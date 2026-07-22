@@ -1,0 +1,15 @@
+/* Account Menu Enhancer for HivePress: settings screen styles. */
+
+/* Keep the repeater selects readable. */
+div[data-component="repeater"] td .select2-container {
+	min-width: 140px;
+}
+
+/* Keep the colour picker compact inside repeater rows. */
+div[data-component="repeater"] td .wp-picker-container .wp-color-result.button {
+	margin-bottom: 0;
+}
+
+div[data-component="repeater"] td .wp-picker-container input.amehp-colour {
+	width: 80px;
+}
