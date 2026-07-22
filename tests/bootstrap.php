@@ -43,6 +43,7 @@ $GLOBALS['amehp_test'] = [
 	'hp_menu_items'  => [],
 	'permalinks'     => [],
 	'posts'          => [],
+	'global_post'    => null,
 	'route_urls'     => [],
 	'route_titles'   => [],
 	'route_params'   => [],
@@ -76,6 +77,7 @@ function amehp_test_reset() {
 			'hp_menu_items'  => [],
 			'permalinks'     => [],
 			'posts'          => [],
+			'global_post'    => null,
 			'route_urls'     => [],
 			'route_titles'   => [],
 			'route_params'   => [],
@@ -226,7 +228,14 @@ function get_permalink( $post = 0 ) {
 	return isset( $permalinks[ $post_id ] ) ? $permalinks[ $post_id ] : false;
 }
 
-function get_post( $post_id ) {
+function get_post( $post_id = null ) {
+	// Mirror WordPress: get_post( 0 ) returns the global post, if any.
+	if ( empty( $post_id ) ) {
+		$global = amehp_test_state( 'global_post' );
+
+		return $global ? (object) $global : null;
+	}
+
 	$post_id = absint( $post_id );
 	$posts   = amehp_test_state( 'posts' );
 

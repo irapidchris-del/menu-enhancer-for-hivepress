@@ -337,6 +337,12 @@ $resolve   = function ( $item ) use ( $component ) {
 check( 'URL: published page link resolved', 'https://example.com/about/' === $resolve( [ 'link' => 'page:12' ] ) );
 check( 'URL: unpublished page link dropped', '' === $resolve( [ 'link' => 'page:13' ] ) );
 
+// A zero/invalid page id must not fall back to the current (global) page.
+amehp_test_state( 'global_post', [ 'ID' => 99, 'post_status' => 'publish' ] );
+amehp_test_state( 'permalinks', [ 12 => 'https://example.com/about/', 99 => 'https://example.com/current/' ] );
+check( 'URL: page link with a zero id dropped, not resolved to the current page', '' === $resolve( [ 'link' => 'page:0' ] ) );
+check( 'URL: page link with a non-numeric id dropped', '' === $resolve( [ 'link' => 'page:abc' ] ) );
+
 /*
 ---------------------------------------------------------------------------
  Icon CSS tests
@@ -665,8 +671,8 @@ update_option(
 			'order' => 20,
 		],
 		[
-			'label' => 'Old Downloads',
-			'link'  => 'wc:downloads',
+			'label' => 'Old Subscriptions',
+			'link'  => 'wc:subscriptions',
 			'menus' => 'both',
 			'order' => 25,
 		],
@@ -676,8 +682,11 @@ $amehp = amehp_test_component();
 
 $links = $amehp->get_link_options();
 
+// Neither target is in the live option list (the route has no extension and
+// "subscriptions" is not a fixture endpoint), so only the preservation path
+// can keep them selectable.
 check( 'Links: saved route link kept selectable after its route disappears', isset( $links['route:bookings_view_page'] ) );
-check( 'Links: saved WooCommerce link kept selectable', isset( $links['wc:downloads'] ) );
+check( 'Links: saved WooCommerce link kept selectable after its endpoint disappears', isset( $links['wc:subscriptions'] ) );
 
 /*
 ---------------------------------------------------------------------------

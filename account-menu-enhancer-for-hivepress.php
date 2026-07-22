@@ -35,22 +35,18 @@ if ( ! defined( 'AMEHP_DIR' ) ) {
 }
 
 /**
- * Registers the plugin as a HivePress extension.
+ * Registers the plugin directory as a HivePress extension.
  *
- * The array form is used instead of a bare directory path because HivePress
- * only accepts a path when the main plugin file is named exactly after its
- * folder, so this keeps the extension working regardless of the folder name.
+ * HivePress registers the extension only when the main plugin file is named
+ * after its folder, so the plugin folder must be "account-menu-enhancer-for-
+ * hivepress" (which is the case for the released package). The folder name is
+ * verified separately in amehp_folder_notice() to avoid a silent failure.
  *
- * @param array $extensions Extension configurations.
+ * @param array $extensions Extension directory paths.
  * @return array
  */
 function amehp_register_extension( $extensions ) {
-	$extensions['account_menu_enhancer'] = [
-		'name'    => 'Account Menu Enhancer',
-		'version' => AMEHP_VERSION,
-		'path'    => __DIR__,
-		'url'     => rtrim( plugin_dir_url( __FILE__ ), '/' ),
-	];
+	$extensions[] = __DIR__;
 
 	return $extensions;
 }
@@ -81,6 +77,34 @@ function amehp_admin_notice() {
 }
 
 add_action( 'admin_notices', 'amehp_admin_notice' );
+
+/**
+ * Displays an admin notice if the plugin folder name prevents it from loading.
+ *
+ * HivePress registers the extension only when the main plugin file is named
+ * after its folder, so a renamed folder would stop the plugin loading without
+ * any visible error. This turns that case into a clear message.
+ */
+function amehp_folder_notice() {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+
+	$folder   = basename( AMEHP_DIR );
+	$expected = basename( AMEHP_FILE, '.php' );
+
+	if ( $folder === $expected ) {
+		return;
+	}
+
+	echo '<div class="notice notice-error"><p>' . sprintf(
+		/* translators: %s: required plugin folder name. */
+		esc_html__( 'Account Menu Enhancer for HivePress must be installed in a folder named "%s" to work. Please rename the plugin folder.', 'account-menu-enhancer-for-hivepress' ),
+		esc_html( $expected )
+	) . '</p></div>';
+}
+
+add_action( 'admin_notices', 'amehp_folder_notice' );
 
 /**
  * Adds a settings link to the plugin action links.
