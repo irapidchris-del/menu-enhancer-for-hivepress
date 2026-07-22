@@ -9,6 +9,11 @@
 
 // phpcs:ignoreFile
 
+// Abort unless run from the command line.
+if ( 'cli' !== PHP_SAPI ) {
+	exit;
+}
+
 require_once __DIR__ . '/bootstrap.php';
 
 $passed = 0;
@@ -205,6 +210,23 @@ $wc_menu = $component->alter_wc_menu( amehp_fixture_wc_items() );
 check( 'WC menu: hidden WooCommerce endpoint removed', ! isset( $wc_menu['downloads'] ) );
 check( 'WC menu: hidden HivePress item not injected', ! isset( $wc_menu['messages_thread'] ) );
 
+// Hiding wc:orders must also drop the mirrored HivePress orders_view item.
+amehp_fixture_setup();
+$hp_items                 = amehp_fixture_hp_items();
+$hp_items['orders_view']  = [
+	'label'  => 'Orders',
+	'url'    => 'https://example.com/my-account/orders/',
+	'_order' => 40,
+];
+amehp_test_state( 'hp_menu_items', $hp_items );
+update_option( 'hp_amehp_hidden_items', [ 'wc:orders' ] );
+$component = amehp_test_component();
+
+$wc_menu = $component->alter_wc_menu( amehp_fixture_wc_items() );
+
+check( 'WC menu: hiding wc:orders removes the WooCommerce Orders endpoint', ! isset( $wc_menu['orders'] ) );
+check( 'WC menu: hiding wc:orders also removes the mirrored HivePress orders_view', ! isset( $wc_menu['orders_view'] ) );
+
 // Custom item targeted at WooCommerce with a relative URL.
 amehp_fixture_setup();
 update_option(
@@ -276,6 +298,44 @@ check( 'URL: custom URL overrides the link', 'https://example.com/override/' ===
 
 amehp_test_state( 'vendor_id', 0 );
 check( 'URL: vendor profile route empty without a vendor', '' === $resolve( [ 'link' => 'route:vendor_view_page' ] ) );
+
+// The user profile route must be built with the username, the way core does.
+amehp_fixture_setup();
+amehp_test_state( 'user_login', 'chris' );
+$component = amehp_test_component();
+$resolve   = function ( $item ) use ( $component ) {
+	return amehp_test_call( $component, 'get_custom_item_url', [ array_merge( [ 'link' => '', 'url' => '' ], $item ) ] );
+};
+
+$user_url    = $resolve( [ 'link' => 'route:user_view_page' ] );
+$user_params = amehp_test_state( 'route_params' );
+
+check( 'URL: user profile route built from the username', 'https://example.com/user/chris/' === $user_url );
+check( 'URL: user profile route uses the username param, not a user ID', isset( $user_params['user_view_page']['username'] ) && 'chris' === $user_params['user_view_page']['username'] && ! isset( $user_params['user_view_page']['user'] ) );
+
+// Only web URL schemes are accepted for custom URLs.
+check( 'URL: javascript scheme rejected', '' === $resolve( [ 'url' => 'javascript://%0aalert(1)' ] ) );
+check( 'URL: ftp scheme rejected', '' === $resolve( [ 'url' => 'ftp://example.com/file' ] ) );
+check( 'URL: https scheme accepted', 'https://example.com/page/' === $resolve( [ 'url' => 'https://example.com/page/' ] ) );
+check( 'URL: http scheme accepted', 'http://example.com/page/' === $resolve( [ 'url' => 'http://example.com/page/' ] ) );
+
+// Unpublished pages are dropped.
+amehp_fixture_setup();
+amehp_test_state( 'permalinks', [ 12 => 'https://example.com/about/', 13 => 'https://example.com/draft/' ] );
+amehp_test_state(
+	'posts',
+	[
+		12 => [ 'post_status' => 'publish' ],
+		13 => [ 'post_status' => 'draft' ],
+	]
+);
+$component = amehp_test_component();
+$resolve   = function ( $item ) use ( $component ) {
+	return amehp_test_call( $component, 'get_custom_item_url', [ array_merge( [ 'link' => '', 'url' => '' ], $item ) ] );
+};
+
+check( 'URL: published page link resolved', 'https://example.com/about/' === $resolve( [ 'link' => 'page:12' ] ) );
+check( 'URL: unpublished page link dropped', '' === $resolve( [ 'link' => 'page:13' ] ) );
 
 /*
 ---------------------------------------------------------------------------
@@ -574,6 +634,92 @@ $wc_menu = $amehp->alter_wc_menu( amehp_fixture_wc_items() );
 check( 'Regression: throwing menu build falls back without a fatal', is_array( $wc_menu ) && isset( $wc_menu['dashboard'] ) );
 check( 'Regression: throwing menu build yields an empty base menu', [] === amehp_test_call( $amehp, 'get_base_hp_items' ) );
 
+// A throwing WooCommerce menu build must also fall back and reset the flag.
+amehp_fixture_setup();
+amehp_test_state( 'wc_menu_throws', true );
+
+$amehp = amehp_test_component();
+
+check( 'Regression: throwing WooCommerce base menu yields an empty menu', [] === amehp_test_call( $amehp, 'get_base_wc_items' ) );
+
+$suppressed = new ReflectionProperty( $amehp, 'suppressed' );
+$suppressed->setAccessible( true );
+check( 'Regression: throwing WooCommerce base menu resets the suppressed flag', false === $suppressed->getValue( $amehp ) );
+
+/*
+---------------------------------------------------------------------------
+ Link option preservation
+---------------------------------------------------------------------------
+*/
+
+// Saved custom-item links must stay selectable after their target disappears,
+// so that saving the settings does not fail core validation.
+amehp_fixture_setup();
+update_option(
+	'hp_amehp_custom_items',
+	[
+		[
+			'label' => 'Old Booking',
+			'link'  => 'route:bookings_view_page',
+			'menus' => 'both',
+			'order' => 20,
+		],
+		[
+			'label' => 'Old Downloads',
+			'link'  => 'wc:downloads',
+			'menus' => 'both',
+			'order' => 25,
+		],
+	]
+);
+$amehp = amehp_test_component();
+
+$links = $amehp->get_link_options();
+
+check( 'Links: saved route link kept selectable after its route disappears', isset( $links['route:bookings_view_page'] ) );
+check( 'Links: saved WooCommerce link kept selectable', isset( $links['wc:downloads'] ) );
+
+/*
+---------------------------------------------------------------------------
+ Migration race regression
+---------------------------------------------------------------------------
+*/
+
+// HivePress seeds the plugin option defaults before admin_init, so the
+// migration must still import the legacy settings rather than bail out.
+amehp_fixture_setup();
+amehp_test_state( 'is_admin', true );
+
+// Emulate HivePress init_settings() seeding the checkbox defaults first.
+update_option( 'hp_amehp_merge_menus', '1' );
+update_option( 'hp_amehp_unify_account', '1' );
+
+update_option( 'amehp_version', '' );
+update_option(
+	'amehp_settings',
+	[
+		'enable_integration'        => 0,
+		'woocommerce_items_to_hide' => [ 'downloads' ],
+		'custom_menu_items'         => [
+			[
+				'label'    => 'Support',
+				'type'     => 'url',
+				'url'      => 'https://example.com/support/',
+				'menu'     => 'both',
+				'position' => 30,
+			],
+		],
+	]
+);
+
+amehp_maybe_migrate();
+
+check( 'Migration race: legacy integration flag still imported over the seeded default', '' === get_option( 'hp_amehp_merge_menus' ) );
+check( 'Migration race: layout preserved for upgraded sites over the seeded default', '' === get_option( 'hp_amehp_unify_account' ) );
+check( 'Migration race: hidden items still imported', [ 'wc:downloads' ] === get_option( 'hp_amehp_hidden_items' ) );
+
+$raced = get_option( 'hp_amehp_custom_items' );
+check( 'Migration race: custom items still imported', is_array( $raced ) && isset( $raced[0]['url'] ) && 'https://example.com/support/' === $raced[0]['url'] );
 
 /*
 ---------------------------------------------------------------------------

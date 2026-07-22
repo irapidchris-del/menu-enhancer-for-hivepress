@@ -13,6 +13,11 @@
 
 // phpcs:ignoreFile
 
+// Abort unless run from the command line.
+if ( 'cli' !== PHP_SAPI ) {
+	exit;
+}
+
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'AMEHP_TESTS', true );
 
@@ -25,21 +30,25 @@ error_reporting( E_ALL );
 */
 
 $GLOBALS['amehp_test'] = [
-	'options'       => [],
-	'filters'       => [],
-	'actions'       => [],
-	'logged_in'     => true,
-	'user_roles'    => [ 'customer' ],
-	'is_admin'      => false,
-	'is_account'    => false,
-	'wc_endpoint'   => '',
-	'wc_items'      => [],
-	'hp_menu_items' => [],
-	'permalinks'    => [],
-	'route_urls'    => [],
-	'route_titles'  => [],
-	'vendor_id'     => 0,
-	'menu_throws'   => false,
+	'options'        => [],
+	'filters'        => [],
+	'actions'        => [],
+	'logged_in'      => true,
+	'user_roles'     => [ 'customer' ],
+	'user_login'     => 'chris',
+	'is_admin'       => false,
+	'is_account'     => false,
+	'wc_endpoint'    => '',
+	'wc_items'       => [],
+	'hp_menu_items'  => [],
+	'permalinks'     => [],
+	'posts'          => [],
+	'route_urls'     => [],
+	'route_titles'   => [],
+	'route_params'   => [],
+	'vendor_id'      => 0,
+	'menu_throws'    => false,
+	'wc_menu_throws' => false,
 ];
 
 function amehp_test_state( $key, $value = null ) {
@@ -54,21 +63,25 @@ function amehp_test_reset() {
 	$GLOBALS['amehp_test'] = array_merge(
 		$GLOBALS['amehp_test'],
 		[
-			'options'       => [],
-			'filters'       => [],
-			'actions'       => [],
-			'logged_in'     => true,
-			'user_roles'    => [ 'customer' ],
-			'is_admin'      => false,
-			'is_account'    => false,
-			'wc_endpoint'   => '',
-			'wc_items'      => [],
-			'hp_menu_items' => [],
-			'permalinks'    => [],
-			'route_urls'    => [],
-			'route_titles'  => [],
-			'vendor_id'     => 0,
-			'menu_throws'   => false,
+			'options'        => [],
+			'filters'        => [],
+			'actions'        => [],
+			'logged_in'      => true,
+			'user_roles'     => [ 'customer' ],
+			'user_login'     => 'chris',
+			'is_admin'       => false,
+			'is_account'     => false,
+			'wc_endpoint'    => '',
+			'wc_items'       => [],
+			'hp_menu_items'  => [],
+			'permalinks'     => [],
+			'posts'          => [],
+			'route_urls'     => [],
+			'route_titles'   => [],
+			'route_params'   => [],
+			'vendor_id'      => 0,
+			'menu_throws'    => false,
+			'wc_menu_throws' => false,
 		]
 	);
 }
@@ -131,9 +144,12 @@ function wp_get_current_user() {
 
 		public $roles;
 
+		public $user_login;
+
 		public function __construct( $user ) {
-			$this->user  = $user;
-			$this->roles = $user->roles;
+			$this->user       = $user;
+			$this->roles      = $user->roles;
+			$this->user_login = amehp_test_state( 'logged_in' ) ? amehp_test_state( 'user_login' ) : '';
 		}
 
 		public function exists() {
@@ -202,10 +218,34 @@ function home_url( $path = '' ) {
 	return 'https://example.com' . $path;
 }
 
-function get_permalink( $post_id ) {
+function get_permalink( $post = 0 ) {
+	$post_id = is_object( $post ) ? $post->ID : $post;
+
 	$permalinks = amehp_test_state( 'permalinks' );
 
 	return isset( $permalinks[ $post_id ] ) ? $permalinks[ $post_id ] : false;
+}
+
+function get_post( $post_id ) {
+	$post_id = absint( $post_id );
+	$posts   = amehp_test_state( 'posts' );
+
+	if ( isset( $posts[ $post_id ] ) ) {
+		return (object) array_merge( [ 'ID' => $post_id, 'post_status' => 'publish' ], $posts[ $post_id ] );
+	}
+
+	// Treat any page with a known permalink as published by default.
+	$permalinks = amehp_test_state( 'permalinks' );
+
+	if ( isset( $permalinks[ $post_id ] ) ) {
+		return (object) [ 'ID' => $post_id, 'post_status' => 'publish' ];
+	}
+
+	return null;
+}
+
+function wp_parse_url( $url, $component = -1 ) {
+	return parse_url( (string) $url, $component );
 }
 
 function wp_list_sort( $input_list, $orderby = [], $order = 'ASC', $preserve_keys = false ) {
@@ -294,6 +334,10 @@ function is_account_page() {
 }
 
 function wc_get_account_menu_items() {
+	if ( amehp_test_state( 'wc_menu_throws' ) ) {
+		throw new \TypeError( 'wc_get_account_menu_items(): front-end context required' );
+	}
+
 	// Apply the registered filter like WooCommerce does.
 	$items = amehp_test_state( 'wc_items' );
 
@@ -335,6 +379,18 @@ require_once $hivepress_path . '/includes/helpers.php';
 
 class Amehp_Test_Router {
 	public function get_url( $route, $params = [] ) {
+		$recorded                 = amehp_test_state( 'route_params' );
+		$recorded[ $route ]       = $params;
+		amehp_test_state( 'route_params', $recorded );
+
+		// Mirror core: the user profile URL is built from the username, so a
+		// missing/wrong parameter key produces an empty (invalid) URL.
+		if ( 'user_view_page' === $route ) {
+			$username = isset( $params['username'] ) ? (string) $params['username'] : '';
+
+			return '' !== $username ? 'https://example.com/user/' . $username . '/' : '';
+		}
+
 		$urls = amehp_test_state( 'route_urls' );
 
 		return isset( $urls[ $route ] ) ? $urls[ $route ] : '';

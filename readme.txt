@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,18 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
 
+= 2.0.2 =
+* Fixed the "My Profile" custom link, which pointed to a broken URL because the user profile address was built without the username.
+* Fixed the version 1.x settings migration being skipped on some upgrades, which discarded the old hidden items and custom menu items and could switch the account layout unexpectedly.
+* The extension now registers reliably regardless of the installation folder name.
+* Hiding the WooCommerce Orders item no longer leaves a duplicate Orders link in the WooCommerce menu.
+* Custom URLs are now restricted to http and https links.
+* Custom links to a page that is later unpublished or trashed are no longer shown.
+* Custom links whose target is later removed (for example when WooCommerce or an extension is deactivated) no longer block the settings from saving.
+* Kept the account menu working if another plugin errors while building the WooCommerce menu.
+* Updated the page title handling for compatibility with newer WooCommerce versions.
+* Added translation loading, an uninstall cleanup routine and a bundled licence file.
+
 = 2.0.1 =
 * Fixed a critical error when opening the settings page on sites where the user or vendor profile pages are available. Route titles that are resolved by callbacks (which expect the front-end context) are no longer invoked when building the settings dropdowns; plugin labels are used instead.
 
@@ -53,3 +65,8 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 = 1.1.0 =
 * Legacy version.
+
+== Upgrade Notice ==
+
+= 2.0.2 =
+This release repairs the automatic settings migration from version 1.x and fixes several account menu issues. Upgrading is recommended for all users.
