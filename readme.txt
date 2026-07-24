@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,6 +38,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.0.3 =
+* The plugin now loads even when its folder has a non-standard name (for example when installed directly from source) instead of requiring an exact folder name. Using the recommended folder name is still suggested for full compatibility.
 
 = 2.0.2 =
 * Fixed the "My Profile" custom link, which pointed to a broken URL because the user profile address was built without the username.

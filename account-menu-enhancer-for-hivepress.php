@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.0.2
+ * Version: 2.0.3
  * Author: Chris Bruce
  * Author URI: https://community.hivepress.io/u/chrisb
  * Requires at least: 5.0
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.0.2' );
+	define( 'AMEHP_VERSION', '2.0.3' );
 }
 
 // Define the plugin file.
@@ -35,18 +35,28 @@ if ( ! defined( 'AMEHP_DIR' ) ) {
 }
 
 /**
- * Registers the plugin directory as a HivePress extension.
+ * Registers the plugin as a HivePress extension.
  *
- * HivePress registers the extension only when the main plugin file is named
- * after its folder, so the plugin folder must be "account-menu-enhancer-for-
- * hivepress" (which is the case for the released package). The folder name is
- * verified separately in amehp_folder_notice() to avoid a silent failure.
+ * HivePress registers a plain directory path only when the main plugin file is
+ * named after its folder, which is the case for the released package. When the
+ * folder has a different name (for example when installed straight from source)
+ * the array form is used instead, which HivePress accepts regardless of the
+ * folder name so the plugin still works.
  *
- * @param array $extensions Extension directory paths.
+ * @param array $extensions Extension configurations.
  * @return array
  */
 function amehp_register_extension( $extensions ) {
-	$extensions[] = __DIR__;
+	if ( basename( AMEHP_DIR ) === basename( AMEHP_FILE, '.php' ) ) {
+		$extensions[] = AMEHP_DIR;
+	} else {
+		$extensions['account_menu_enhancer'] = [
+			'name'    => 'Account Menu Enhancer for HivePress',
+			'version' => AMEHP_VERSION,
+			'path'    => AMEHP_DIR,
+			'url'     => rtrim( plugin_dir_url( AMEHP_FILE ), '/' ),
+		];
+	}
 
 	return $extensions;
 }
@@ -79,14 +89,14 @@ function amehp_admin_notice() {
 add_action( 'admin_notices', 'amehp_admin_notice' );
 
 /**
- * Displays an admin notice if the plugin folder name prevents it from loading.
+ * Displays an admin notice recommending the standard plugin folder name.
  *
- * HivePress registers the extension only when the main plugin file is named
- * after its folder, so a renamed folder would stop the plugin loading without
- * any visible error. This turns that case into a clear message.
+ * The plugin works from any folder, but a non-standard folder name makes
+ * HivePress emit a notice on each request and does not match the WordPress.org
+ * slug, so this suggests the recommended folder name.
  */
 function amehp_folder_notice() {
-	if ( ! current_user_can( 'activate_plugins' ) ) {
+	if ( ! function_exists( 'hivepress' ) || ! current_user_can( 'activate_plugins' ) ) {
 		return;
 	}
 
@@ -97,9 +107,10 @@ function amehp_folder_notice() {
 		return;
 	}
 
-	echo '<div class="notice notice-error"><p>' . sprintf(
-		/* translators: %s: required plugin folder name. */
-		esc_html__( 'Account Menu Enhancer for HivePress must be installed in a folder named "%s" to work. Please rename the plugin folder.', 'account-menu-enhancer-for-hivepress' ),
+	echo '<div class="notice notice-warning"><p>' . sprintf(
+		/* translators: 1: current plugin folder name, 2: recommended plugin folder name. */
+		esc_html__( 'Account Menu Enhancer for HivePress is running from a folder named "%1$s". For full compatibility, rename the plugin folder to "%2$s".', 'account-menu-enhancer-for-hivepress' ),
+		esc_html( $folder ),
 		esc_html( $expected )
 	) . '</p></div>';
 }
