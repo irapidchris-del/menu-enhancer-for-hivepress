@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 * **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, position, menu targeting and per-role visibility.
 * **Hidden items.** Hide any HivePress or WooCommerce menu item.
 * **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when the menus are merged.
+* **Menu styling.** Set the menu item font weight, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
 
 All settings live under HivePress, then Settings, then Account Menu.
 
@@ -39,6 +40,37 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
 
+= 2.1.2 =
+* Hiding the menu chevrons now also removes the space they left behind, so the account menu items sit flush.
+* Reworked the settings repeaters so the drag and remove controls sit in a clear bar at the top of each card, with roomier fields on small screens.
+
+= 2.1.1 =
+* The hide menu chevrons option is now limited to the account menus, so other navigation menus (for example in the footer) keep their markers.
+* Moved the Behaviour section to the top of the settings page.
+* Improved the settings repeaters on small screens, with more inset fields and larger drag and remove controls.
+
+= 2.1.0 =
+* Added a menu item weight option (Normal to Bold) for the account menus.
+* Added an option to hide the theme navigation menu arrows so only the chosen icons show.
+* Added an option to hide the page header on WooCommerce account pages so they match the HivePress account pages.
+* Reworked the settings repeaters (icons and custom items) to stack their fields vertically on all screen sizes, so every field is readable and the drag and remove controls stay on screen.
+* The plugin now loads from any folder name without showing an admin notice.
+
+= 2.0.3 =
+* The plugin now loads even when its folder has a non-standard name (for example when installed directly from source) instead of requiring an exact folder name. Using the recommended folder name is still suggested for full compatibility.
+
+= 2.0.2 =
+* Fixed the "My Profile" custom link, which pointed to a broken URL because the user profile address was built without the username.
+* Fixed the version 1.x settings migration being skipped on some upgrades, which discarded the old hidden items and custom menu items and could switch the account layout unexpectedly.
+* The extension now registers reliably regardless of the installation folder name.
+* Hiding the WooCommerce Orders item no longer leaves a duplicate Orders link in the WooCommerce menu.
+* Custom URLs are now restricted to http and https links.
+* Custom links to a page that is later unpublished or trashed are no longer shown.
+* Custom links whose target is later removed (for example when WooCommerce or an extension is deactivated) no longer block the settings from saving.
+* Kept the account menu working if another plugin errors while building the WooCommerce menu.
+* Updated the page title handling for compatibility with newer WooCommerce versions.
+* Added translation loading, an uninstall cleanup routine and a bundled licence file.
+
 = 2.0.1 =
 * Fixed a critical error when opening the settings page on sites where the user or vendor profile pages are available. Route titles that are resolved by callbacks (which expect the front-end context) are no longer invoked when building the settings dropdowns; plugin labels are used instead.
 
@@ -53,3 +85,8 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 = 1.1.0 =
 * Legacy version.
+
+== Upgrade Notice ==
+
+= 2.0.2 =
+This release repairs the automatic settings migration from version 1.x and fixes several account menu issues. Upgrading is recommended for all users.

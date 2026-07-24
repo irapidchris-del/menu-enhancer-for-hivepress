@@ -2,13 +2,14 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.0.1
- * Author: Chris Bruce
- * Author URI: https://community.hivepress.io/u/chrisb
+ * Version: 2.1.2
+ * Author: ChrisB @ HivePress Community
+ * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.0
- * Tested up to: 7.0
  * Requires PHP: 7.4
  * Requires Plugins: hivepress
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: account-menu-enhancer-for-hivepress
  * Domain Path: /languages
  *
@@ -20,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.0.1' );
+	define( 'AMEHP_VERSION', '2.1.2' );
 }
 
 // Define the plugin file.
@@ -34,18 +35,45 @@ if ( ! defined( 'AMEHP_DIR' ) ) {
 }
 
 /**
- * Registers the plugin directory as a HivePress extension.
+ * Registers the plugin as a HivePress extension.
  *
- * @param array $extensions Extension directory paths.
+ * HivePress registers a plain directory path only when the main plugin file is
+ * named after its folder, which is the case for the released package. When the
+ * folder has a different name (for example when installed straight from source)
+ * the array form is used instead, which HivePress accepts regardless of the
+ * folder name so the plugin still works.
+ *
+ * @param array $extensions Extension configurations.
  * @return array
  */
 function amehp_register_extension( $extensions ) {
-	$extensions[] = __DIR__;
+	if ( basename( AMEHP_DIR ) === basename( AMEHP_FILE, '.php' ) ) {
+		$extensions[] = AMEHP_DIR;
+	} else {
+		$extensions['account_menu_enhancer'] = [
+			'name'    => 'Account Menu Enhancer for HivePress',
+			'version' => AMEHP_VERSION,
+			'path'    => AMEHP_DIR,
+			'url'     => rtrim( plugin_dir_url( AMEHP_FILE ), '/' ),
+		];
+	}
 
 	return $extensions;
 }
 
 add_filter( 'hivepress/v1/extensions', 'amehp_register_extension' );
+
+/**
+ * Loads the plugin translations.
+ *
+ * HivePress loads extension text domains based on the folder name, so the
+ * plugin loads its own translations to keep working with any folder name.
+ */
+function amehp_load_textdomain() {
+	load_plugin_textdomain( 'account-menu-enhancer-for-hivepress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+
+add_action( 'init', 'amehp_load_textdomain' );
 
 /**
  * Displays an admin notice if HivePress is not active.
@@ -96,7 +124,10 @@ function amehp_maybe_migrate() {
 	// Get the legacy settings.
 	$legacy = get_option( 'amehp_settings' );
 
-	if ( is_array( $legacy ) && false === get_option( 'hp_amehp_merge_menus', false ) ) {
+	// The migrated values are written unconditionally because HivePress seeds
+	// the plugin options with their defaults on the same request (via the
+	// activation event at "init"), before this callback runs on "admin_init".
+	if ( is_array( $legacy ) ) {
 
 		// Migrate the integration toggle.
 		update_option( 'hp_amehp_merge_menus', empty( $legacy['enable_integration'] ) ? '' : '1' );

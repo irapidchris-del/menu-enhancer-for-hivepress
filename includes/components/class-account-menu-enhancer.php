@@ -230,7 +230,15 @@ final class Account_Menu_Enhancer extends Component {
 			if ( function_exists( 'wc_get_account_menu_items' ) ) {
 				$this->suppressed = true;
 
-				$this->wc_items = wc_get_account_menu_items();
+				try {
+					$this->wc_items = wc_get_account_menu_items();
+				} catch ( \Throwable $throwable ) {
+
+					// Third-party menu filters can expect the front-end query
+					// context, so fall back to an empty base menu if the menu
+					// cannot be built in the current context.
+					$this->wc_items = [];
+				}
 
 				$this->suppressed = false;
 			}
@@ -396,6 +404,13 @@ final class Account_Menu_Enhancer extends Component {
 		if ( $this->is_merge_enabled() ) {
 			foreach ( $this->get_base_hp_items() as $name => $item ) {
 				if ( in_array( 'hp:' . $name, $hidden, true ) ) {
+					continue;
+				}
+
+				// Skip the HivePress items that mirror hidden WooCommerce
+				// endpoints, since their endpoint rows are already removed
+				// before the duplicate URL check can catch them.
+				if ( ( 'orders_view' === $name && in_array( 'wc:orders', $hidden, true ) ) || ( 'subscriptions_view' === $name && in_array( 'wc:subscriptions', $hidden, true ) ) ) {
 					continue;
 				}
 
@@ -576,9 +591,11 @@ final class Account_Menu_Enhancer extends Component {
 	public function alter_account_page( $template ) {
 		if ( $this->is_unified_page() ) {
 
-			// Set the page title.
+			// Set the page title. The argument count matches the current
+			// WooCommerce registration so that re-adding the filter keeps
+			// the queried-object guard of newer WooCommerce versions.
 			if ( 'dashboard' !== $this->get_current_endpoint_key() ) {
-				add_filter( 'the_title', 'wc_page_endpoint_title' );
+				add_filter( 'the_title', 'wc_page_endpoint_title', 10, 2 );
 			}
 
 			// Alter the page template.
@@ -650,13 +667,28 @@ final class Account_Menu_Enhancer extends Component {
 				return home_url( $url );
 			}
 
-			return filter_var( $url, FILTER_VALIDATE_URL ) ? $url : '';
+			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+				return '';
+			}
+
+			// Allow web URLs only.
+			$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+
+			return in_array( $scheme, [ 'http', 'https' ], true ) ? $url : '';
 		}
 
 		$link = $item['link'];
 
 		if ( 0 === strpos( $link, 'page:' ) ) {
-			$permalink = get_permalink( absint( substr( $link, strlen( 'page:' ) ) ) );
+			$page_id = absint( substr( $link, strlen( 'page:' ) ) );
+			$page    = $page_id ? get_post( $page_id ) : null;
+
+			// Skip the pages that are missing or no longer published.
+			if ( ! $page || 'publish' !== $page->post_status ) {
+				return '';
+			}
+
+			$permalink = get_permalink( $page );
 
 			return $permalink ? $permalink : '';
 		}
@@ -680,11 +712,12 @@ final class Account_Menu_Enhancer extends Component {
 	 */
 	protected function get_route_url( $route ) {
 
-		// Resolve the current user profile URL.
+		// Resolve the current user profile URL. The route expects the
+		// username, the same way HivePress core builds this URL.
 		if ( 'user_view_page' === $route ) {
-			$user_id = get_current_user_id();
+			$user = wp_get_current_user();
 
-			return $user_id ? (string) hivepress()->router->get_url( $route, [ 'user' => $user_id ] ) : '';
+			return $user->exists() ? (string) hivepress()->router->get_url( $route, [ 'username' => $user->user_login ] ) : '';
 		}
 
 		// Resolve the current vendor profile URL.
@@ -742,7 +775,7 @@ final class Account_Menu_Enhancer extends Component {
 	 * Enqueues the front-end assets.
 	 */
 	public function enqueue_frontend_assets() {
-		$css    = $this->get_icon_css();
+		$css    = $this->get_icon_css() . $this->get_appearance_css();
 		$badges = [];
 
 		// The counters are only needed where the WooCommerce menu renders.
@@ -940,6 +973,42 @@ final class Account_Menu_Enhancer extends Component {
 		}
 
 		return $base . $css;
+	}
+
+	/**
+	 * Builds the account menu appearance CSS.
+	 *
+	 * Covers the optional menu item weight, the theme chevron hiding and the
+	 * WooCommerce account page header hiding.
+	 *
+	 * @return string
+	 */
+	protected function get_appearance_css() {
+		$css = '';
+
+		// Set the menu item font weight.
+		$weight = (string) get_option( 'hp_amehp_menu_weight' );
+
+		if ( preg_match( '/^[1-9]00$/', $weight ) ) {
+			$css .= '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:' . $weight . ';}';
+		}
+
+		// Hide the theme navigation chevrons on the account menus only. The
+		// selectors are specific enough to override the theme rule, and they
+		// are scoped so that other navigation menus (for example in the
+		// footer) keep their markers. The inline-start padding the theme
+		// reserved for the chevron is also removed so the items sit flush.
+		if ( get_option( 'hp_amehp_hide_chevrons' ) ) {
+			$css .= '.hp-menu--user-account .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}';
+			$css .= '.hp-menu--user-account .hp-menu__item,.woocommerce-MyAccount-navigation ul li{padding-inline-start:0;}';
+		}
+
+		// Hide the WooCommerce account page header.
+		if ( hp\is_plugin_active( 'woocommerce' ) && get_option( 'hp_amehp_hide_wc_header' ) ) {
+			$css .= 'body.woocommerce-account .header-hero--title{display:none;}';
+		}
+
+		return $css;
 	}
 
 	/**
@@ -1195,6 +1264,16 @@ final class Account_Menu_Enhancer extends Component {
 			foreach ( $pages as $page ) {
 				/* translators: %s: page title. */
 				$options[ 'page:' . $page->ID ] = sprintf( esc_html__( '%s (Page)', 'account-menu-enhancer-for-hivepress' ), $page->post_title );
+			}
+		}
+
+		// Keep the previously saved links selectable, so that the saved
+		// custom items still validate after their link target disappears.
+		foreach ( $this->get_custom_items() as $item ) {
+			$link = $item['link'];
+
+			if ( '' !== $link && ! isset( $options[ $link ] ) ) {
+				$options[ $link ] = ucwords( trim( str_replace( [ 'route:', 'wc:', 'page:', '_', '-' ], [ '', '', 'Page ', ' ', ' ' ], $link ) ) );
 			}
 		}
 

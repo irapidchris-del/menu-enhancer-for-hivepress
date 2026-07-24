@@ -1,15 +1,107 @@
 /* Account Menu Enhancer for HivePress: settings screen styles. */
 
-/* Keep the repeater selects readable. */
-div[data-component="repeater"] td .select2-container {
-	min-width: 140px;
+/*
+ * Turn each repeater row into a vertical card on every screen size. The
+ * default HivePress repeater lays a row out as a horizontal table row, which
+ * leaves the many fields too narrow to read. The drag handle and remove
+ * button are pinned to a reserved bar at the top of the card so they never
+ * crowd the fields or slip off screen.
+ */
+div[data-component="repeater"] table.hp-table,
+div[data-component="repeater"] table.hp-table > tbody {
+	display: block;
+	width: 100%;
 }
 
-/* Keep the colour picker compact inside repeater rows. */
-div[data-component="repeater"] td .wp-picker-container .wp-color-result.button {
+div[data-component="repeater"] table.hp-table > tbody > tr {
+	display: block;
+	position: relative;
+	margin-bottom: 16px;
+	padding: 46px 20px 20px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #fff;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td {
+	display: block;
+	width: 100%;
+	margin: 0 0 12px;
+	padding: 0;
+	border: 0;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
 	margin-bottom: 0;
 }
 
-div[data-component="repeater"] td .wp-picker-container input.amehp-colour {
+/* Pin the drag handle to the top-left and the remove button to the top-right. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child,
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+	position: absolute;
+	top: 8px;
+	width: auto;
+	margin: 0;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+	inset-inline-start: 14px;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+	inset-inline-end: 14px;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	font-size: 15px;
+}
+
+/* Let the field controls fill the row width. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td input[type="text"]:not(.amehp-colour),
+div[data-component="repeater"] table.hp-table > tbody > tr > td input[type="number"],
+div[data-component="repeater"] table.hp-table > tbody > tr > td textarea,
+div[data-component="repeater"] table.hp-table > tbody > tr > td .select2-container {
+	width: 100% !important;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/* Keep the colour picker compact inside repeater rows. */
+div[data-component="repeater"] .wp-picker-container .wp-color-result.button {
+	margin-bottom: 0;
+}
+
+div[data-component="repeater"] .wp-picker-container input.amehp-colour {
 	width: 80px;
+}
+
+/*
+ * Narrow the fields and enlarge the handles on small screens, where the admin
+ * controls are larger and touch friendly.
+ */
+@media screen and (max-width: 782px) {
+	div[data-component="repeater"] table.hp-table > tbody > tr {
+		padding: 52px 26px 26px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+		inset-inline-start: 18px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+		inset-inline-end: 18px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
+		width: 40px;
+		height: 40px;
+		font-size: 18px;
+	}
 }
