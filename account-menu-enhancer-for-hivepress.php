@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.0.3
+ * Version: 2.1.0
  * Author: Chris Bruce
  * Author URI: https://community.hivepress.io/u/chrisb
  * Requires at least: 5.0
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.0.3' );
+	define( 'AMEHP_VERSION', '2.1.0' );
 }
 
 // Define the plugin file.
@@ -87,35 +87,6 @@ function amehp_admin_notice() {
 }
 
 add_action( 'admin_notices', 'amehp_admin_notice' );
-
-/**
- * Displays an admin notice recommending the standard plugin folder name.
- *
- * The plugin works from any folder, but a non-standard folder name makes
- * HivePress emit a notice on each request and does not match the WordPress.org
- * slug, so this suggests the recommended folder name.
- */
-function amehp_folder_notice() {
-	if ( ! function_exists( 'hivepress' ) || ! current_user_can( 'activate_plugins' ) ) {
-		return;
-	}
-
-	$folder   = basename( AMEHP_DIR );
-	$expected = basename( AMEHP_FILE, '.php' );
-
-	if ( $folder === $expected ) {
-		return;
-	}
-
-	echo '<div class="notice notice-warning"><p>' . sprintf(
-		/* translators: 1: current plugin folder name, 2: recommended plugin folder name. */
-		esc_html__( 'Account Menu Enhancer for HivePress is running from a folder named "%1$s". For full compatibility, rename the plugin folder to "%2$s".', 'account-menu-enhancer-for-hivepress' ),
-		esc_html( $folder ),
-		esc_html( $expected )
-	) . '</p></div>';
-}
-
-add_action( 'admin_notices', 'amehp_folder_notice' );
 
 /**
  * Adds a settings link to the plugin action links.

@@ -15,12 +15,12 @@ $settings = [
 
 		'sections' => [
 			'display'   => [
-				'title'       => esc_html__( 'Icons', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'Assign a Font Awesome icon and an optional colour to any account menu item. Leave the colour empty to inherit the menu text colour.', 'account-menu-enhancer-for-hivepress' ),
+				'title'       => esc_html__( 'Appearance', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Assign a Font Awesome icon and an optional colour to any account menu item, and control how the account menus look. Leave the colour empty to inherit the menu text colour.', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => 10,
 
 				'fields'      => [
-					'amehp_icons'       => [
+					'amehp_icons'         => [
 						'label'       => esc_html__( 'Menu Item Icons', 'account-menu-enhancer-for-hivepress' ),
 						'description' => esc_html__( 'Choose a menu item, then pick its icon and an optional colour. Icons for custom items are set in the Custom Items section below.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'repeater',
@@ -56,7 +56,7 @@ $settings = [
 						],
 					],
 
-					'amehp_icon_colour' => [
+					'amehp_icon_colour'   => [
 						'label'       => esc_html__( 'Default Icon Colour', 'account-menu-enhancer-for-hivepress' ),
 						'description' => esc_html__( 'This colour is used for icons that have no colour of their own. Leave empty to inherit the menu text colour.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'color',
@@ -65,6 +65,29 @@ $settings = [
 						'attributes'  => [
 							'class' => [ 'amehp-colour' ],
 						],
+					],
+
+					'amehp_menu_weight'   => [
+						'label'       => esc_html__( 'Menu Item Weight', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Sets the font weight of the account menu items. Choose Default to keep the theme style.', 'account-menu-enhancer-for-hivepress' ),
+						'type'        => 'select',
+						'placeholder' => esc_html__( 'Default', 'account-menu-enhancer-for-hivepress' ),
+						'_order'      => 30,
+
+						'options'     => [
+							'400' => esc_html__( 'Normal', 'account-menu-enhancer-for-hivepress' ),
+							'500' => esc_html__( 'Medium', 'account-menu-enhancer-for-hivepress' ),
+							'600' => esc_html__( 'Semi-bold', 'account-menu-enhancer-for-hivepress' ),
+							'700' => esc_html__( 'Bold', 'account-menu-enhancer-for-hivepress' ),
+						],
+					],
+
+					'amehp_hide_chevrons' => [
+						'label'       => esc_html__( 'Menu Chevrons', 'account-menu-enhancer-for-hivepress' ),
+						'caption'     => esc_html__( 'Hide the theme navigation menu arrows', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Hides the default arrow markers that some themes add before navigation menu items, so only your chosen icons show.', 'account-menu-enhancer-for-hivepress' ),
+						'type'        => 'checkbox',
+						'_order'      => 40,
 					],
 				],
 			],
@@ -211,6 +234,14 @@ if ( class_exists( 'WooCommerce' ) ) {
 				'default'     => true,
 				'_parent'     => 'amehp_merge_menus',
 				'_order'      => 30,
+			],
+
+			'amehp_hide_wc_header' => [
+				'label'       => esc_html__( 'WooCommerce Page Header', 'account-menu-enhancer-for-hivepress' ),
+				'caption'     => esc_html__( 'Hide the page header on WooCommerce account pages', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages.', 'account-menu-enhancer-for-hivepress' ),
+				'type'        => 'checkbox',
+				'_order'      => 40,
 			],
 		],
 		$settings['account_menu']['sections']['behaviour']['fields']

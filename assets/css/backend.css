@@ -1,15 +1,68 @@
 /* Account Menu Enhancer for HivePress: settings screen styles. */
 
-/* Keep the repeater selects readable. */
-div[data-component="repeater"] td .select2-container {
-	min-width: 140px;
+/*
+ * Stack the repeater rows vertically on every screen size. The default
+ * HivePress repeater lays each row out as a horizontal table row, which
+ * leaves the many custom item fields too narrow to read on desktop.
+ */
+div[data-component="repeater"] table.hp-table,
+div[data-component="repeater"] table.hp-table > tbody {
+	display: block;
+	width: 100%;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+	padding: 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: 0;
+}
+
+/* Drag handle (first cell) and remove button (last cell) share the top row. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+	order: 0;
+	width: auto;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+	order: 1;
+	width: auto;
+	margin-inline-start: auto;
+}
+
+/* Field cells stack full width below the top row. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:not(:first-child):not(:last-child) {
+	order: 2;
+	flex: 1 1 100%;
+}
+
+/* Let the field controls fill the row width. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td input[type="text"]:not(.amehp-colour),
+div[data-component="repeater"] table.hp-table > tbody > tr > td input[type="number"],
+div[data-component="repeater"] table.hp-table > tbody > tr > td textarea,
+div[data-component="repeater"] table.hp-table > tbody > tr > td .select2-container {
+	width: 100% !important;
+	max-width: 100%;
+	box-sizing: border-box;
 }
 
 /* Keep the colour picker compact inside repeater rows. */
-div[data-component="repeater"] td .wp-picker-container .wp-color-result.button {
+div[data-component="repeater"] .wp-picker-container .wp-color-result.button {
 	margin-bottom: 0;
 }
 
-div[data-component="repeater"] td .wp-picker-container input.amehp-colour {
+div[data-component="repeater"] .wp-picker-container input.amehp-colour {
 	width: 80px;
 }

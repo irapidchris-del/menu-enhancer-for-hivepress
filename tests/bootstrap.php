@@ -21,6 +21,11 @@ if ( 'cli' !== PHP_SAPI ) {
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'AMEHP_TESTS', true );
 
+// Plugin constants, matching the ones defined by the main plugin file.
+define( 'AMEHP_VERSION', '2.1.0' );
+define( 'AMEHP_FILE', dirname( __DIR__ ) . '/account-menu-enhancer-for-hivepress.php' );
+define( 'AMEHP_DIR', dirname( __DIR__ ) );
+
 error_reporting( E_ALL );
 
 /*

@@ -399,6 +399,42 @@ check( 'CSS: base rule uses the Font Awesome stack', false !== strpos( $css, '"F
 
 /*
 ---------------------------------------------------------------------------
+ Appearance CSS tests
+---------------------------------------------------------------------------
+*/
+
+amehp_fixture_setup();
+update_option( 'hp_amehp_menu_weight', '700' );
+update_option( 'hp_amehp_hide_chevrons', '1' );
+update_option( 'hp_amehp_hide_wc_header', '1' );
+$component = amehp_test_component();
+
+$appearance = amehp_test_call( $component, 'get_appearance_css' );
+
+check( 'Appearance: menu weight applied to both account menus', false !== strpos( $appearance, '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:700;}' ) );
+check( 'Appearance: chevrons hidden', false !== strpos( $appearance, '.widget_nav_menu li::before{display:none;}' ) );
+check( 'Appearance: WooCommerce header hidden', false !== strpos( $appearance, 'body.woocommerce-account .header-hero--title{display:none;}' ) );
+
+// Invalid or empty settings emit nothing.
+amehp_fixture_setup();
+update_option( 'hp_amehp_menu_weight', 'bold' );
+$component = amehp_test_component();
+check( 'Appearance: invalid weight rejected', false === strpos( amehp_test_call( $component, 'get_appearance_css' ), 'font-weight' ) );
+
+amehp_fixture_setup();
+$component = amehp_test_component();
+check( 'Appearance: no settings emit no CSS', '' === amehp_test_call( $component, 'get_appearance_css' ) );
+
+// Appearance-only settings (no icons) still enqueue inline CSS.
+amehp_fixture_setup();
+$GLOBALS['amehp_test']['inline_css'] = '';
+update_option( 'hp_amehp_menu_weight', '600' );
+$component = amehp_test_component();
+$component->enqueue_frontend_assets();
+check( 'Appearance: enqueue outputs appearance CSS without any icons', false !== strpos( (string) amehp_test_state( 'inline_css' ), 'font-weight:600;' ) );
+
+/*
+---------------------------------------------------------------------------
  Counter tests
 ---------------------------------------------------------------------------
 */

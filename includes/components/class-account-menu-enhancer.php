@@ -775,7 +775,7 @@ final class Account_Menu_Enhancer extends Component {
 	 * Enqueues the front-end assets.
 	 */
 	public function enqueue_frontend_assets() {
-		$css    = $this->get_icon_css();
+		$css    = $this->get_icon_css() . $this->get_appearance_css();
 		$badges = [];
 
 		// The counters are only needed where the WooCommerce menu renders.
@@ -973,6 +973,37 @@ final class Account_Menu_Enhancer extends Component {
 		}
 
 		return $base . $css;
+	}
+
+	/**
+	 * Builds the account menu appearance CSS.
+	 *
+	 * Covers the optional menu item weight, the theme chevron hiding and the
+	 * WooCommerce account page header hiding.
+	 *
+	 * @return string
+	 */
+	protected function get_appearance_css() {
+		$css = '';
+
+		// Set the menu item font weight.
+		$weight = (string) get_option( 'hp_amehp_menu_weight' );
+
+		if ( preg_match( '/^[1-9]00$/', $weight ) ) {
+			$css .= '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:' . $weight . ';}';
+		}
+
+		// Hide the theme navigation menu chevrons.
+		if ( get_option( 'hp_amehp_hide_chevrons' ) ) {
+			$css .= '.widget_nav_menu li::before{display:none;}';
+		}
+
+		// Hide the WooCommerce account page header.
+		if ( hp\is_plugin_active( 'woocommerce' ) && get_option( 'hp_amehp_hide_wc_header' ) ) {
+			$css .= 'body.woocommerce-account .header-hero--title{display:none;}';
+		}
+
+		return $css;
 	}
 
 	/**

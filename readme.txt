@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.3
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 * **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, position, menu targeting and per-role visibility.
 * **Hidden items.** Hide any HivePress or WooCommerce menu item.
 * **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when the menus are merged.
+* **Menu styling.** Set the menu item font weight, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
 
 All settings live under HivePress, then Settings, then Account Menu.
 
@@ -38,6 +39,13 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.1.0 =
+* Added a menu item weight option (Normal to Bold) for the account menus.
+* Added an option to hide the theme navigation menu arrows so only the chosen icons show.
+* Added an option to hide the page header on WooCommerce account pages so they match the HivePress account pages.
+* Reworked the settings repeaters (icons and custom items) to stack their fields vertically on all screen sizes, so every field is readable and the drag and remove controls stay on screen.
+* The plugin now loads from any folder name without showing an admin notice.
 
 = 2.0.3 =
 * The plugin now loads even when its folder has a non-standard name (for example when installed directly from source) instead of requiring an exact folder name. Using the recommended folder name is still suggested for full compatibility.
