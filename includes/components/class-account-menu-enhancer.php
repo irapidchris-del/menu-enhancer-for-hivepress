@@ -1001,14 +1001,16 @@ final class Account_Menu_Enhancer extends Component {
 			$css .= '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:' . $weight . ';}';
 		}
 
-		// Hide the theme navigation chevrons on the account menus only. The
-		// selectors are specific enough to override the theme rule, and they
-		// are scoped so that other navigation menus (for example in the
-		// footer) keep their markers. The inline-start padding the theme
-		// reserved for the chevron is also removed so the items sit flush.
+		// Hide the theme navigation chevrons on the sidebar account menus
+		// only. HivePress renders the sidebar menu inside a "widget_nav_menu"
+		// widget, so scoping to it leaves the header account dropdown (the
+		// same menu without that class) and other navigation menus (for
+		// example in the footer, which have no "hp-menu__item") untouched. The
+		// inline-start padding the theme reserved for the chevron is also
+		// removed so the items sit flush.
 		if ( get_option( 'hp_amehp_hide_chevrons' ) ) {
-			$css .= '.hp-menu--user-account .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}';
-			$css .= '.hp-menu--user-account .hp-menu__item,.woocommerce-MyAccount-navigation ul li{padding-inline-start:0;}';
+			$css .= '.widget_nav_menu .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}';
+			$css .= '.widget_nav_menu .hp-menu__item,.woocommerce-MyAccount-navigation ul li{padding-inline-start:0;}';
 		}
 
 		// Hide the WooCommerce account page header.

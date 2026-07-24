@@ -11,6 +11,20 @@
 				return;
 			}
 
+			// HivePress renders the colour field as a native colour input,
+			// which has no editable hex field. Convert it to a text input so
+			// the colour picker exposes a hex field that accepts a typed
+			// value, keeping any empty value empty.
+			if ( 'color' === this.type ) {
+				var hasValue = !! this.getAttribute( 'value' );
+
+				this.type = 'text';
+
+				if ( ! hasValue ) {
+					this.value = '';
+				}
+			}
+
 			input.wpColorPicker( {
 				defaultColor: false,
 			} );
