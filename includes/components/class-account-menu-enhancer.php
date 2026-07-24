@@ -965,6 +965,14 @@ final class Account_Menu_Enhancer extends Component {
 		// Add the base rule.
 		$base = implode( '::before,', $selectors ) . '::before{font-family:"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free";font-weight:900;font-style:normal;font-variant:normal;display:inline-block;width:1.25em;margin-inline-end:0.5em;text-align:center;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;color:var(--amehp-icon-colour,currentColor);}';
 
+		// Keep the icon next to its label, and the counter on the right, when
+		// the theme lays the menu link out as a flex row (some themes do this
+		// to push the counter to the edge, which would otherwise fling the
+		// icon away from its label). Both rules are ignored where the link is
+		// not a flex container.
+		$base .= implode( ',', $selectors ) . '{justify-content:flex-start;}';
+		$base .= implode( '>small,', $selectors ) . '>small{margin-inline-start:auto;}';
+
 		// Add the default colour.
 		$default_colour = $this->sanitize_colour( (string) get_option( 'hp_amehp_icon_colour' ) );
 

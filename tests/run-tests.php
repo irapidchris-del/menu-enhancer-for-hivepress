@@ -396,6 +396,8 @@ check( 'CSS: unknown icon slug skipped', false === strpos( $css, 'no-such-icon' 
 check( 'CSS: custom item icon emitted', false !== strpos( $css, '.hp-menu__item--amehp-item-1 > a::before' ) && false !== strpos( $css, 'content:"\\f004"' ) );
 check( 'CSS: default colour emitted on root', false !== strpos( $css, ':root{--amehp-icon-colour:#123abc;}' ) );
 check( 'CSS: base rule uses the Font Awesome stack', false !== strpos( $css, '"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free"' ) && false !== strpos( $css, 'font-weight:900' ) );
+check( 'CSS: icon links kept left aligned for flex themes', false !== strpos( $css, '{justify-content:flex-start;}' ) );
+check( 'CSS: counters pushed to the end for flex themes', false !== strpos( $css, '>small{margin-inline-start:auto;}' ) );
 
 /*
 ---------------------------------------------------------------------------
