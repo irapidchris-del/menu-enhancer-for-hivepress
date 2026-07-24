@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.1.3 =
+* Fixed the icon spacing on themes that lay the account menu links out as a flex row, where the icon could be pushed away from its label. The icon now stays next to its label while any counter stays on the right.
 
 = 2.1.2 =
 * Hiding the menu chevrons now also removes the space they left behind, so the account menu items sit flush.

@@ -22,7 +22,7 @@ define( 'ABSPATH', __DIR__ . '/' );
 define( 'AMEHP_TESTS', true );
 
 // Plugin constants, matching the ones defined by the main plugin file.
-define( 'AMEHP_VERSION', '2.1.2' );
+define( 'AMEHP_VERSION', '2.1.3' );
 define( 'AMEHP_FILE', dirname( __DIR__ ) . '/account-menu-enhancer-for-hivepress.php' );
 define( 'AMEHP_DIR', dirname( __DIR__ ) );
 
