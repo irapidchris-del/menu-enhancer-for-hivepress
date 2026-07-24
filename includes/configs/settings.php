@@ -57,8 +57,8 @@ $settings = [
 					],
 
 					'amehp_icon_colour'   => [
-						'label'       => esc_html__( 'Default Icon Colour', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'This colour is used for icons that have no colour of their own. Leave empty to inherit the menu text colour.', 'account-menu-enhancer-for-hivepress' ),
+						'label'       => esc_html__( 'Icon Colour', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Applies one colour to every menu item icon at once, so you do not have to colour them one by one. Leave it empty to inherit the menu text colour. Set a colour on an individual item above to override it there.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'color',
 						'_order'      => 20,
 

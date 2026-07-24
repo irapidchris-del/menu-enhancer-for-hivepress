@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.4
+Stable tag: 2.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.1.5 =
+* Renamed the "Default Icon Colour" option to "Icon Colour" and clarified that it colours every menu item icon at once, while a colour set on an individual item still overrides it.
 
 = 2.1.4 =
 * The colour pickers now include an editable hex field, so a colour value can be typed in directly as well as picked.
