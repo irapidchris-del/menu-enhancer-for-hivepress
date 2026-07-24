@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,10 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.1.2 =
+* Hiding the menu chevrons now also removes the space they left behind, so the account menu items sit flush.
+* Reworked the settings repeaters so the drag and remove controls sit in a clear bar at the top of each card, with roomier fields on small screens.
 
 = 2.1.1 =
 * The hide menu chevrons option is now limited to the account menus, so other navigation menus (for example in the footer) keep their markers.

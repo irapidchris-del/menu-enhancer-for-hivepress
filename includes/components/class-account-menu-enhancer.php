@@ -996,9 +996,11 @@ final class Account_Menu_Enhancer extends Component {
 		// Hide the theme navigation chevrons on the account menus only. The
 		// selectors are specific enough to override the theme rule, and they
 		// are scoped so that other navigation menus (for example in the
-		// footer) keep their markers.
+		// footer) keep their markers. The inline-start padding the theme
+		// reserved for the chevron is also removed so the items sit flush.
 		if ( get_option( 'hp_amehp_hide_chevrons' ) ) {
 			$css .= '.hp-menu--user-account .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}';
+			$css .= '.hp-menu--user-account .hp-menu__item,.woocommerce-MyAccount-navigation ul li{padding-inline-start:0;}';
 		}
 
 		// Hide the WooCommerce account page header.

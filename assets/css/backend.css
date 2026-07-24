@@ -1,10 +1,11 @@
 /* Account Menu Enhancer for HivePress: settings screen styles. */
 
 /*
- * Stack the repeater rows vertically on every screen size. The default
- * HivePress repeater lays each row out as a horizontal table row, which
- * leaves the many fields too narrow to read and pushes the drag and remove
- * controls off screen on small viewports.
+ * Turn each repeater row into a vertical card on every screen size. The
+ * default HivePress repeater lays a row out as a horizontal table row, which
+ * leaves the many fields too narrow to read. The drag handle and remove
+ * button are pinned to a reserved bar at the top of the card so they never
+ * crowd the fields or slip off screen.
  */
 div[data-component="repeater"] table.hp-table,
 div[data-component="repeater"] table.hp-table > tbody {
@@ -13,12 +14,10 @@ div[data-component="repeater"] table.hp-table > tbody {
 }
 
 div[data-component="repeater"] table.hp-table > tbody > tr {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 10px;
-	margin-bottom: 14px;
-	padding: 14px 16px;
+	display: block;
+	position: relative;
+	margin-bottom: 16px;
+	padding: 46px 20px 20px;
 	border: 1px solid #dcdcde;
 	border-radius: 6px;
 	background: #fff;
@@ -27,38 +26,40 @@ div[data-component="repeater"] table.hp-table > tbody > tr {
 div[data-component="repeater"] table.hp-table > tbody > tr > td {
 	display: block;
 	width: 100%;
+	margin: 0 0 12px;
 	padding: 0;
 	border: 0;
 }
 
-/* Drag handle (first cell) and remove button (last cell) share the top row. */
-div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
-	order: 0;
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+	margin-bottom: 0;
+}
+
+/* Pin the drag handle to the top-left and the remove button to the top-right. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child,
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+	position: absolute;
+	top: 8px;
 	width: auto;
+	margin: 0;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+	inset-inline-start: 14px;
 }
 
 div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
-	order: 1;
-	width: auto;
-	margin-inline-start: auto;
-	text-align: end;
+	inset-inline-end: 14px;
 }
 
-/* Larger, easier to tap drag and remove controls. */
 div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
 div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 28px;
-	min-height: 28px;
+	width: 30px;
+	height: 30px;
 	font-size: 15px;
-}
-
-/* Field cells stack full width below the top row. */
-div[data-component="repeater"] table.hp-table > tbody > tr > td:not(:first-child):not(:last-child) {
-	order: 2;
-	flex: 1 1 100%;
 }
 
 /* Let the field controls fill the row width. */
@@ -81,19 +82,26 @@ div[data-component="repeater"] .wp-picker-container input.amehp-colour {
 }
 
 /*
- * Give the fields extra inset and the drag and remove handles more room on
- * small screens, where the admin controls are larger and touch friendly.
+ * Narrow the fields and enlarge the handles on small screens, where the admin
+ * controls are larger and touch friendly.
  */
 @media screen and (max-width: 782px) {
 	div[data-component="repeater"] table.hp-table > tbody > tr {
-		gap: 16px;
-		padding: 22px;
+		padding: 52px 26px 26px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+		inset-inline-start: 18px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
+		inset-inline-end: 18px;
 	}
 
 	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
 	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
-		min-width: 40px;
-		min-height: 40px;
+		width: 40px;
+		height: 40px;
 		font-size: 18px;
 	}
 }
