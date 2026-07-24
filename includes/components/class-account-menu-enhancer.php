@@ -993,9 +993,12 @@ final class Account_Menu_Enhancer extends Component {
 			$css .= '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:' . $weight . ';}';
 		}
 
-		// Hide the theme navigation menu chevrons.
+		// Hide the theme navigation chevrons on the account menus only. The
+		// selectors are specific enough to override the theme rule, and they
+		// are scoped so that other navigation menus (for example in the
+		// footer) keep their markers.
 		if ( get_option( 'hp_amehp_hide_chevrons' ) ) {
-			$css .= '.widget_nav_menu li::before{display:none;}';
+			$css .= '.hp-menu--user-account .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}';
 		}
 
 		// Hide the WooCommerce account page header.

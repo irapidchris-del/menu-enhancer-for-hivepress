@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.1.0
- * Author: Chris Bruce
- * Author URI: https://community.hivepress.io/u/chrisb
+ * Version: 2.1.1
+ * Author: ChrisB @ HivePress Community
+ * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.0
  * Requires PHP: 7.4
  * Requires Plugins: hivepress
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.1.0' );
+	define( 'AMEHP_VERSION', '2.1.1' );
 }
 
 // Define the plugin file.

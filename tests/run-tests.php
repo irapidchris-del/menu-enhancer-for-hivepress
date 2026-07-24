@@ -412,7 +412,7 @@ $component = amehp_test_component();
 $appearance = amehp_test_call( $component, 'get_appearance_css' );
 
 check( 'Appearance: menu weight applied to both account menus', false !== strpos( $appearance, '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{font-weight:700;}' ) );
-check( 'Appearance: chevrons hidden', false !== strpos( $appearance, '.widget_nav_menu li::before{display:none;}' ) );
+check( 'Appearance: chevrons hidden on the account menus only', false !== strpos( $appearance, '.hp-menu--user-account .hp-menu__item::before,.woocommerce-MyAccount-navigation ul li::before{display:none;}' ) && false === strpos( $appearance, '.widget_nav_menu' ) );
 check( 'Appearance: WooCommerce header hidden', false !== strpos( $appearance, 'body.woocommerce-account .header-hero--title{display:none;}' ) );
 
 // Invalid or empty settings emit nothing.

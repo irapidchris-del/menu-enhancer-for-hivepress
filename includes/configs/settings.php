@@ -85,7 +85,7 @@ $settings = [
 					'amehp_hide_chevrons' => [
 						'label'       => esc_html__( 'Menu Chevrons', 'account-menu-enhancer-for-hivepress' ),
 						'caption'     => esc_html__( 'Hide the theme navigation menu arrows', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'Hides the default arrow markers that some themes add before navigation menu items, so only your chosen icons show.', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Hides the default arrow markers that some themes add before the account menu items, so only your chosen icons show. Other menus, such as those in the footer, are not affected.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'checkbox',
 						'_order'      => 40,
 					],
@@ -187,7 +187,7 @@ $settings = [
 			'behaviour' => [
 				'title'       => esc_html__( 'Behaviour', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Control how the account menus behave and which items appear.', 'account-menu-enhancer-for-hivepress' ),
-				'_order'      => 30,
+				'_order'      => 5,
 
 				'fields'      => [
 					'amehp_hidden_items' => [

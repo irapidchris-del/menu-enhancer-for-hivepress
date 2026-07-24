@@ -3,7 +3,8 @@
 /*
  * Stack the repeater rows vertically on every screen size. The default
  * HivePress repeater lays each row out as a horizontal table row, which
- * leaves the many custom item fields too narrow to read on desktop.
+ * leaves the many fields too narrow to read and pushes the drag and remove
+ * controls off screen on small viewports.
  */
 div[data-component="repeater"] table.hp-table,
 div[data-component="repeater"] table.hp-table > tbody {
@@ -16,10 +17,10 @@ div[data-component="repeater"] table.hp-table > tbody > tr {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
-	margin-bottom: 12px;
-	padding: 16px;
+	margin-bottom: 14px;
+	padding: 14px 16px;
 	border: 1px solid #dcdcde;
-	border-radius: 4px;
+	border-radius: 6px;
 	background: #fff;
 }
 
@@ -40,6 +41,18 @@ div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
 	order: 1;
 	width: auto;
 	margin-inline-start: auto;
+	text-align: end;
+}
+
+/* Larger, easier to tap drag and remove controls. */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
+div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 28px;
+	min-height: 28px;
+	font-size: 15px;
 }
 
 /* Field cells stack full width below the top row. */
@@ -65,4 +78,22 @@ div[data-component="repeater"] .wp-picker-container .wp-color-result.button {
 
 div[data-component="repeater"] .wp-picker-container input.amehp-colour {
 	width: 80px;
+}
+
+/*
+ * Give the fields extra inset and the drag and remove handles more room on
+ * small screens, where the admin controls are larger and touch friendly.
+ */
+@media screen and (max-width: 782px) {
+	div[data-component="repeater"] table.hp-table > tbody > tr {
+		gap: 16px;
+		padding: 22px;
+	}
+
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
+		min-width: 40px;
+		min-height: 40px;
+		font-size: 18px;
+	}
 }
