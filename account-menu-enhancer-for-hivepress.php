@@ -67,6 +67,12 @@ function amehp_init_updater() {
 		'account-menu-enhancer-for-hivepress'
 	);
 
+	// Releases are still preferred; this just names the repository's default
+	// branch so the fallback check does not look for a non-existent "master".
+	if ( method_exists( $update_checker, 'setBranch' ) ) {
+		$update_checker->setBranch( 'main' );
+	}
+
 	// Update from the attached release asset (the clean ZIP), falling back to the
 	// source archive only if a release has no matching asset.
 	$api = $update_checker->getVcsApi();
