@@ -77,15 +77,18 @@ div[data-component="repeater"] .wp-picker-container .wp-color-result.button {
 	margin-bottom: 0;
 }
 
+/*
+ * Keep the hex input and the Clear button on one line. On small screens the
+ * admin widens the picker input and blocks its label, which would otherwise
+ * push the Clear button onto its own line, so the width and inline flow are
+ * forced back.
+ */
 div[data-component="repeater"] .wp-picker-container input.amehp-colour {
-	width: 90px;
+	display: inline-block;
+	width: 90px !important;
+	vertical-align: middle;
 }
 
-/*
- * Keep the hex input and the Clear button on one line. The hex input sits in
- * a label that the admin makes block on small screens, which would otherwise
- * push the Clear button onto its own line.
- */
 div[data-component="repeater"] .wp-picker-container .wp-picker-input-wrap label {
 	display: inline-block;
 	margin: 0 6px 0 0;
@@ -96,6 +99,15 @@ div[data-component="repeater"] .wp-picker-container .wp-picker-clear {
 	display: inline-block;
 	margin: 0;
 	vertical-align: middle;
+}
+
+/* Field labels added to each repeater row for clarity. */
+div[data-component="repeater"] .amehp-field-label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #1d2327;
 }
 
 /*

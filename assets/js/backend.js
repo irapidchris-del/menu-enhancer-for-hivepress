@@ -2,6 +2,41 @@
 ( function ( $ ) {
 	'use strict';
 
+	function labelFields( container ) {
+		container.find( 'div[data-component="repeater"] table.hp-table > tbody > tr > td' ).each( function () {
+			var cell = $( this );
+
+			// Skip the cells that are already labelled.
+			if ( cell.children( '.amehp-field-label' ).length ) {
+				return;
+			}
+
+			var control = cell.find( 'input, select, textarea' ).first();
+
+			// Skip the drag and remove cells, which have no field control.
+			if ( ! control.length ) {
+				return;
+			}
+
+			// Derive the label from the field placeholder.
+			var text = '';
+
+			if ( control.is( 'select' ) ) {
+				text = control.attr( 'data-placeholder' ) || control.find( 'option[value=""]' ).first().text();
+			} else {
+				text = control.attr( 'placeholder' );
+			}
+
+			text = $.trim( text || '' );
+
+			if ( ! text || '—' === text ) {
+				return;
+			}
+
+			$( '<label class="amehp-field-label"></label>' ).text( text ).prependTo( cell );
+		} );
+	}
+
 	function initColourPickers( container ) {
 		container.find( 'input.amehp-colour' ).each( function () {
 			var input = $( this );
@@ -31,12 +66,18 @@
 		} );
 	}
 
+	function init( container ) {
+		// Label the fields before the colour pickers wrap their inputs.
+		labelFields( container );
+		initColourPickers( container );
+	}
+
 	$( document ).ready( function () {
-		initColourPickers( $( 'body' ) );
+		init( $( 'body' ) );
 	} );
 
-	// Initialise the pickers inside newly added repeater rows.
+	// Initialise newly added repeater rows.
 	$( document ).on( 'hivepress:init', function ( event, container ) {
-		initColourPickers( container );
+		init( container );
 	} );
 } )( jQuery );

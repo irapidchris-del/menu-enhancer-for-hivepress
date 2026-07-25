@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,10 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.1 =
+* Added a label above each field in the settings repeaters, so every field (including the two colour pickers) is clear at a glance.
+* Fixed the colour picker's hex input and Clear button still stacking on separate lines on small screens.
 
 = 2.2.0 =
 * Added a per-item text colour for both the built-in menu items and custom items, so the text of an individual menu item can be recoloured. The icon is now optional on each styling row, so a built-in item can be recoloured without adding an icon (the "Menu Item Icons" section is now "Menu Item Styling").
