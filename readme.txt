@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.2
+Stable tag: 2.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,7 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 * Icons are rendered with CSS using Font Awesome codepoints, so they work with the Font Awesome 5 Free files bundled with HivePress as well as self-hosted Font Awesome 6 or 7. If you subset Font Awesome yourself, make sure the icons you select here are included in your subset.
 * The WooCommerce settings only appear while WooCommerce is active.
+* Because the plugin is distributed from GitHub rather than wordpress.org, it checks its GitHub releases for updates and shows any new version on the Plugins screen, so you can update it from the dashboard as usual.
 
 == Installation ==
 
@@ -39,6 +40,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.3 =
+* Added automatic updates. New versions are now delivered through the plugin's GitHub releases, so a new release shows the usual "update available" notice on the Plugins screen and can be installed with one click, just like a plugin from wordpress.org.
 
 = 2.2.2 =
 * Tidied the settings field labels (for example "Icon" and "Menus" instead of "Select Icon" and "Both Menus").

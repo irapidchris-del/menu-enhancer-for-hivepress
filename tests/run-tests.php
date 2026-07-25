@@ -833,6 +833,56 @@ check( 'Migration race: custom items still imported', is_array( $raced ) && isse
 
 /*
 ---------------------------------------------------------------------------
+ GitHub auto-updater wiring (v2.2.3)
+---------------------------------------------------------------------------
+*/
+
+check( 'Updater: init function is defined', function_exists( 'amehp_init_updater' ) );
+check( 'Updater: library loader is bundled', is_readable( AMEHP_DIR . '/includes/plugin-update-checker/plugin-update-checker.php' ) );
+
+$updater = amehp_init_updater();
+
+check( 'Updater: builds a version-control update checker', is_object( $updater ) && $updater instanceof \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\PluginUpdateChecker );
+check( 'Updater: points at the plugin GitHub repository', is_object( $updater ) && 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/' === $updater->metadataUrl );
+check( 'Updater: uses the correct plugin slug', is_object( $updater ) && 'account-menu-enhancer-for-hivepress' === $updater->slug );
+
+$updater_api = is_object( $updater ) ? $updater->getVcsApi() : null;
+
+check( 'Updater: uses the GitHub API client', is_object( $updater_api ) && $updater_api instanceof \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\GitHubApi );
+check( 'Updater: API repository URL matches', is_object( $updater_api ) && 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/' === $updater_api->getRepositoryUrl() );
+
+// The clean release asset must be preferred over GitHub's source archive, and
+// only the correctly named asset should be matched, so an update keeps the right
+// plugin folder name.
+$assets_enabled = false;
+$asset_regex    = null;
+
+if ( is_object( $updater_api ) ) {
+	$ref = new ReflectionObject( $updater_api );
+
+	$prop = $ref->getProperty( 'releaseAssetsEnabled' );
+	$prop->setAccessible( true );
+	$assets_enabled = $prop->getValue( $updater_api );
+
+	$prop = $ref->getProperty( 'assetFilterRegex' );
+	$prop->setAccessible( true );
+	$asset_regex = $prop->getValue( $updater_api );
+}
+
+check( 'Updater: release assets are enabled', true === $assets_enabled );
+check( 'Updater: asset filter matches the clean ZIP name', '/account-menu-enhancer-for-hivepress\.zip$/' === $asset_regex );
+check( 'Updater: asset filter matches the release asset', is_string( $asset_regex ) && 1 === preg_match( $asset_regex, 'account-menu-enhancer-for-hivepress.zip' ) );
+check( 'Updater: asset filter rejects the source archive', is_string( $asset_regex ) && 0 === preg_match( $asset_regex, 'menu-enhancer-for-hivepress-2.2.3.zip' ) );
+
+// The updater must stay off front-end requests to avoid loading the library.
+$GLOBALS['amehp_test']['loaded_updater'] = false;
+amehp_test_state( 'is_admin', false );
+amehp_test_state( 'doing_cron', false );
+check( 'Updater: front-end context is neither admin nor cron', ! is_admin() && ! wp_doing_cron() );
+amehp_test_state( 'is_admin', true );
+
+/*
+---------------------------------------------------------------------------
  Summary
 ---------------------------------------------------------------------------
 */

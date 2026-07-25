@@ -22,9 +22,14 @@ define( 'ABSPATH', __DIR__ . '/' );
 define( 'AMEHP_TESTS', true );
 
 // Plugin constants, matching the ones defined by the main plugin file.
-define( 'AMEHP_VERSION', '2.2.2' );
+define( 'AMEHP_VERSION', '2.2.3' );
 define( 'AMEHP_FILE', dirname( __DIR__ ) . '/account-menu-enhancer-for-hivepress.php' );
 define( 'AMEHP_DIR', dirname( __DIR__ ) );
+
+// WordPress constants used by the bundled Plugin Update Checker library.
+define( 'WP_PLUGIN_DIR', dirname( AMEHP_DIR ) );
+define( 'WPMU_PLUGIN_DIR', dirname( AMEHP_DIR ) . '/mu-plugins' );
+define( 'WP_DEBUG', false );
 
 error_reporting( E_ALL );
 
@@ -55,6 +60,9 @@ $GLOBALS['amehp_test'] = [
 	'vendor_id'      => 0,
 	'menu_throws'    => false,
 	'wc_menu_throws' => false,
+	'doing_cron'     => false,
+	'site_transients' => [],
+	'transients'     => [],
 ];
 
 function amehp_test_state( $key, $value = null ) {
@@ -289,6 +297,75 @@ function admin_url( $path = '' ) {
 
 function wp_enqueue_style() {}
 function wp_enqueue_script() {}
+
+// Shims used by the bundled Plugin Update Checker library.
+function remove_action( $tag, $callback, $priority = 10 ) {
+	return true;
+}
+function remove_filter( $tag, $callback, $priority = 10 ) {
+	return true;
+}
+function has_action( $tag, $callback = false ) {
+	return false;
+}
+function did_action( $tag ) {
+	return 0;
+}
+function wp_doing_cron() {
+	return (bool) amehp_test_state( 'doing_cron' );
+}
+function wp_normalize_path( $path ) {
+	return str_replace( '\\', '/', $path );
+}
+function wp_next_scheduled( $hook, $args = [] ) {
+	return false;
+}
+function wp_schedule_event( $timestamp, $recurrence, $hook, $args = [] ) {
+	return true;
+}
+function wp_clear_scheduled_hook( $hook, $args = [] ) {
+	return true;
+}
+function wp_get_scheduled_event( $hook, $args = [], $timestamp = null ) {
+	return false;
+}
+function get_bloginfo( $show = '' ) {
+	return '6.5';
+}
+function is_multisite() {
+	return false;
+}
+function wp_installing() {
+	return false;
+}
+function get_site_transient( $transient ) {
+	return $GLOBALS['amehp_test']['site_transients'][ $transient ] ?? false;
+}
+function set_site_transient( $transient, $value, $expiration = 0 ) {
+	$GLOBALS['amehp_test']['site_transients'][ $transient ] = $value;
+	return true;
+}
+function delete_site_transient( $transient ) {
+	unset( $GLOBALS['amehp_test']['site_transients'][ $transient ] );
+	return true;
+}
+function get_transient( $transient ) {
+	return $GLOBALS['amehp_test']['transients'][ $transient ] ?? false;
+}
+function set_transient( $transient, $value, $expiration = 0 ) {
+	$GLOBALS['amehp_test']['transients'][ $transient ] = $value;
+	return true;
+}
+function register_activation_hook( $file, $callback ) {
+	return true;
+}
+function register_deactivation_hook( $file, $callback ) {
+	return true;
+}
+function register_uninstall_hook( $file, $callback ) {
+	return true;
+}
+
 function wp_add_inline_style( $handle, $css ) {
 	$GLOBALS['amehp_test']['inline_css'] = $css;
 }

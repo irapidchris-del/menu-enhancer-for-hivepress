@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.2.2
+ * Version: 2.2.3
  * Author: ChrisB @ HivePress Community
  * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.0
@@ -12,6 +12,7 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: account-menu-enhancer-for-hivepress
  * Domain Path: /languages
+ * Update URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
  *
  * @package AccountMenuEnhancer
  */
@@ -21,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.2.2' );
+	define( 'AMEHP_VERSION', '2.2.3' );
 }
 
 // Define the plugin file.
@@ -32,6 +33,55 @@ if ( ! defined( 'AMEHP_FILE' ) ) {
 // Define the plugin directory.
 if ( ! defined( 'AMEHP_DIR' ) ) {
 	define( 'AMEHP_DIR', __DIR__ );
+}
+
+/**
+ * Sets up automatic updates from the plugin's GitHub releases.
+ *
+ * WordPress only checks wordpress.org for plugin updates by default, so a plugin
+ * installed from a ZIP never reports new versions on its own. The bundled Plugin
+ * Update Checker library makes WordPress read this repository's GitHub releases
+ * instead, so a new release shows the normal "update available" notice and can be
+ * installed with one click from the Plugins screen.
+ *
+ * The library is pointed at the attached release asset (the clean ZIP) rather
+ * than GitHub's auto-generated source archive, so an update always installs into
+ * the correct "account-menu-enhancer-for-hivepress" folder.
+ */
+function amehp_init_updater() {
+	$loader = AMEHP_DIR . '/includes/plugin-update-checker/plugin-update-checker.php';
+
+	if ( ! is_readable( $loader ) ) {
+		return;
+	}
+
+	require_once $loader;
+
+	if ( ! class_exists( '\YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
+		return;
+	}
+
+	$update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+		'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/',
+		AMEHP_FILE,
+		'account-menu-enhancer-for-hivepress'
+	);
+
+	// Update from the attached release asset (the clean ZIP), falling back to the
+	// source archive only if a release has no matching asset.
+	$api = $update_checker->getVcsApi();
+
+	if ( $api && method_exists( $api, 'enableReleaseAssets' ) ) {
+		$api->enableReleaseAssets( '/account-menu-enhancer-for-hivepress\.zip$/' );
+	}
+
+	return $update_checker;
+}
+
+// Update checks only happen in the dashboard and during cron, so the updater is
+// only initialised there to avoid loading the library on front-end requests.
+if ( is_admin() || ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() ) ) {
+	amehp_init_updater();
 }
 
 /**
