@@ -439,6 +439,67 @@ check( 'Appearance: enqueue outputs appearance CSS without any icons', false !==
 
 /*
 ---------------------------------------------------------------------------
+ Text colour CSS tests
+---------------------------------------------------------------------------
+*/
+
+amehp_fixture_setup();
+update_option(
+	'hp_amehp_icons',
+	[
+		// Text colour without an icon (icon is now optional).
+		[
+			'item'        => 'hp:listings_edit',
+			'text_colour' => '#112233',
+		],
+		// Icon and text colour together.
+		[
+			'item'        => 'wc:orders',
+			'icon'        => 'shopping-cart',
+			'colour'      => '#ff0000',
+			'text_colour' => '#00ff00',
+		],
+		// Invalid text colour is ignored.
+		[
+			'item'        => 'hp:messages_thread',
+			'text_colour' => 'purple',
+		],
+	]
+);
+$component = amehp_test_component();
+
+$text_css = amehp_test_call( $component, 'get_text_colour_css' );
+
+check( 'Text colour: applied to a link without an icon', false !== strpos( $text_css, '.hp-menu--user-account .hp-menu__item--listings-edit > a' ) && false !== strpos( $text_css, 'color:#112233;' ) );
+check( 'Text colour: applied alongside an icon colour', false !== strpos( $text_css, 'color:#00ff00;' ) );
+check( 'Text colour: invalid value ignored', false === strpos( $text_css, 'purple' ) );
+
+// The icon colour and text colour stay independent in the icon CSS.
+$icon_css = amehp_test_call( $component, 'get_icon_css' );
+check( 'Text colour: icon colour still emitted independently', false !== strpos( $icon_css, '--amehp-icon-colour:#ff0000' ) );
+
+// Custom items support a text colour too.
+amehp_fixture_setup();
+update_option(
+	'hp_amehp_custom_items',
+	[
+		[
+			'label'       => 'Support',
+			'url'         => 'https://example.com/support/',
+			'menus'       => 'both',
+			'order'       => 20,
+			'text_colour' => '#abcdef',
+		],
+	]
+);
+$component = amehp_test_component();
+
+$custom_text_css = amehp_test_call( $component, 'get_text_colour_css' );
+
+check( 'Text colour: applied to a custom item link', false !== strpos( $custom_text_css, '.hp-menu__item--amehp-item-1 > a' ) && false !== strpos( $custom_text_css, 'color:#abcdef;' ) );
+
+/*
+---------------------------------------------------------------------------
  Counter tests
 ---------------------------------------------------------------------------
 */

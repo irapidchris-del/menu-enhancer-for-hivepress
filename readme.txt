@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.6
+Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 * **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, position, menu targeting and per-role visibility.
 * **Hidden items.** Hide any HivePress or WooCommerce menu item.
 * **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when the menus are merged.
-* **Menu styling.** Set the menu item font weight, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
+* **Menu styling.** Set the menu item font weight, recolour individual menu item text, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
 
 All settings live under HivePress, then Settings, then Account Menu.
 
@@ -39,6 +39,17 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.2 =
+* Tidied the settings field labels (for example "Icon" and "Menus" instead of "Select Icon" and "Both Menus").
+
+= 2.2.1 =
+* Added a label above each field in the settings repeaters, so every field (including the two colour pickers) is clear at a glance.
+* Fixed the colour picker's hex input and Clear button still stacking on separate lines on small screens.
+
+= 2.2.0 =
+* Added a per-item text colour for both the built-in menu items and custom items, so the text of an individual menu item can be recoloured. The icon is now optional on each styling row, so a built-in item can be recoloured without adding an icon (the "Menu Item Icons" section is now "Menu Item Styling").
+* Fixed the colour picker's hex field and Clear button stacking onto separate lines in the settings.
 
 = 2.1.6 =
 * The hide chevrons option now only affects the sidebar account menus, leaving the header account dropdown at its normal position.
