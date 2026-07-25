@@ -1,0 +1,6 @@
+# Keep development files out of the GitHub source archive (Download ZIP).
+tests export-ignore
+.github export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.distignore export-ignore
