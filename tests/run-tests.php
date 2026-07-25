@@ -478,6 +478,26 @@ check( 'Text colour: invalid value ignored', false === strpos( $text_css, 'purpl
 $icon_css = amehp_test_call( $component, 'get_icon_css' );
 check( 'Text colour: icon colour still emitted independently', false !== strpos( $icon_css, '--amehp-icon-colour:#ff0000' ) );
 
+// Custom items support a text colour too.
+amehp_fixture_setup();
+update_option(
+	'hp_amehp_custom_items',
+	[
+		[
+			'label'       => 'Support',
+			'url'         => 'https://example.com/support/',
+			'menus'       => 'both',
+			'order'       => 20,
+			'text_colour' => '#abcdef',
+		],
+	]
+);
+$component = amehp_test_component();
+
+$custom_text_css = amehp_test_call( $component, 'get_text_colour_css' );
+
+check( 'Text colour: applied to a custom item link', false !== strpos( $custom_text_css, '.hp-menu__item--amehp-item-1 > a' ) && false !== strpos( $custom_text_css, 'color:#abcdef;' ) );
+
 /*
 ---------------------------------------------------------------------------
  Counter tests

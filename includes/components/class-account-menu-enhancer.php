@@ -167,14 +167,15 @@ final class Account_Menu_Enhancer extends Component {
 				}
 
 				$items[ 'amehp_item_' . ( $index + 1 ) ] = [
-					'label'  => (string) $row['label'],
-					'link'   => isset( $row['link'] ) ? (string) $row['link'] : '',
-					'url'    => isset( $row['url'] ) ? (string) $row['url'] : '',
-					'icon'   => isset( $row['icon'] ) ? (string) $row['icon'] : '',
-					'colour' => isset( $row['colour'] ) && is_string( $row['colour'] ) ? $row['colour'] : '',
-					'menus'  => isset( $row['menus'] ) && in_array( $row['menus'], [ 'hivepress', 'woocommerce' ], true ) ? $row['menus'] : 'both',
-					'order'  => isset( $row['order'] ) && is_numeric( $row['order'] ) ? (int) $row['order'] : 100,
-					'roles'  => isset( $row['roles'] ) && is_array( $row['roles'] ) ? $row['roles'] : [],
+					'label'       => (string) $row['label'],
+					'link'        => isset( $row['link'] ) ? (string) $row['link'] : '',
+					'url'         => isset( $row['url'] ) ? (string) $row['url'] : '',
+					'icon'        => isset( $row['icon'] ) ? (string) $row['icon'] : '',
+					'colour'      => isset( $row['colour'] ) && is_string( $row['colour'] ) ? $row['colour'] : '',
+					'text_colour' => isset( $row['text_colour'] ) && is_string( $row['text_colour'] ) ? $row['text_colour'] : '',
+					'menus'       => isset( $row['menus'] ) && in_array( $row['menus'], [ 'hivepress', 'woocommerce' ], true ) ? $row['menus'] : 'both',
+					'order'       => isset( $row['order'] ) && is_numeric( $row['order'] ) ? (int) $row['order'] : 100,
+					'roles'       => isset( $row['roles'] ) && is_array( $row['roles'] ) ? $row['roles'] : [],
 				];
 			}
 		}
@@ -1030,26 +1031,39 @@ final class Account_Menu_Enhancer extends Component {
 	 * @return string
 	 */
 	protected function get_text_colour_css() {
+		$css  = '';
 		$rows = get_option( 'hp_amehp_icons' );
 
-		if ( ! is_array( $rows ) ) {
-			return '';
+		// Add the menu item styling text colours.
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) || empty( $row['item'] ) ) {
+					continue;
+				}
+
+				$colour = $this->sanitize_colour( isset( $row['text_colour'] ) && is_string( $row['text_colour'] ) ? $row['text_colour'] : '' );
+
+				if ( ! $colour ) {
+					continue;
+				}
+
+				$selectors = $this->get_item_selectors( (string) $row['item'] );
+
+				if ( $selectors ) {
+					$css .= implode( ',', $selectors ) . '{color:' . $colour . ';}';
+				}
+			}
 		}
 
-		$css = '';
-
-		foreach ( $rows as $row ) {
-			if ( ! is_array( $row ) || empty( $row['item'] ) ) {
-				continue;
-			}
-
-			$colour = $this->sanitize_colour( isset( $row['text_colour'] ) && is_string( $row['text_colour'] ) ? $row['text_colour'] : '' );
+		// Add the custom item text colours.
+		foreach ( $this->get_custom_items() as $name => $item ) {
+			$colour = $this->sanitize_colour( $item['text_colour'] );
 
 			if ( ! $colour ) {
 				continue;
 			}
 
-			$selectors = $this->get_item_selectors( (string) $row['item'] );
+			$selectors = $this->get_item_selectors( $name );
 
 			if ( $selectors ) {
 				$css .= implode( ',', $selectors ) . '{color:' . $colour . ';}';

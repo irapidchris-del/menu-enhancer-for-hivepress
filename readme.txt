@@ -41,7 +41,7 @@ All settings live under HivePress, then Settings, then Account Menu.
 == Changelog ==
 
 = 2.2.0 =
-* Added a per-item text colour, so the text of an individual menu item can be recoloured. The icon is now optional on each styling row, so an item can be recoloured without adding an icon (the "Menu Item Icons" section is now "Menu Item Styling").
+* Added a per-item text colour for both the built-in menu items and custom items, so the text of an individual menu item can be recoloured. The icon is now optional on each styling row, so a built-in item can be recoloured without adding an icon (the "Menu Item Icons" section is now "Menu Item Styling").
 * Fixed the colour picker's hex field and Clear button stacking onto separate lines in the settings.
 
 = 2.1.6 =

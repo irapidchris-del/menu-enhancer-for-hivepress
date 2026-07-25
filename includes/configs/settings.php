@@ -155,7 +155,17 @@ $settings = [
 
 								'attributes' => [
 									'class'       => [ 'amehp-colour' ],
-									'placeholder' => esc_html__( 'Colour', 'account-menu-enhancer-for-hivepress' ),
+									'placeholder' => esc_html__( 'Icon Colour', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
+
+							'text_colour' => [
+								'type'       => 'color',
+								'_order'     => 55,
+
+								'attributes' => [
+									'class'       => [ 'amehp-colour' ],
+									'placeholder' => esc_html__( 'Text Colour', 'account-menu-enhancer-for-hivepress' ),
 								],
 							],
 
