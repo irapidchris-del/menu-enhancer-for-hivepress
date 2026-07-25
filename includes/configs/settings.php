@@ -21,14 +21,14 @@ $settings = [
 
 				'fields'      => [
 					'amehp_icons'         => [
-						'label'       => esc_html__( 'Menu Item Icons', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'Choose a menu item, then pick its icon and an optional colour. Icons for custom items are set in the Custom Items section below.', 'account-menu-enhancer-for-hivepress' ),
+						'label'       => esc_html__( 'Menu Item Styling', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Choose a menu item, then optionally give it an icon, an icon colour and a text colour. Styling for custom items is set in the Custom Items section below.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'repeater',
-						'caption'     => esc_html__( 'Add Icon', 'account-menu-enhancer-for-hivepress' ),
+						'caption'     => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
 						'_order'      => 10,
 
 						'fields'      => [
-							'item'   => [
+							'item'        => [
 								'type'        => 'select',
 								'options'     => 'amehp_menu_items',
 								'placeholder' => esc_html__( 'Select Menu Item', 'account-menu-enhancer-for-hivepress' ),
@@ -36,21 +36,30 @@ $settings = [
 								'_order'      => 10,
 							],
 
-							'icon'   => [
+							'icon'        => [
 								'type'        => 'select',
 								'options'     => 'icons',
 								'placeholder' => esc_html__( 'Select Icon', 'account-menu-enhancer-for-hivepress' ),
-								'required'    => true,
 								'_order'      => 20,
 							],
 
-							'colour' => [
+							'colour'      => [
 								'type'       => 'color',
 								'_order'     => 30,
 
 								'attributes' => [
 									'class'       => [ 'amehp-colour' ],
-									'placeholder' => esc_html__( 'Colour', 'account-menu-enhancer-for-hivepress' ),
+									'placeholder' => esc_html__( 'Icon Colour', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
+
+							'text_colour' => [
+								'type'       => 'color',
+								'_order'     => 40,
+
+								'attributes' => [
+									'class'       => [ 'amehp-colour' ],
+									'placeholder' => esc_html__( 'Text Colour', 'account-menu-enhancer-for-hivepress' ),
 								],
 							],
 						],

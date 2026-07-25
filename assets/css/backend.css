@@ -82,6 +82,23 @@ div[data-component="repeater"] .wp-picker-container input.amehp-colour {
 }
 
 /*
+ * Keep the hex input and the Clear button on one line. The hex input sits in
+ * a label that the admin makes block on small screens, which would otherwise
+ * push the Clear button onto its own line.
+ */
+div[data-component="repeater"] .wp-picker-container .wp-picker-input-wrap label {
+	display: inline-block;
+	margin: 0 6px 0 0;
+	vertical-align: middle;
+}
+
+div[data-component="repeater"] .wp-picker-container .wp-picker-clear {
+	display: inline-block;
+	margin: 0;
+	vertical-align: middle;
+}
+
+/*
  * Narrow the fields and enlarge the handles on small screens, where the admin
  * controls are larger and touch friendly.
  */

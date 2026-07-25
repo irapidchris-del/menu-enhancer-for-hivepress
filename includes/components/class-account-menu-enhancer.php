@@ -775,7 +775,7 @@ final class Account_Menu_Enhancer extends Component {
 	 * Enqueues the front-end assets.
 	 */
 	public function enqueue_frontend_assets() {
-		$css    = $this->get_icon_css() . $this->get_appearance_css();
+		$css    = $this->get_icon_css() . $this->get_text_colour_css() . $this->get_appearance_css();
 		$badges = [];
 
 		// The counters are only needed where the WooCommerce menu renders.
@@ -1016,6 +1016,44 @@ final class Account_Menu_Enhancer extends Component {
 		// Hide the WooCommerce account page header.
 		if ( hp\is_plugin_active( 'woocommerce' ) && get_option( 'hp_amehp_hide_wc_header' ) ) {
 			$css .= 'body.woocommerce-account .header-hero--title{display:none;}';
+		}
+
+		return $css;
+	}
+
+	/**
+	 * Builds the menu item text colour CSS.
+	 *
+	 * Each styling row can set a text colour for its menu item, applied to the
+	 * link independently of the icon colour.
+	 *
+	 * @return string
+	 */
+	protected function get_text_colour_css() {
+		$rows = get_option( 'hp_amehp_icons' );
+
+		if ( ! is_array( $rows ) ) {
+			return '';
+		}
+
+		$css = '';
+
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || empty( $row['item'] ) ) {
+				continue;
+			}
+
+			$colour = $this->sanitize_colour( isset( $row['text_colour'] ) && is_string( $row['text_colour'] ) ? $row['text_colour'] : '' );
+
+			if ( ! $colour ) {
+				continue;
+			}
+
+			$selectors = $this->get_item_selectors( (string) $row['item'] );
+
+			if ( $selectors ) {
+				$css .= implode( ',', $selectors ) . '{color:' . $colour . ';}';
+			}
 		}
 
 		return $css;
