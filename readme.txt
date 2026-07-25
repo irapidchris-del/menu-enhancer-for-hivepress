@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.2 =
+* Tidied the settings field labels (for example "Icon" and "Menus" instead of "Select Icon" and "Both Menus").
 
 = 2.2.1 =
 * Added a label above each field in the settings repeaters, so every field (including the two colour pickers) is clear at a glance.

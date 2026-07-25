@@ -18,13 +18,15 @@
 				return;
 			}
 
-			// Derive the label from the field placeholder.
-			var text = '';
+			// Prefer an explicit label, then fall back to the placeholder.
+			var text = control.attr( 'data-amehp-label' );
 
-			if ( control.is( 'select' ) ) {
-				text = control.attr( 'data-placeholder' ) || control.find( 'option[value=""]' ).first().text();
-			} else {
-				text = control.attr( 'placeholder' );
+			if ( ! text ) {
+				if ( control.is( 'select' ) ) {
+					text = control.attr( 'data-placeholder' ) || control.find( 'option[value=""]' ).first().text();
+				} else {
+					text = control.attr( 'placeholder' );
+				}
 			}
 
 			text = $.trim( text || '' );

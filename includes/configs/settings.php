@@ -34,6 +34,10 @@ $settings = [
 								'placeholder' => esc_html__( 'Select Menu Item', 'account-menu-enhancer-for-hivepress' ),
 								'required'    => true,
 								'_order'      => 10,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Menu Item', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 
 							'icon'        => [
@@ -41,6 +45,10 @@ $settings = [
 								'options'     => 'icons',
 								'placeholder' => esc_html__( 'Select Icon', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 20,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Icon', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 
 							'colour'      => [
@@ -130,6 +138,10 @@ $settings = [
 								'options'     => 'amehp_links',
 								'placeholder' => esc_html__( 'Select Link', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 20,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Link', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 
 							'url'    => [
@@ -147,6 +159,10 @@ $settings = [
 								'options'     => 'icons',
 								'placeholder' => esc_html__( 'Select Icon', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 40,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Icon', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 
 							'colour' => [
@@ -178,6 +194,10 @@ $settings = [
 									'hivepress'   => esc_html__( 'HivePress Menu Only', 'account-menu-enhancer-for-hivepress' ),
 									'woocommerce' => esc_html__( 'WooCommerce Menu Only', 'account-menu-enhancer-for-hivepress' ),
 								],
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Menus', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 
 							'order'  => [
@@ -197,6 +217,10 @@ $settings = [
 								'multiple'    => true,
 								'placeholder' => esc_html__( 'All Roles', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 80,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Roles', 'account-menu-enhancer-for-hivepress' ),
+								],
 							],
 						],
 					],
