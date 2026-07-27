@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.3
+Stable tag: 2.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.4 =
+* Reworked automatic updates to use WordPress's built-in update mechanism directly instead of a bundled library. The plugin is now much smaller, while keeping the same one-click updates from GitHub releases, the "Check for updates" link and the "View version details" popup on the Plugins screen. Requires WordPress 5.8 or newer for automatic updates.
 
 = 2.2.3 =
 * Added automatic updates. New versions are now delivered through the plugin's GitHub releases, so a new release shows the usual "update available" notice on the Plugins screen and can be installed with one click, just like a plugin from wordpress.org.

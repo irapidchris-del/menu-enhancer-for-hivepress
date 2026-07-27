@@ -29,3 +29,6 @@ $amehp_options = [
 foreach ( $amehp_options as $amehp_option ) {
 	delete_option( $amehp_option );
 }
+
+// Remove the cached GitHub release lookup used by the updater.
+delete_site_transient( 'amehp_github_release' );

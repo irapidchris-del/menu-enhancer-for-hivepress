@@ -833,53 +833,146 @@ check( 'Migration race: custom items still imported', is_array( $raced ) && isse
 
 /*
 ---------------------------------------------------------------------------
- GitHub auto-updater wiring (v2.2.3)
+ GitHub updater (native, v2.2.4)
 ---------------------------------------------------------------------------
 */
 
-check( 'Updater: init function is defined', function_exists( 'amehp_init_updater' ) );
-check( 'Updater: library loader is bundled', is_readable( AMEHP_DIR . '/includes/plugin-update-checker/plugin-update-checker.php' ) );
-
-$updater = amehp_init_updater();
-
-check( 'Updater: builds a version-control update checker', is_object( $updater ) && $updater instanceof \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\PluginUpdateChecker );
-check( 'Updater: points at the plugin GitHub repository', is_object( $updater ) && 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/' === $updater->metadataUrl );
-check( 'Updater: uses the correct plugin slug', is_object( $updater ) && 'account-menu-enhancer-for-hivepress' === $updater->slug );
-
-$updater_api = is_object( $updater ) ? $updater->getVcsApi() : null;
-
-check( 'Updater: uses the GitHub API client', is_object( $updater_api ) && $updater_api instanceof \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\GitHubApi );
-check( 'Updater: API repository URL matches', is_object( $updater_api ) && 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/' === $updater_api->getRepositoryUrl() );
-
-// The clean release asset must be preferred over GitHub's source archive, and
-// only the correctly named asset should be matched, so an update keeps the right
-// plugin folder name.
-$assets_enabled = false;
-$asset_regex    = null;
-
-if ( is_object( $updater_api ) ) {
-	$ref = new ReflectionObject( $updater_api );
-
-	$prop = $ref->getProperty( 'releaseAssetsEnabled' );
-	$prop->setAccessible( true );
-	$assets_enabled = $prop->getValue( $updater_api );
-
-	$prop = $ref->getProperty( 'assetFilterRegex' );
-	$prop->setAccessible( true );
-	$asset_regex = $prop->getValue( $updater_api );
+function amehp_reset_release_cache() {
+	$GLOBALS['amehp_test']['site_transients']       = [];
+	$GLOBALS['amehp_test']['site_transient_expiry'] = [];
+	$GLOBALS['amehp_test']['http_requests']         = [];
 }
 
-check( 'Updater: release assets are enabled', true === $assets_enabled );
-check( 'Updater: asset filter matches the clean ZIP name', '/account-menu-enhancer-for-hivepress\.zip$/' === $asset_regex );
-check( 'Updater: asset filter matches the release asset', is_string( $asset_regex ) && 1 === preg_match( $asset_regex, 'account-menu-enhancer-for-hivepress.zip' ) );
-check( 'Updater: asset filter rejects the source archive', is_string( $asset_regex ) && 0 === preg_match( $asset_regex, 'menu-enhancer-for-hivepress-2.2.3.zip' ) );
+function amehp_set_http_ok( $data ) {
+	amehp_test_state( 'http_response', [ 'response' => [ 'code' => 200 ], 'body' => json_encode( $data ) ] );
+}
 
-// The updater must stay off front-end requests to avoid loading the library.
-$GLOBALS['amehp_test']['loaded_updater'] = false;
-amehp_test_state( 'is_admin', false );
-amehp_test_state( 'doing_cron', false );
-check( 'Updater: front-end context is neither admin nor cron', ! is_admin() && ! wp_doing_cron() );
-amehp_test_state( 'is_admin', true );
+class Amehp_Fake_Filesystem {
+	public $moves  = [];
+	public $result = true;
+
+	public function move( $from, $to ) {
+		$this->moves[] = [ $from, $to ];
+
+		return $this->result;
+	}
+}
+
+$amehp_release_fixture = [
+	'tag_name'     => 'v2.3.0',
+	'html_url'     => 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/releases/tag/v2.3.0',
+	'body'         => "First line\nSecond line",
+	'published_at' => '2026-07-27T12:00:00Z',
+	'assets'       => [
+		[
+			'name'                 => 'account-menu-enhancer-for-hivepress.zip',
+			'browser_download_url' => 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/releases/download/v2.3.0/account-menu-enhancer-for-hivepress.zip',
+		],
+	],
+];
+
+// The bundled library and its initialiser are gone.
+check( 'Updater: the bundled library directory is removed', ! is_dir( AMEHP_DIR . '/includes/plugin-update-checker' ) );
+check( 'Updater: the old library initialiser is gone', ! function_exists( 'amehp_init_updater' ) );
+check( 'Updater: the native callbacks are defined', function_exists( 'amehp_check_for_update' ) && function_exists( 'amehp_get_plugin_information' ) && function_exists( 'amehp_fix_update_directory' ) && function_exists( 'amehp_handle_update_check' ) );
+
+// Parsing.
+amehp_reset_release_cache();
+amehp_set_http_ok( $amehp_release_fixture );
+$release = amehp_fetch_latest_release();
+
+check( 'Updater: parses the version with the v prefix stripped', is_array( $release ) && '2.3.0' === $release['version'] );
+check( 'Updater: package is the zip asset download URL', is_array( $release ) && 'https://github.com/irapidchris-del/menu-enhancer-for-hivepress/releases/download/v2.3.0/account-menu-enhancer-for-hivepress.zip' === $release['package'] );
+check( 'Updater: keeps the release URL, notes and published date', is_array( $release ) && false !== strpos( $release['url'], '/releases/tag/v2.3.0' ) && false !== strpos( $release['notes'], 'First line' ) && '2026-07-27T12:00:00Z' === $release['published'] );
+
+// Asset selection.
+amehp_reset_release_cache();
+amehp_set_http_ok(
+	array_merge(
+		$amehp_release_fixture,
+		[
+			'assets' => [
+				[ 'name' => 'source.tar.gz', 'browser_download_url' => 'https://example.com/source.tar.gz' ],
+				[ 'name' => 'account-menu-enhancer-for-hivepress.zip', 'browser_download_url' => 'https://example.com/plugin.zip' ],
+			],
+		]
+	)
+);
+$release = amehp_fetch_latest_release();
+check( 'Updater: skips non-zip assets and picks the first zip', is_array( $release ) && 'https://example.com/plugin.zip' === $release['package'] );
+
+amehp_reset_release_cache();
+amehp_set_http_ok( array_merge( $amehp_release_fixture, [ 'assets' => [ [ 'name' => 'notes.txt', 'browser_download_url' => 'https://example.com/notes.txt' ] ] ] ) );
+check( 'Updater: no zip asset yields no update', null === amehp_get_latest_release() );
+
+// Error handling.
+amehp_reset_release_cache();
+amehp_test_state( 'http_response', new WP_Error( 'http_request_failed', 'down' ) );
+check( 'Updater: a transport error yields no update', null === amehp_get_latest_release() );
+
+amehp_reset_release_cache();
+amehp_test_state( 'http_response', [ 'response' => [ 'code' => 404 ], 'body' => '' ] );
+check( 'Updater: a non-200 response yields no update', null === amehp_get_latest_release() );
+
+amehp_reset_release_cache();
+amehp_set_http_ok( [ 'assets' => [ [ 'name' => 'x.zip', 'browser_download_url' => 'https://example.com/x.zip' ] ] ] );
+check( 'Updater: a missing tag yields no update', null === amehp_get_latest_release() );
+
+// Caching.
+amehp_reset_release_cache();
+amehp_set_http_ok( $amehp_release_fixture );
+amehp_get_latest_release();
+check( 'Updater: a successful lookup is cached for 6 hours', ( 6 * HOUR_IN_SECONDS ) === ( $GLOBALS['amehp_test']['site_transient_expiry']['amehp_github_release'] ?? null ) );
+
+$amehp_requests_before = count( $GLOBALS['amehp_test']['http_requests'] );
+amehp_get_latest_release();
+check( 'Updater: a cached lookup does not hit the API again', $amehp_requests_before === count( $GLOBALS['amehp_test']['http_requests'] ) );
+
+amehp_get_latest_release( true );
+check( 'Updater: forcing a refresh bypasses the cache', ( $amehp_requests_before + 1 ) === count( $GLOBALS['amehp_test']['http_requests'] ) );
+
+amehp_reset_release_cache();
+amehp_test_state( 'http_response', new WP_Error( 'http_request_failed', 'down' ) );
+amehp_get_latest_release();
+check( 'Updater: a failed lookup is cached for 1 hour', HOUR_IN_SECONDS === ( $GLOBALS['amehp_test']['site_transient_expiry']['amehp_github_release'] ?? null ) );
+
+// update_plugins_github.com filter.
+amehp_reset_release_cache();
+amehp_set_http_ok( $amehp_release_fixture );
+$amehp_plugin_file = plugin_basename( AMEHP_FILE );
+$update            = amehp_check_for_update( false, [], $amehp_plugin_file );
+check( 'Updater: reports the update for this plugin', is_array( $update ) && '2.3.0' === $update['version'] && $amehp_plugin_file === $update['plugin'] && 'account-menu-enhancer-for-hivepress' === $update['slug'] && false !== strpos( $update['package'], '.zip' ) );
+check( 'Updater: leaves other plugins untouched', false === amehp_check_for_update( false, [], 'other-plugin/other-plugin.php' ) );
+
+// plugins_api popup.
+amehp_reset_release_cache();
+amehp_set_http_ok( $amehp_release_fixture );
+$info = amehp_get_plugin_information( false, 'plugin_information', (object) [ 'slug' => 'account-menu-enhancer-for-hivepress' ] );
+check( 'Updater: plugins_api returns the plugin details', is_object( $info ) && '2.3.0' === $info->version && 'account-menu-enhancer-for-hivepress' === $info->slug );
+check( 'Updater: plugins_api name comes from the plugin header', is_object( $info ) && 'Account Menu Enhancer for HivePress' === $info->name );
+check( 'Updater: plugins_api changelog carries the release notes', is_object( $info ) && isset( $info->sections['changelog'] ) && false !== strpos( $info->sections['changelog'], 'First line' ) );
+check( 'Updater: plugins_api ignores other actions', false === amehp_get_plugin_information( false, 'query_plugins', (object) [ 'slug' => 'account-menu-enhancer-for-hivepress' ] ) );
+check( 'Updater: plugins_api ignores other slugs', false === amehp_get_plugin_information( false, 'plugin_information', (object) [ 'slug' => 'something-else' ] ) );
+
+// upgrader_source_selection folder rename.
+$amehp_plugin_dir = dirname( plugin_basename( AMEHP_FILE ) );
+$amehp_remote     = '/tmp/amehp-remote';
+$amehp_wrong_src  = $amehp_remote . '/menu-enhancer-for-hivepress-2.3.0/';
+$amehp_expected   = trailingslashit( $amehp_remote ) . $amehp_plugin_dir . '/';
+
+$GLOBALS['wp_filesystem'] = new Amehp_Fake_Filesystem();
+$amehp_result             = amehp_fix_update_directory( $amehp_wrong_src, $amehp_remote, null, [ 'plugin' => plugin_basename( AMEHP_FILE ) ] );
+check( 'Updater: renames the update folder to the installed directory', $amehp_result === $amehp_expected );
+check( 'Updater: performs the rename through the filesystem', 1 === count( $GLOBALS['wp_filesystem']->moves ) && untrailingslashit( $amehp_wrong_src ) === $GLOBALS['wp_filesystem']->moves[0][0] && untrailingslashit( $amehp_expected ) === $GLOBALS['wp_filesystem']->moves[0][1] );
+
+$GLOBALS['wp_filesystem'] = new Amehp_Fake_Filesystem();
+check( 'Updater: leaves a correctly named folder as-is', $amehp_expected === amehp_fix_update_directory( $amehp_expected, $amehp_remote, null, [ 'plugin' => plugin_basename( AMEHP_FILE ) ] ) && 0 === count( $GLOBALS['wp_filesystem']->moves ) );
+
+$GLOBALS['wp_filesystem'] = new Amehp_Fake_Filesystem();
+check( 'Updater: leaves other plugins update folders alone', $amehp_wrong_src === amehp_fix_update_directory( $amehp_wrong_src, $amehp_remote, null, [ 'plugin' => 'other/other.php' ] ) && 0 === count( $GLOBALS['wp_filesystem']->moves ) );
+
+$GLOBALS['wp_filesystem'] = null;
+check( 'Updater: passes through when the filesystem is unavailable', $amehp_wrong_src === amehp_fix_update_directory( $amehp_wrong_src, $amehp_remote, null, [ 'plugin' => plugin_basename( AMEHP_FILE ) ] ) );
 
 /*
 ---------------------------------------------------------------------------

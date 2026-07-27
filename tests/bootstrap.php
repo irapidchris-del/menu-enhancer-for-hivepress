@@ -22,14 +22,12 @@ define( 'ABSPATH', __DIR__ . '/' );
 define( 'AMEHP_TESTS', true );
 
 // Plugin constants, matching the ones defined by the main plugin file.
-define( 'AMEHP_VERSION', '2.2.3' );
+define( 'AMEHP_VERSION', '2.2.4' );
 define( 'AMEHP_FILE', dirname( __DIR__ ) . '/account-menu-enhancer-for-hivepress.php' );
 define( 'AMEHP_DIR', dirname( __DIR__ ) );
 
-// WordPress constants used by the bundled Plugin Update Checker library.
-define( 'WP_PLUGIN_DIR', dirname( AMEHP_DIR ) );
-define( 'WPMU_PLUGIN_DIR', dirname( AMEHP_DIR ) . '/mu-plugins' );
-define( 'WP_DEBUG', false );
+// WordPress time constant used by the GitHub updater.
+define( 'HOUR_IN_SECONDS', 3600 );
 
 error_reporting( E_ALL );
 
@@ -60,9 +58,10 @@ $GLOBALS['amehp_test'] = [
 	'vendor_id'      => 0,
 	'menu_throws'    => false,
 	'wc_menu_throws' => false,
-	'doing_cron'     => false,
-	'site_transients' => [],
-	'transients'     => [],
+	'site_transients'          => [],
+	'site_transient_expiry'    => [],
+	'http_response'            => null,
+	'http_requests'            => [],
 ];
 
 function amehp_test_state( $key, $value = null ) {
@@ -298,72 +297,101 @@ function admin_url( $path = '' ) {
 function wp_enqueue_style() {}
 function wp_enqueue_script() {}
 
-// Shims used by the bundled Plugin Update Checker library.
-function remove_action( $tag, $callback, $priority = 10 ) {
-	return true;
+// Shims used by the native GitHub updater.
+class WP_Error {
+	public $errors = [];
+	public function __construct( $code = '', $message = '' ) {
+		if ( '' !== $code ) {
+			$this->errors[ $code ][] = $message;
+		}
+	}
 }
-function remove_filter( $tag, $callback, $priority = 10 ) {
-	return true;
+
+function is_wp_error( $thing ) {
+	return $thing instanceof WP_Error;
 }
-function has_action( $tag, $callback = false ) {
-	return false;
+
+function wp_remote_get( $url, $args = [] ) {
+	$GLOBALS['amehp_test']['http_requests'][] = $url;
+
+	$response = $GLOBALS['amehp_test']['http_response'];
+
+	if ( $response instanceof WP_Error ) {
+		return $response;
+	}
+
+	return is_array( $response ) ? $response : [ 'response' => [ 'code' => 0 ], 'body' => '' ];
 }
-function did_action( $tag ) {
-	return 0;
+
+function wp_remote_retrieve_response_code( $response ) {
+	return is_array( $response ) && isset( $response['response']['code'] ) ? $response['response']['code'] : 0;
 }
-function wp_doing_cron() {
-	return (bool) amehp_test_state( 'doing_cron' );
+
+function wp_remote_retrieve_body( $response ) {
+	return is_array( $response ) && isset( $response['body'] ) ? $response['body'] : '';
 }
-function wp_normalize_path( $path ) {
-	return str_replace( '\\', '/', $path );
-}
-function wp_next_scheduled( $hook, $args = [] ) {
-	return false;
-}
-function wp_schedule_event( $timestamp, $recurrence, $hook, $args = [] ) {
-	return true;
-}
-function wp_clear_scheduled_hook( $hook, $args = [] ) {
-	return true;
-}
-function wp_get_scheduled_event( $hook, $args = [], $timestamp = null ) {
-	return false;
-}
-function get_bloginfo( $show = '' ) {
-	return '6.5';
-}
-function is_multisite() {
-	return false;
-}
-function wp_installing() {
-	return false;
-}
+
 function get_site_transient( $transient ) {
 	return $GLOBALS['amehp_test']['site_transients'][ $transient ] ?? false;
 }
+
 function set_site_transient( $transient, $value, $expiration = 0 ) {
-	$GLOBALS['amehp_test']['site_transients'][ $transient ] = $value;
+	$GLOBALS['amehp_test']['site_transients'][ $transient ]       = $value;
+	$GLOBALS['amehp_test']['site_transient_expiry'][ $transient ] = $expiration;
 	return true;
 }
-function delete_site_transient( $transient ) {
-	unset( $GLOBALS['amehp_test']['site_transients'][ $transient ] );
+
+function get_file_data( $file, $headers, $context = '' ) {
+	$contents = (string) file_get_contents( $file );
+	$contents = str_replace( "\r", "\n", $contents );
+
+	$result = [];
+
+	foreach ( $headers as $field => $label ) {
+		if ( preg_match( '/^[ \t\/*#@]*' . preg_quote( $label, '/' ) . ':(.*)$/mi', $contents, $match ) && $match[1] ) {
+			$result[ $field ] = trim( preg_replace( '/\s*(?:\*\/|\?>).*/', '', $match[1] ) );
+		} else {
+			$result[ $field ] = '';
+		}
+	}
+
+	return $result;
+}
+
+function wpautop( $text ) {
+	return '<p>' . $text . '</p>';
+}
+
+function wp_nonce_url( $url, $action = -1 ) {
+	return add_query_arg( '_wpnonce', 'test-nonce', $url );
+}
+
+function self_admin_url( $path = '' ) {
+	return 'https://example.com/wp-admin/' . $path;
+}
+
+function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ) {
 	return true;
 }
-function get_transient( $transient ) {
-	return $GLOBALS['amehp_test']['transients'][ $transient ] ?? false;
+
+function wp_clean_plugins_cache( $clear_update_cache = true ) {}
+
+function wp_update_plugins() {
+	$GLOBALS['amehp_test']['wp_update_plugins_called'] = true;
 }
-function set_transient( $transient, $value, $expiration = 0 ) {
-	$GLOBALS['amehp_test']['transients'][ $transient ] = $value;
+
+function wp_safe_redirect( $location, $status = 302 ) {
+	$GLOBALS['amehp_test']['redirect'] = $location;
 	return true;
 }
-function register_activation_hook( $file, $callback ) {
-	return true;
+
+function add_query_arg( $key, $value, $url = '' ) {
+	$sep = ( false === strpos( $url, '?' ) ) ? '?' : '&';
+	return $url . $sep . rawurlencode( $key ) . '=' . rawurlencode( $value );
 }
-function register_deactivation_hook( $file, $callback ) {
-	return true;
-}
-function register_uninstall_hook( $file, $callback ) {
-	return true;
+
+function wp_unslash( $value ) {
+	return is_string( $value ) ? stripslashes( $value ) : $value;
 }
 
 function wp_add_inline_style( $handle, $css ) {
