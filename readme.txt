@@ -1,10 +1,10 @@
 === Account Menu Enhancer for HivePress ===
 Contributors: chrisb
 Tags: hivepress, woocommerce, account, menu, icons
-Requires at least: 5.0
+Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.4
+Stable tag: 2.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 * Icons are rendered with CSS using Font Awesome codepoints, so they work with the Font Awesome 5 Free files bundled with HivePress as well as self-hosted Font Awesome 6 or 7. If you subset Font Awesome yourself, make sure the icons you select here are included in your subset.
 * The WooCommerce settings only appear while WooCommerce is active.
+* If you use a performance plugin that removes unused CSS (for example Perfmatters or FlyingPress), exclude this plugin's stylesheet from that feature, otherwise the menu counters can render unstyled because they are added to the page after the used CSS is sampled.
+* Once an item is given an icon, the icon colour comes from this plugin's settings (or the menu text colour when no colour is set), taking precedence over icon colour rules added by themes or custom CSS.
+* Administrators always see every custom menu item, including role-restricted ones, so they can check what they have configured. Use a non-administrator account to see a role restriction in effect.
 * Because the plugin is distributed from GitHub rather than wordpress.org, it checks its GitHub releases for updates and shows any new version on the Plugins screen, so you can update it from the dashboard as usual.
 
 == Installation ==
@@ -40,6 +43,22 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.5 =
+* Fixed a PHP warning that HivePress core logged on every page load while the plugin was active, caused by the way the plugin registered itself with HivePress.
+* The counters mirrored into the WooCommerce menu now match the HivePress counter style exactly, and themes that restyle their badges through a class convention can pick these up too.
+* The Import Listings page can now be hidden, styled and linked like the other account pages when the Import extension is active.
+* The colour fields now fall back to a plain text field on HivePress versions older than 1.7.26, instead of silently disappearing from the settings screen.
+* The Appearance settings now warn that replacing or subsetting Font Awesome can remove icons.
+* The custom items setting now explains that administrators always see every item, including role-restricted ones.
+* The WooCommerce pages shown inside the HivePress account layout now display their own titles (for example Downloads or Account details) in the same style as the Orders page, instead of a generic My account header.
+* Fixed a duplicate subscriptions link in the WooCommerce account menu for customers with a single subscription, where WooCommerce Subscriptions links the menu item straight to the subscription details page.
+* Fixed browser caching of the plugin styles and scripts. Asset versions now include the file modification time, so updates always load fresh files instead of appearing to revert to earlier behaviour until a hard refresh.
+* Shorthand colour values such as #fff are now expanded automatically, instead of quietly preventing the settings page from saving.
+* Added a description to the custom menu items setting, explaining which fields are required.
+* Added the translation template file, so the plugin can be translated with the usual tools. Translations belong in WordPress's own languages folder, which survives plugin updates.
+* The plugin now registers itself with HivePress in a way that works from any folder name, and uses the current HivePress method for adding blocks to the account template.
+* Corrected the minimum WordPress version to 5.8, which is what the built-in update mechanism requires.
 
 = 2.2.4 =
 * Reworked automatic updates to use WordPress's built-in update mechanism directly instead of a bundled library. The plugin is now much smaller, while keeping the same one-click updates from GitHub releases, the "Check for updates" link and the "View version details" popup on the Plugins screen. Requires WordPress 5.8 or newer for automatic updates.

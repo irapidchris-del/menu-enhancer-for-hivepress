@@ -16,7 +16,7 @@ $settings = [
 		'sections' => [
 			'display'   => [
 				'title'       => esc_html__( 'Appearance', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'Assign a Font Awesome icon and an optional colour to any account menu item, and control how the account menus look. Leave the colour empty to inherit the menu text colour.', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Assign a Font Awesome icon and an optional colour to any account menu item, and control how the account menus look. Leave the colour empty to inherit the menu text colour. If your site replaces or subsets Font Awesome, make sure any icons you choose here are included in it, otherwise they will not display.', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => 10,
 
 				'fields'      => [
@@ -52,7 +52,7 @@ $settings = [
 							],
 
 							'colour'      => [
-								'type'       => 'color',
+								'type'       => class_exists( '\HivePress\Fields\Color' ) ? 'color' : 'text',
 								'_order'     => 30,
 
 								'attributes' => [
@@ -62,7 +62,7 @@ $settings = [
 							],
 
 							'text_colour' => [
-								'type'       => 'color',
+								'type'       => class_exists( '\HivePress\Fields\Color' ) ? 'color' : 'text',
 								'_order'     => 40,
 
 								'attributes' => [
@@ -76,7 +76,7 @@ $settings = [
 					'amehp_icon_colour'   => [
 						'label'       => esc_html__( 'Icon Colour', 'account-menu-enhancer-for-hivepress' ),
 						'description' => esc_html__( 'Applies one colour to every menu item icon at once, so you do not have to colour them one by one. Leave it empty to inherit the menu text colour. Set a colour on an individual item above to override it there.', 'account-menu-enhancer-for-hivepress' ),
-						'type'        => 'color',
+						'type'        => class_exists( '\HivePress\Fields\Color' ) ? 'color' : 'text',
 						'_order'      => 20,
 
 						'attributes'  => [
@@ -116,13 +116,14 @@ $settings = [
 
 				'fields'      => [
 					'amehp_custom_items' => [
-						'label'   => esc_html__( 'Menu Items', 'account-menu-enhancer-for-hivepress' ),
-						'type'    => 'repeater',
-						'caption' => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
-						'_order'  => 10,
+						'label'       => esc_html__( 'Menu Items', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Add one row per link. The label is required, and so is either a link from the dropdown or a custom URL. Everything else is optional: an icon and colours, which menus the item appears in, its position, and the user roles that can see it. Administrators always see every item, so check a role restriction with a non-administrator account.', 'account-menu-enhancer-for-hivepress' ),
+						'type'        => 'repeater',
+						'caption'     => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
+						'_order'      => 10,
 
-						'fields'  => [
-							'label'  => [
+						'fields'      => [
+							'label'       => [
 								'type'       => 'text',
 								'max_length' => 100,
 								'required'   => true,
@@ -133,7 +134,7 @@ $settings = [
 								],
 							],
 
-							'link'   => [
+							'link'        => [
 								'type'        => 'select',
 								'options'     => 'amehp_links',
 								'placeholder' => esc_html__( 'Select Link', 'account-menu-enhancer-for-hivepress' ),
@@ -144,7 +145,7 @@ $settings = [
 								],
 							],
 
-							'url'    => [
+							'url'         => [
 								'type'       => 'text',
 								'max_length' => 2048,
 								'_order'     => 30,
@@ -154,7 +155,7 @@ $settings = [
 								],
 							],
 
-							'icon'   => [
+							'icon'        => [
 								'type'        => 'select',
 								'options'     => 'icons',
 								'placeholder' => esc_html__( 'Select Icon', 'account-menu-enhancer-for-hivepress' ),
@@ -165,8 +166,8 @@ $settings = [
 								],
 							],
 
-							'colour' => [
-								'type'       => 'color',
+							'colour'      => [
+								'type'       => class_exists( '\HivePress\Fields\Color' ) ? 'color' : 'text',
 								'_order'     => 50,
 
 								'attributes' => [
@@ -176,7 +177,7 @@ $settings = [
 							],
 
 							'text_colour' => [
-								'type'       => 'color',
+								'type'       => class_exists( '\HivePress\Fields\Color' ) ? 'color' : 'text',
 								'_order'     => 55,
 
 								'attributes' => [
@@ -185,7 +186,7 @@ $settings = [
 								],
 							],
 
-							'menus'  => [
+							'menus'       => [
 								'type'        => 'select',
 								'placeholder' => esc_html__( 'Both Menus', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 60,
@@ -200,7 +201,7 @@ $settings = [
 								],
 							],
 
-							'order'  => [
+							'order'       => [
 								'type'       => 'number',
 								'min_value'  => 0,
 								'max_value'  => 10000,
@@ -211,7 +212,7 @@ $settings = [
 								],
 							],
 
-							'roles'  => [
+							'roles'       => [
 								'type'        => 'select',
 								'options'     => 'amehp_roles',
 								'multiple'    => true,
@@ -251,7 +252,7 @@ $settings = [
 if ( class_exists( 'WooCommerce' ) ) {
 	$settings['account_menu']['sections']['behaviour']['fields'] = array_merge(
 		[
-			'amehp_unify_account' => [
+			'amehp_unify_account'  => [
 				'label'       => esc_html__( 'WooCommerce Integration', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Show WooCommerce account pages inside the HivePress account layout', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Renders the WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) inside the HivePress account template, the same way HivePress already displays the Orders page, so every account page shares one sidebar menu.', 'account-menu-enhancer-for-hivepress' ),
@@ -260,7 +261,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 				'_order'      => 10,
 			],
 
-			'amehp_merge_menus'   => [
+			'amehp_merge_menus'    => [
 				'label'       => esc_html__( 'Menu Merging', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Merge the HivePress and WooCommerce account menus', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Adds the WooCommerce account links to the HivePress menu, and the HivePress account links to the WooCommerce menu, so both menus list the same items.', 'account-menu-enhancer-for-hivepress' ),
@@ -269,7 +270,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 				'_order'      => 20,
 			],
 
-			'amehp_wc_badges'     => [
+			'amehp_wc_badges'      => [
 				'label'       => esc_html__( 'Counters', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Show the HivePress counters in the WooCommerce menu', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Mirrors the HivePress menu counters (for example unread messages) next to the matching items in the WooCommerce account menu.', 'account-menu-enhancer-for-hivepress' ),

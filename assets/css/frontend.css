@@ -1,18 +1,24 @@
 /* Account Menu Enhancer for HivePress: front-end styles. */
 
-/* Counters mirrored into the WooCommerce account menu. */
+/*
+ * Counters mirrored into the WooCommerce account menu. The declarations copy
+ * HivePress core's own counter rule (.hp-menu__item small in frontend.min.css)
+ * so the mirrored number is visually identical to the one in the HivePress
+ * menus, except display, which is inline-flex so the badge cannot drop onto
+ * its own line inside links the theme does not lay out as flex rows.
+ */
 .woocommerce-MyAccount-navigation ul li > a small.amehp-badge {
 	display: inline-flex;
-	align-items: center;
 	justify-content: center;
-	min-width: 1.25rem;
-	height: 1.25rem;
-	padding: 0 0.35rem;
+	align-items: center;
+	min-width: 1.5rem;
+	min-height: 1.5rem;
+	padding: 0 0.5rem;
 	margin-inline-start: 0.5rem;
 	border-radius: 9999px;
-	background-color: #e74c3c;
-	color: #ffffff;
-	font-size: 0.75rem;
+	background-color: #ff5a5f;
+	color: #fff;
+	font-size: 80%;
 	line-height: 1;
 	vertical-align: middle;
 	white-space: nowrap;

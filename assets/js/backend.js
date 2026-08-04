@@ -29,7 +29,7 @@
 				}
 			}
 
-			text = $.trim( text || '' );
+			text = ( text || '' ).trim();
 
 			if ( ! text || '—' === text ) {
 				return;
@@ -37,6 +37,18 @@
 
 			$( '<label class="amehp-field-label"></label>' ).text( text ).prependTo( cell );
 		} );
+	}
+
+	// HivePress colour fields carry pattern="#[0-9a-fA-F]{6}", which both the
+	// browser and HivePress enforce, so a typed three digit value such as #fff
+	// would block the whole settings page from saving. Expanding it keeps the
+	// shorthand people paste from a style guide working.
+	function expandShorthandHex( input ) {
+		var match = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/.exec( input.value.trim() );
+
+		if ( match ) {
+			input.value = '#' + match[1] + match[1] + match[2] + match[2] + match[3] + match[3];
+		}
 	}
 
 	function initColourPickers( container ) {
@@ -64,6 +76,20 @@
 
 			input.wpColorPicker( {
 				defaultColor: false,
+			} );
+
+			// Blur covers clicking Save, and Enter is handled separately because
+			// the browser validates the pattern before any submit handler runs,
+			// so the value has to be expanded while the key is still being
+			// processed.
+			input.on( 'change blur', function () {
+				expandShorthandHex( this );
+			} );
+
+			input.on( 'keydown', function ( event ) {
+				if ( 13 === event.which ) {
+					expandShorthandHex( this );
+				}
 			} );
 		} );
 	}

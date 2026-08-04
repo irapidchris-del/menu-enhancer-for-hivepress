@@ -1,0 +1,365 @@
+# Copyright (C) 2026 ChrisB
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Account Menu Enhancer for HivePress 2.2.5\n"
+"Report-Msgid-Bugs-To: https://github.com/irapidchris-del/menu-enhancer-for-hivepress/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-07-29T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Language-Team: \n"
+"X-Domain: account-menu-enhancer-for-hivepress\n"
+
+#. Plugin Name of the plugin
+#: account-menu-enhancer-for-hivepress.php
+msgid "Account Menu Enhancer for HivePress"
+msgstr ""
+
+#. Description of the plugin
+#: account-menu-enhancer-for-hivepress.php
+msgid "Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item."
+msgstr ""
+
+#. Author of the plugin
+#: account-menu-enhancer-for-hivepress.php
+msgid "ChrisB"
+msgstr ""
+
+#. Author URI of the plugin
+#: account-menu-enhancer-for-hivepress.php
+msgid "https://community.hivepress.io/u/chrisb/summary"
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:88
+msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be installed and activated."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:101
+#: includes/components/class-account-menu-enhancer.php:1251
+msgid "Settings"
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:381
+msgid "See the GitHub releases page for the changelog."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:396
+msgid "Check for updates"
+msgstr ""
+
+#. translators: %s: new version number.
+#: account-menu-enhancer-for-hivepress.php:461
+msgid "A new version of Account Menu Enhancer for HivePress (%s) is available."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:464
+msgid "Account Menu Enhancer for HivePress is up to date."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:467
+msgid "Could not reach GitHub to check for updates. Please try again later."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:512
+msgid "Could not rename the update directory."
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1256
+msgid "Listings"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1261
+msgid "Favorites"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1266
+msgid "Import Listings"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1271
+msgid "Messages"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1276
+msgid "Dashboard"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1281
+msgid "Received Orders"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1286
+msgid "Payouts"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1291
+msgid "Bookings"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1296
+msgid "Calendar"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1301
+msgid "Searches"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1306
+msgid "Memberships"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1311
+msgid "Requests"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1316
+msgid "Offers"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1321
+msgid "Sign Out"
+msgstr ""
+
+#. translators: %s: menu item label.
+#: includes/components/class-account-menu-enhancer.php:1391
+#: includes/components/class-account-menu-enhancer.php:1450
+msgid "%s (WooCommerce)"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1434
+msgid "My Profile"
+msgstr ""
+
+#: includes/components/class-account-menu-enhancer.php:1435
+msgid "My Vendor Profile"
+msgstr ""
+
+#. translators: %s: page title.
+#: includes/components/class-account-menu-enhancer.php:1464
+msgid "%s (Page)"
+msgstr ""
+
+#: includes/configs/settings.php:13
+msgid "Account Menu"
+msgstr ""
+
+#: includes/configs/settings.php:18
+msgid "Appearance"
+msgstr ""
+
+#: includes/configs/settings.php:19
+msgid "Assign a Font Awesome icon and an optional colour to any account menu item, and control how the account menus look. Leave the colour empty to inherit the menu text colour. If your site replaces or subsets Font Awesome, make sure any icons you choose here are included in it, otherwise they will not display."
+msgstr ""
+
+#: includes/configs/settings.php:24
+msgid "Menu Item Styling"
+msgstr ""
+
+#: includes/configs/settings.php:25
+msgid "Choose a menu item, then optionally give it an icon, an icon colour and a text colour. Styling for custom items is set in the Custom Items section below."
+msgstr ""
+
+#: includes/configs/settings.php:27
+#: includes/configs/settings.php:122
+msgid "Add Item"
+msgstr ""
+
+#: includes/configs/settings.php:34
+msgid "Select Menu Item"
+msgstr ""
+
+#: includes/configs/settings.php:39
+msgid "Menu Item"
+msgstr ""
+
+#: includes/configs/settings.php:46
+#: includes/configs/settings.php:161
+msgid "Select Icon"
+msgstr ""
+
+#: includes/configs/settings.php:50
+#: includes/configs/settings.php:165
+msgid "Icon"
+msgstr ""
+
+#: includes/configs/settings.php:60
+#: includes/configs/settings.php:77
+#: includes/configs/settings.php:175
+msgid "Icon Colour"
+msgstr ""
+
+#: includes/configs/settings.php:70
+#: includes/configs/settings.php:185
+msgid "Text Colour"
+msgstr ""
+
+#: includes/configs/settings.php:78
+msgid "Applies one colour to every menu item icon at once, so you do not have to colour them one by one. Leave it empty to inherit the menu text colour. Set a colour on an individual item above to override it there."
+msgstr ""
+
+#: includes/configs/settings.php:88
+msgid "Menu Item Weight"
+msgstr ""
+
+#: includes/configs/settings.php:89
+msgid "Sets the font weight of the account menu items. Choose Default to keep the theme style."
+msgstr ""
+
+#: includes/configs/settings.php:91
+msgid "Default"
+msgstr ""
+
+#: includes/configs/settings.php:95
+msgid "Normal"
+msgstr ""
+
+#: includes/configs/settings.php:96
+msgid "Medium"
+msgstr ""
+
+#: includes/configs/settings.php:97
+msgid "Semi-bold"
+msgstr ""
+
+#: includes/configs/settings.php:98
+msgid "Bold"
+msgstr ""
+
+#: includes/configs/settings.php:103
+msgid "Menu Chevrons"
+msgstr ""
+
+#: includes/configs/settings.php:104
+msgid "Hide the theme navigation menu arrows"
+msgstr ""
+
+#: includes/configs/settings.php:105
+msgid "Hides the default arrow markers that some themes add before the account menu items, so only your chosen icons show. Other menus, such as those in the footer, are not affected."
+msgstr ""
+
+#: includes/configs/settings.php:113
+msgid "Custom Items"
+msgstr ""
+
+#: includes/configs/settings.php:114
+msgid "Add your own links to the account menu. For each item, set a label and either choose a link from the dropdown or enter a custom URL (for example https://example.com/page or /page). The Order field controls the position, where lower numbers appear higher (built-in items range from 5 to 1000, with Sign Out at 1000)."
+msgstr ""
+
+#: includes/configs/settings.php:119
+msgid "Menu Items"
+msgstr ""
+
+#: includes/configs/settings.php:120
+msgid "Add one row per link. The label is required, and so is either a link from the dropdown or a custom URL. Everything else is optional: an icon and colours, which menus the item appears in, its position, and the user roles that can see it. Administrators always see every item, so check a role restriction with a non-administrator account."
+msgstr ""
+
+#: includes/configs/settings.php:133
+msgid "Label"
+msgstr ""
+
+#: includes/configs/settings.php:140
+msgid "Select Link"
+msgstr ""
+
+#: includes/configs/settings.php:144
+msgid "Link"
+msgstr ""
+
+#: includes/configs/settings.php:154
+msgid "Custom URL"
+msgstr ""
+
+#: includes/configs/settings.php:191
+msgid "Both Menus"
+msgstr ""
+
+#: includes/configs/settings.php:195
+msgid "HivePress Menu Only"
+msgstr ""
+
+#: includes/configs/settings.php:196
+msgid "WooCommerce Menu Only"
+msgstr ""
+
+#: includes/configs/settings.php:200
+msgid "Menus"
+msgstr ""
+
+#: includes/configs/settings.php:211
+msgid "Order"
+msgstr ""
+
+#: includes/configs/settings.php:219
+msgid "All Roles"
+msgstr ""
+
+#: includes/configs/settings.php:223
+msgid "Roles"
+msgstr ""
+
+#: includes/configs/settings.php:232
+msgid "Behaviour"
+msgstr ""
+
+#: includes/configs/settings.php:233
+msgid "Control how the account menus behave and which items appear."
+msgstr ""
+
+#: includes/configs/settings.php:238
+msgid "Hidden Items"
+msgstr ""
+
+#: includes/configs/settings.php:239
+msgid "Select the menu items that should be hidden from the account menus."
+msgstr ""
+
+#: includes/configs/settings.php:256
+msgid "WooCommerce Integration"
+msgstr ""
+
+#: includes/configs/settings.php:257
+msgid "Show WooCommerce account pages inside the HivePress account layout"
+msgstr ""
+
+#: includes/configs/settings.php:258
+msgid "Renders the WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) inside the HivePress account template, the same way HivePress already displays the Orders page, so every account page shares one sidebar menu."
+msgstr ""
+
+#: includes/configs/settings.php:265
+msgid "Menu Merging"
+msgstr ""
+
+#: includes/configs/settings.php:266
+msgid "Merge the HivePress and WooCommerce account menus"
+msgstr ""
+
+#: includes/configs/settings.php:267
+msgid "Adds the WooCommerce account links to the HivePress menu, and the HivePress account links to the WooCommerce menu, so both menus list the same items."
+msgstr ""
+
+#: includes/configs/settings.php:274
+msgid "Counters"
+msgstr ""
+
+#: includes/configs/settings.php:275
+msgid "Show the HivePress counters in the WooCommerce menu"
+msgstr ""
+
+#: includes/configs/settings.php:276
+msgid "Mirrors the HivePress menu counters (for example unread messages) next to the matching items in the WooCommerce account menu."
+msgstr ""
+
+#: includes/configs/settings.php:284
+msgid "WooCommerce Page Header"
+msgstr ""
+
+#: includes/configs/settings.php:285
+msgid "Hide the page header on WooCommerce account pages"
+msgstr ""
+
+#: includes/configs/settings.php:286
+msgid "Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages."
+msgstr ""
+

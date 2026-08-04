@@ -2,16 +2,16 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.2.4
- * Author: ChrisB @ HivePress Community
+ * Version: 2.2.5
+ * Author: ChrisB
  * Author URI: https://community.hivepress.io/u/chrisb/summary
- * Requires at least: 5.0
+ * Requires at least: 5.8
  * Requires PHP: 7.4
  * Requires Plugins: hivepress
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: account-menu-enhancer-for-hivepress
- * Domain Path: /languages
+ * Domain Path: /languages/
  * Update URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
  *
  * @package AccountMenuEnhancer
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.2.4' );
+	define( 'AMEHP_VERSION', '2.2.5' );
 }
 
 // Define the plugin file.
@@ -38,19 +38,32 @@ if ( ! defined( 'AMEHP_DIR' ) ) {
 /**
  * Registers the plugin as a HivePress extension.
  *
- * HivePress registers a plain directory path only when the main plugin file is
- * named after its folder, which is the case for the released package. When the
- * folder has a different name (for example when installed straight from source)
- * the array form is used instead, which HivePress accepts regardless of the
- * folder name so the plugin still works.
+ * The form is picked at runtime. The bare directory path only works when the
+ * main file is named after its folder, so a renamed folder (for example a
+ * GitHub source download) would make the plugin silently do nothing. The array
+ * form works from any folder name, but HivePress's updater probe concatenates
+ * every entry into a file path, so an array entry makes core log an "Array to
+ * string conversion" warning on each request. The normal install therefore
+ * registers the plain path, and the renamed-folder fallback registers the
+ * array after seeding the updater path itself so the probe never runs.
  *
  * @param array $extensions Extension configurations.
  * @return array
  */
 function amehp_register_extension( $extensions ) {
-	if ( basename( AMEHP_DIR ) === basename( AMEHP_FILE, '.php' ) ) {
+	if ( file_exists( AMEHP_DIR . '/' . basename( AMEHP_DIR ) . '.php' ) ) {
 		$extensions[] = AMEHP_DIR;
 	} else {
+		if ( ! isset( $extensions['updates'] ) ) {
+			foreach ( $extensions as $amehp_dir ) {
+				if ( is_string( $amehp_dir ) && file_exists( $amehp_dir . '/vendor/hivepress/hivepress-updates/hivepress-updates.php' ) ) {
+					$extensions['updates'] = $amehp_dir . '/vendor/hivepress/hivepress-updates';
+
+					break;
+				}
+			}
+		}
+
 		$extensions['account_menu_enhancer'] = [
 			'name'    => 'Account Menu Enhancer for HivePress',
 			'version' => AMEHP_VERSION,
@@ -63,18 +76,6 @@ function amehp_register_extension( $extensions ) {
 }
 
 add_filter( 'hivepress/v1/extensions', 'amehp_register_extension' );
-
-/**
- * Loads the plugin translations.
- *
- * HivePress loads extension text domains based on the folder name, so the
- * plugin loads its own translations to keep working with any folder name.
- */
-function amehp_load_textdomain() {
-	load_plugin_textdomain( 'account-menu-enhancer-for-hivepress', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-}
-
-add_action( 'init', 'amehp_load_textdomain' );
 
 /**
  * Displays an admin notice if HivePress is not active.
@@ -442,11 +443,16 @@ add_action( 'admin_init', 'amehp_handle_update_check' );
  * @return void
  */
 function amehp_show_update_check_notice() {
+
+	// The status flag only chooses which message to display, and the check it
+	// reports on was already nonce verified before the redirect that set it.
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended
 	if ( ! isset( $_GET['amehp_checked'] ) || ! current_user_can( 'update_plugins' ) ) {
 		return;
 	}
 
 	$status = sanitize_key( wp_unslash( $_GET['amehp_checked'] ) );
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 	if ( 'available' === $status ) {
 		$release = amehp_get_latest_release();

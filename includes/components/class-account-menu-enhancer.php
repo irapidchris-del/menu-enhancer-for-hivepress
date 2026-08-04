@@ -75,6 +75,12 @@ final class Account_Menu_Enhancer extends Component {
 
 				// Alter the HivePress account page template.
 				add_filter( 'hivepress/v1/templates/user_account_page', [ $this, 'alter_account_page' ] );
+
+				// Hide the theme page header on the unified account pages.
+				add_filter( 'hivetheme/v1/areas/site_hero', [ $this, 'hide_theme_page_header' ], 110 );
+
+				// Render the endpoint title on the unified account pages.
+				add_action( 'woocommerce_account_content', [ $this, 'render_page_title' ], 1 );
 			}
 
 			// Alter the WooCommerce endpoint URLs.
@@ -86,7 +92,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 Options
+	Options
 	-------------------------------------------------------------------------
 	*/
 
@@ -185,7 +191,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 Base menus
+	Base menus
 	-------------------------------------------------------------------------
 	*/
 
@@ -250,7 +256,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 HivePress menu
+	HivePress menu
 	-------------------------------------------------------------------------
 	*/
 
@@ -354,7 +360,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 WooCommerce menu
+	WooCommerce menu
 	-------------------------------------------------------------------------
 	*/
 
@@ -385,7 +391,7 @@ final class Account_Menu_Enhancer extends Component {
 				'_order' => 'customer-logout' === $endpoint ? 1000 : $order,
 			];
 
-			$order++;
+			++$order;
 		}
 
 		// Get the WooCommerce endpoint URLs for duplicate checks.
@@ -408,10 +414,13 @@ final class Account_Menu_Enhancer extends Component {
 					continue;
 				}
 
-				// Skip the HivePress items that mirror hidden WooCommerce
-				// endpoints, since their endpoint rows are already removed
-				// before the duplicate URL check can catch them.
-				if ( ( 'orders_view' === $name && in_array( 'wc:orders', $hidden, true ) ) || ( 'subscriptions_view' === $name && in_array( 'wc:subscriptions', $hidden, true ) ) ) {
+				// Skip the HivePress items that mirror the WooCommerce Orders
+				// and Subscriptions endpoints whenever the native row is
+				// present or hidden by the settings. The duplicate URL check
+				// alone cannot catch these, since the native URL can differ
+				// (for example WooCommerce Subscriptions links a single
+				// subscription straight to its details page).
+				if ( ( 'orders_view' === $name && ( isset( $rows['orders'] ) || in_array( 'wc:orders', $hidden, true ) ) ) || ( 'subscriptions_view' === $name && ( isset( $rows['subscriptions'] ) || in_array( 'wc:subscriptions', $hidden, true ) ) ) ) {
 					continue;
 				}
 
@@ -500,7 +509,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 Account layout unification
+	Account layout unification
 	-------------------------------------------------------------------------
 	*/
 
@@ -569,6 +578,68 @@ final class Account_Menu_Enhancer extends Component {
 	}
 
 	/**
+	 * Checks if the current page is a unified endpoint with its own title.
+	 *
+	 * The "dashboard" endpoint keeps the theme page header, since "My account"
+	 * is the right title for it, so only the other unified endpoints hide the
+	 * theme header and render their endpoint titles instead.
+	 *
+	 * @return bool
+	 */
+	protected function is_titled_unified_page() {
+		return $this->is_unified_page() && 'dashboard' !== $this->get_current_endpoint_key();
+	}
+
+	/**
+	 * Hides the theme page header on the unified account pages.
+	 *
+	 * The official HivePress themes hide their page header and render the
+	 * endpoint title inside the account content for the Orders endpoints
+	 * only, so the same is done here for the endpoints that the plugin
+	 * renders inside the HivePress account layout.
+	 *
+	 * @param string $output Header HTML.
+	 * @return string
+	 */
+	public function hide_theme_page_header( $output ) {
+		if ( $this->is_titled_unified_page() ) {
+			$output = '';
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Renders the endpoint title on the unified account pages.
+	 *
+	 * Mirrors the way the official HivePress themes render the Orders page
+	 * title, so the unified pages match the rest of the account area.
+	 */
+	public function render_page_title() {
+		if ( ! $this->is_titled_unified_page() || ! function_exists( 'WC' ) ) {
+			return;
+		}
+
+		$title = WC()->query->get_endpoint_title( $this->get_current_endpoint_key() );
+
+		if ( $title ) {
+			$output = ( new \HivePress\Blocks\Part(
+				[
+					'path'    => 'page/page-title',
+
+					'context' => [
+						'page_title' => $title,
+					],
+				]
+			) )->render();
+
+			// The template part returns rendered HTML and escapes the title
+			// itself, so escaping here would print the markup as text.
+			echo $output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
+	}
+
+	/**
 	 * Sets the WooCommerce account page template.
 	 *
 	 * @param string $path Template filepath.
@@ -592,30 +663,35 @@ final class Account_Menu_Enhancer extends Component {
 	public function alter_account_page( $template ) {
 		if ( $this->is_unified_page() ) {
 
-			// Set the page title. The argument count matches the current
-			// WooCommerce registration so that re-adding the filter keeps
-			// the queried-object guard of newer WooCommerce versions.
+			// Set the page title. The filter removes itself after the first
+			// swap, so it is re-added here the same way HivePress core does
+			// when rendering the Orders endpoints in its account template.
 			if ( 'dashboard' !== $this->get_current_endpoint_key() ) {
-				add_filter( 'the_title', 'wc_page_endpoint_title', 10, 2 );
+				add_filter( 'the_title', 'wc_page_endpoint_title' );
 			}
 
-			// Alter the page template.
-			$template = hp\merge_trees(
+			// Alter the page template. The container and the content are merged
+			// separately because a matched block's children are not visited in
+			// the same pass, and "page_content" sits inside "page_container".
+			$this->merge_blocks(
 				$template,
 				[
-					'blocks' => [
-						'page_container' => [
-							'type' => 'container',
-						],
+					'page_container' => [
+						'type' => 'container',
+					],
+				]
+			);
 
-						'page_content'   => [
-							'blocks' => [
-								'amehp_woocommerce_content' => [
-									'type'     => 'callback',
-									'callback' => 'do_action',
-									'params'   => [ 'woocommerce_account_content' ],
-									'_order'   => 10,
-								],
+			$this->merge_blocks(
+				$template,
+				[
+					'page_content' => [
+						'blocks' => [
+							'amehp_woocommerce_content' => [
+								'type'     => 'callback',
+								'callback' => 'do_action',
+								'params'   => [ 'woocommerce_account_content' ],
+								'_order'   => 10,
 							],
 						],
 					],
@@ -626,9 +702,27 @@ final class Account_Menu_Enhancer extends Component {
 		return $template;
 	}
 
+	/**
+	 * Merges blocks into a template.
+	 *
+	 * Uses the template component, which HivePress prefers over the
+	 * "hp\merge_trees" helper, falling back to the helper on cores that
+	 * predate it.
+	 *
+	 * @param array $template Template arguments.
+	 * @param array $blocks Blocks to merge.
+	 */
+	protected function merge_blocks( &$template, $blocks ) {
+		if ( hivepress()->template && method_exists( hivepress()->template, 'merge_blocks' ) ) {
+			hivepress()->template->merge_blocks( $template, $blocks );
+		} else {
+			$template = hp\merge_trees( $template, [ 'blocks' => $blocks ] );
+		}
+	}
+
 	/*
 	-------------------------------------------------------------------------
-	 URLs and visibility
+	URLs and visibility
 	-------------------------------------------------------------------------
 	*/
 
@@ -768,9 +862,28 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 Icons and counters
+	Icons and counters
 	-------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Gets a cache-busting asset version.
+	 *
+	 * WordPress appends the version as "?ver={version}", so a constant version
+	 * string would keep serving stale files from the browser cache after an
+	 * update. The file modification time is appended so that every asset
+	 * change gets a fresh URL.
+	 *
+	 * @param string $file Asset path relative to the plugin directory.
+	 * @return string
+	 */
+	protected function get_asset_version( $file ) {
+		$filepath = AMEHP_DIR . '/' . $file;
+
+		$time = file_exists( $filepath ) ? filemtime( $filepath ) : false;
+
+		return $time ? AMEHP_VERSION . '.' . $time : AMEHP_VERSION;
+	}
 
 	/**
 	 * Enqueues the front-end assets.
@@ -793,7 +906,7 @@ final class Account_Menu_Enhancer extends Component {
 			'amehp-frontend',
 			plugins_url( 'assets/css/frontend.css', AMEHP_FILE ),
 			[],
-			AMEHP_VERSION
+			$this->get_asset_version( 'assets/css/frontend.css' )
 		);
 
 		if ( $css ) {
@@ -806,15 +919,29 @@ final class Account_Menu_Enhancer extends Component {
 				'amehp-frontend',
 				plugins_url( 'assets/js/frontend.js', AMEHP_FILE ),
 				[],
-				AMEHP_VERSION,
+				$this->get_asset_version( 'assets/js/frontend.js' ),
 				true
 			);
+
+			/**
+			 * Filters the CSS classes of the counters mirrored into the
+			 * WooCommerce account menu, so a theme styling its badges by a
+			 * class convention can pick these up with its existing rules.
+			 * The "amehp-badge" class is always kept, since the plugin's own
+			 * styling and duplicate checks rely on it.
+			 *
+			 * Hook name: "amehp_wc_badge_classes".
+			 *
+			 * @param array $classes Badge CSS classes.
+			 */
+			$badge_classes = (array) apply_filters( 'amehp_wc_badge_classes', [ 'hp-badge' ] );
 
 			wp_localize_script(
 				'amehp-frontend',
 				'amehpFrontendData',
 				[
-					'badges' => $badges,
+					'badges'       => $badges,
+					'badgeClasses' => implode( ' ', array_unique( array_merge( [ 'amehp-badge' ], array_filter( array_map( 'sanitize_html_class', $badge_classes ) ) ) ) ),
 				]
 			);
 		}
@@ -826,6 +953,10 @@ final class Account_Menu_Enhancer extends Component {
 	 * @param string $hook Page hook suffix.
 	 */
 	public function enqueue_backend_assets( $hook ) {
+
+		// Reading the tab decides which assets to enqueue and changes nothing,
+		// which is how HivePress itself reads the settings screen query args.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( 'toplevel_page_hp_settings' !== $hook || 'account_menu' !== hp\get_array_value( $_GET, 'tab' ) ) {
 			return;
 		}
@@ -836,14 +967,14 @@ final class Account_Menu_Enhancer extends Component {
 			'amehp-backend',
 			plugins_url( 'assets/css/backend.css', AMEHP_FILE ),
 			[],
-			AMEHP_VERSION
+			$this->get_asset_version( 'assets/css/backend.css' )
 		);
 
 		wp_enqueue_script(
 			'amehp-backend',
 			plugins_url( 'assets/js/backend.js', AMEHP_FILE ),
 			[ 'jquery', 'wp-color-picker', 'hivepress-core' ],
-			AMEHP_VERSION,
+			$this->get_asset_version( 'assets/js/backend.js' ),
 			true
 		);
 	}
@@ -1100,7 +1231,7 @@ final class Account_Menu_Enhancer extends Component {
 
 	/*
 	-------------------------------------------------------------------------
-	 Settings options
+	Settings options
 	-------------------------------------------------------------------------
 	*/
 
@@ -1128,6 +1259,11 @@ final class Account_Menu_Enhancer extends Component {
 			'listings_favorite'  => [
 				'route' => 'listings_favorite_page',
 				'label' => esc_html__( 'Favorites', 'account-menu-enhancer-for-hivepress' ),
+			],
+
+			'listing_import'     => [
+				'route' => 'listing_import_page',
+				'label' => esc_html__( 'Import Listings', 'account-menu-enhancer-for-hivepress' ),
 			],
 
 			'messages_thread'    => [

@@ -30,7 +30,11 @@
 
 			var badge = document.createElement( 'small' );
 
-			badge.className = 'amehp-badge';
+			badge.className = data.badgeClasses || 'amehp-badge';
+
+			// The digit count lets themes that size their badges by a data-len
+			// convention target this one with the same rules.
+			badge.setAttribute( 'data-len', String( count.length ) );
 			badge.textContent = count;
 
 			link.appendChild( badge );
