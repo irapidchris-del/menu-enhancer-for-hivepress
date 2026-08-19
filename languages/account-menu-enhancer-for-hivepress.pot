@@ -396,3 +396,11 @@ msgstr ""
 #: includes/configs/settings.php:312
 msgid "Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages."
 msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:827
+msgid "No releases have been published for Account Menu Enhancer for HivePress yet, so there is nothing to update to. This is normal for a brand new copy and does not mean anything is wrong."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:830
+msgid "GitHub limits how many update checks one server may make each hour, and this server has reached that limit. Nothing is wrong with the plugin or your site, and checking will work again within the hour."
+msgstr ""
