@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Enhances the HivePress and WooCommerce account menus.
  */
-final class Account_Menu_Enhancer extends Component {
+final class Amehp_Menu_Enhancer extends Component {
 
 	/**
 	 * Suppresses the plugin menu filters while fetching the base menus.
@@ -1059,7 +1059,7 @@ final class Account_Menu_Enhancer extends Component {
 		}
 
 		// Get the icon codepoints.
-		$codes = hivepress()->get_config( 'icon_codes' );
+		$codes = hivepress()->get_config( 'amehp_icon_codes' );
 
 		$css       = '';
 		$selectors = [];

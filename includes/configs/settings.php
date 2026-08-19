@@ -244,6 +244,32 @@ $settings = [
 					],
 				],
 			],
+
+			'removal'   => [
+				'title'       => esc_html__( 'Removing the Plugin', 'account-menu-enhancer-for-hivepress' ),
+
+				// The section description carries the warning about WordPress's own wording,
+				// because the delete screen prints "will also delete its data" for any plugin
+				// that ships an uninstall.php, whatever that file actually does
+				// (wp-admin/plugins.php:376-380), and a site owner reading it has no way to
+				// tell that it does not apply here.
+				'description' => esc_html__( 'Your menu settings are kept if you delete this plugin, so you can reinstall it and pick up where you left off. WordPress shows its own warning on the delete screen saying the data goes too, but that warning is the same for every plugin and does not apply here unless you tick the box below. Switching the plugin off never removes anything.', 'account-menu-enhancer-for-hivepress' ),
+				'_order'      => 30,
+
+				'fields'      => [
+					'amehp_delete_data' => [
+						'label'       => esc_html__( 'Delete All Data', 'account-menu-enhancer-for-hivepress' ),
+						'caption'     => esc_html__( 'Delete everything when this plugin is deleted', 'account-menu-enhancer-for-hivepress' ),
+
+						// Spelled out rather than summarised as "all data": the owner is being
+						// asked to authorise something irreversible that nothing will confirm at
+						// the time, so they have to be able to see exactly what goes.
+						'description' => esc_html__( 'Leave this unticked unless you are certain. With it ticked, deleting the plugin also removes every icon and colour you have chosen, your custom menu items, the list of items you have hidden, and every other setting on this page. It cannot be undone and nothing asks you to confirm at the time, so copy down anything you want to keep first. Deleting the plugin with this unticked keeps all of it.', 'account-menu-enhancer-for-hivepress' ),
+						'type'        => 'checkbox',
+						'_order'      => 10,
+					],
+				],
+			],
 		],
 	],
 ];

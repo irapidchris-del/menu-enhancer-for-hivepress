@@ -1,20 +1,27 @@
-# Copyright (C) 2026 ChrisB
+# Copyright (C) 2026 ChrisB @ HivePress Community
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Account Menu Enhancer for HivePress 2.2.5\n"
-"Report-Msgid-Bugs-To: https://github.com/irapidchris-del/menu-enhancer-for-hivepress/issues\n"
+"Project-Id-Version: Account Menu Enhancer for HivePress 2.2.6\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/account-menu-enhancer-for-hivepress\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-29T00:00:00+00:00\n"
+"POT-Creation-Date: 2026-08-19T11:53:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Language-Team: \n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: account-menu-enhancer-for-hivepress\n"
 
 #. Plugin Name of the plugin
 #: account-menu-enhancer-for-hivepress.php
 msgid "Account Menu Enhancer for HivePress"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: account-menu-enhancer-for-hivepress.php
+msgid "https://github.com/irapidchris-del/menu-enhancer-for-hivepress"
 msgstr ""
 
 #. Description of the plugin
@@ -24,7 +31,7 @@ msgstr ""
 
 #. Author of the plugin
 #: account-menu-enhancer-for-hivepress.php
-msgid "ChrisB"
+msgid "ChrisB @ HivePress Community"
 msgstr ""
 
 #. Author URI of the plugin
@@ -32,112 +39,119 @@ msgstr ""
 msgid "https://community.hivepress.io/u/chrisb/summary"
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:88
+#: account-menu-enhancer-for-hivepress.php:98
 msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be installed and activated."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:101
-#: includes/components/class-account-menu-enhancer.php:1251
+#: account-menu-enhancer-for-hivepress.php:111
+#: includes/components/class-amehp-menu-enhancer.php:1251
 msgid "Settings"
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:381
+#: account-menu-enhancer-for-hivepress.php:392
 msgid "See the GitHub releases page for the changelog."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:396
+#: account-menu-enhancer-for-hivepress.php:407
 msgid "Check for updates"
 msgstr ""
 
 #. translators: %s: new version number.
-#: account-menu-enhancer-for-hivepress.php:461
+#: account-menu-enhancer-for-hivepress.php:472
+#, php-format
 msgid "A new version of Account Menu Enhancer for HivePress (%s) is available."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:464
+#: account-menu-enhancer-for-hivepress.php:475
 msgid "Account Menu Enhancer for HivePress is up to date."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:467
+#: account-menu-enhancer-for-hivepress.php:478
 msgid "Could not reach GitHub to check for updates. Please try again later."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:512
+#: account-menu-enhancer-for-hivepress.php:523
 msgid "Could not rename the update directory."
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1256
+#: account-menu-enhancer-for-hivepress.php:550
+msgid "Donate"
+msgstr ""
+
+#: includes/components/class-amehp-menu-enhancer.php:1256
 msgid "Listings"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1261
+#: includes/components/class-amehp-menu-enhancer.php:1261
 msgid "Favorites"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1266
+#: includes/components/class-amehp-menu-enhancer.php:1266
 msgid "Import Listings"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1271
+#: includes/components/class-amehp-menu-enhancer.php:1271
 msgid "Messages"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1276
+#: includes/components/class-amehp-menu-enhancer.php:1276
 msgid "Dashboard"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1281
+#: includes/components/class-amehp-menu-enhancer.php:1281
 msgid "Received Orders"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1286
+#: includes/components/class-amehp-menu-enhancer.php:1286
 msgid "Payouts"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1291
+#: includes/components/class-amehp-menu-enhancer.php:1291
 msgid "Bookings"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1296
+#: includes/components/class-amehp-menu-enhancer.php:1296
 msgid "Calendar"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1301
+#: includes/components/class-amehp-menu-enhancer.php:1301
 msgid "Searches"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1306
+#: includes/components/class-amehp-menu-enhancer.php:1306
 msgid "Memberships"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1311
+#: includes/components/class-amehp-menu-enhancer.php:1311
 msgid "Requests"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1316
+#: includes/components/class-amehp-menu-enhancer.php:1316
 msgid "Offers"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1321
+#: includes/components/class-amehp-menu-enhancer.php:1321
 msgid "Sign Out"
 msgstr ""
 
 #. translators: %s: menu item label.
-#: includes/components/class-account-menu-enhancer.php:1391
-#: includes/components/class-account-menu-enhancer.php:1450
+#: includes/components/class-amehp-menu-enhancer.php:1391
+#: includes/components/class-amehp-menu-enhancer.php:1450
+#, php-format
 msgid "%s (WooCommerce)"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1434
+#: includes/components/class-amehp-menu-enhancer.php:1434
 msgid "My Profile"
 msgstr ""
 
-#: includes/components/class-account-menu-enhancer.php:1435
+#: includes/components/class-amehp-menu-enhancer.php:1435
 msgid "My Vendor Profile"
 msgstr ""
 
 #. translators: %s: page title.
-#: includes/components/class-account-menu-enhancer.php:1464
+#: includes/components/class-amehp-menu-enhancer.php:1464
+#, php-format
 msgid "%s (Page)"
 msgstr ""
 
@@ -315,51 +329,70 @@ msgstr ""
 msgid "Select the menu items that should be hidden from the account menus."
 msgstr ""
 
+#: includes/configs/settings.php:249
+msgid "Removing the Plugin"
+msgstr ""
+
 #: includes/configs/settings.php:256
-msgid "WooCommerce Integration"
+msgid "Your menu settings are kept if you delete this plugin, so you can reinstall it and pick up where you left off. WordPress shows its own warning on the delete screen saying the data goes too, but that warning is the same for every plugin and does not apply here unless you tick the box below. Switching the plugin off never removes anything."
 msgstr ""
 
-#: includes/configs/settings.php:257
-msgid "Show WooCommerce account pages inside the HivePress account layout"
+#: includes/configs/settings.php:261
+msgid "Delete All Data"
 msgstr ""
 
-#: includes/configs/settings.php:258
-msgid "Renders the WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) inside the HivePress account template, the same way HivePress already displays the Orders page, so every account page shares one sidebar menu."
-msgstr ""
-
-#: includes/configs/settings.php:265
-msgid "Menu Merging"
-msgstr ""
-
-#: includes/configs/settings.php:266
-msgid "Merge the HivePress and WooCommerce account menus"
+#: includes/configs/settings.php:262
+msgid "Delete everything when this plugin is deleted"
 msgstr ""
 
 #: includes/configs/settings.php:267
-msgid "Adds the WooCommerce account links to the HivePress menu, and the HivePress account links to the WooCommerce menu, so both menus list the same items."
+msgid "Leave this unticked unless you are certain. With it ticked, deleting the plugin also removes every icon and colour you have chosen, your custom menu items, the list of items you have hidden, and every other setting on this page. It cannot be undone and nothing asks you to confirm at the time, so copy down anything you want to keep first. Deleting the plugin with this unticked keeps all of it."
 msgstr ""
 
-#: includes/configs/settings.php:274
-msgid "Counters"
+#: includes/configs/settings.php:282
+msgid "WooCommerce Integration"
 msgstr ""
 
-#: includes/configs/settings.php:275
-msgid "Show the HivePress counters in the WooCommerce menu"
-msgstr ""
-
-#: includes/configs/settings.php:276
-msgid "Mirrors the HivePress menu counters (for example unread messages) next to the matching items in the WooCommerce account menu."
+#: includes/configs/settings.php:283
+msgid "Show WooCommerce account pages inside the HivePress account layout"
 msgstr ""
 
 #: includes/configs/settings.php:284
+msgid "Renders the WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) inside the HivePress account template, the same way HivePress already displays the Orders page, so every account page shares one sidebar menu."
+msgstr ""
+
+#: includes/configs/settings.php:291
+msgid "Menu Merging"
+msgstr ""
+
+#: includes/configs/settings.php:292
+msgid "Merge the HivePress and WooCommerce account menus"
+msgstr ""
+
+#: includes/configs/settings.php:293
+msgid "Adds the WooCommerce account links to the HivePress menu, and the HivePress account links to the WooCommerce menu, so both menus list the same items."
+msgstr ""
+
+#: includes/configs/settings.php:300
+msgid "Counters"
+msgstr ""
+
+#: includes/configs/settings.php:301
+msgid "Show the HivePress counters in the WooCommerce menu"
+msgstr ""
+
+#: includes/configs/settings.php:302
+msgid "Mirrors the HivePress menu counters (for example unread messages) next to the matching items in the WooCommerce account menu."
+msgstr ""
+
+#: includes/configs/settings.php:310
 msgid "WooCommerce Page Header"
 msgstr ""
 
-#: includes/configs/settings.php:285
+#: includes/configs/settings.php:311
 msgid "Hide the page header on WooCommerce account pages"
 msgstr ""
 
-#: includes/configs/settings.php:286
+#: includes/configs/settings.php:312
 msgid "Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages."
 msgstr ""
-

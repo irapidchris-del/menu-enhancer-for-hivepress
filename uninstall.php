@@ -2,14 +2,33 @@
 /**
  * Uninstalls the plugin.
  *
- * Deletes all plugin options, including the preserved version 1.x settings,
- * since rolling back no longer applies once the plugin is deleted.
+ * Your settings are kept unless you asked for them to go. Deleting a plugin is
+ * often a reinstall in disguise - a site owner clearing a problem, or swapping a
+ * broken copy for a clean one - so destruction is opt-in via the "Delete All
+ * Data" setting and never the default. WordPress prints its own "will also
+ * delete its data" warning on the delete screen whenever an uninstall.php
+ * exists, whatever that file actually does, so the setting's description says
+ * plainly that the warning does not apply here unless the box is ticked.
  *
  * @package AccountMenuEnhancer
  */
 
 // Exit if uninstall is not called from WordPress.
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
+
+/**
+ * Regenerable runtime junk goes either way.
+ *
+ * The cached GitHub release lookup is rebuilt on the next update check, so
+ * there is nothing to lose by clearing it and an orphaned row to gain by
+ * leaving it.
+ */
+delete_site_transient( 'amehp_github_release' );
+
+// Everything below is the owner's own configuration, so it only goes on request.
+if ( ! get_option( 'hp_amehp_delete_data' ) ) {
+	return;
+}
 
 $amehp_options = [
 	'hp_amehp_icons',
@@ -30,5 +49,11 @@ foreach ( $amehp_options as $amehp_option ) {
 	delete_option( $amehp_option );
 }
 
-// Remove the cached GitHub release lookup used by the updater.
-delete_site_transient( 'amehp_github_release' );
+/**
+ * The flag itself goes last, deliberately.
+ *
+ * If anything above fails part-way through, the flag is still set, so deleting
+ * the plugin a second time finishes the job. Clearing it first would silently
+ * flip the site back to "retain" with half the settings already gone.
+ */
+delete_option( 'hp_amehp_delete_data' );

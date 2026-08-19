@@ -1,9 +1,10 @@
 <?php
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
+ * Plugin URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.2.5
- * Author: ChrisB
+ * Version: 2.2.6
+ * Author: ChrisB @ HivePress Community
  * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -22,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.2.5' );
+	define( 'AMEHP_VERSION', '2.2.6' );
 }
 
 // Define the plugin file.
@@ -33,6 +34,15 @@ if ( ! defined( 'AMEHP_FILE' ) ) {
 // Define the plugin directory.
 if ( ! defined( 'AMEHP_DIR' ) ) {
 	define( 'AMEHP_DIR', __DIR__ );
+}
+
+/**
+ * The author's support page.
+ *
+ * One place, so the Plugins row and the View details popup can never drift apart.
+ */
+if ( ! defined( 'AMEHP_SUPPORT_URL' ) ) {
+	define( 'AMEHP_SUPPORT_URL', 'https://ko-fi.com/chrisbathivepresscommunity' );
 }
 
 /**
@@ -376,6 +386,7 @@ function amehp_get_plugin_information( $result, $action, $args ) {
 		'requires_php'  => $plugin_data['RequiresPHP'],
 		'last_updated'  => $release['published'],
 		'download_link' => $release['package'],
+		'donate_link'   => AMEHP_SUPPORT_URL,
 		'sections'      => [
 			'description' => wpautop( esc_html( $plugin_data['Description'] ) ),
 			'changelog'   => $release['notes'] ? wpautop( esc_html( $release['notes'] ) ) : '<p>' . esc_html__( 'See the GitHub releases page for the changelog.', 'account-menu-enhancer-for-hivepress' ) . '</p>',
@@ -516,3 +527,31 @@ function amehp_fix_update_directory( $source, $remote_source, $upgrader, $hook_e
 }
 
 add_filter( 'upgrader_source_selection', 'amehp_fix_update_directory', 10, 4 );
+
+/**
+ * Adds the house "Donate" link to this plugin's row on the Plugins screen.
+ *
+ * WordPress fires plugin_row_meta for EVERY plugin on the screen, so without the basename
+ * test the link would appear on every row on the site. The markup is copied verbatim from
+ * the house spec in `releasing.md` rather than composed here: every plugin's row has to look
+ * identical and sessions have drifted before. The label is exactly "Donate", matching the
+ * wording WordPress itself uses in the details popup, and the icon is a Dashicon rather than
+ * Font Awesome because Dashicons is the admin's own font and is always loaded there.
+ * WordPress joins row-meta items with " | " itself, so this returns a bare anchor.
+ *
+ * @param array<string> $meta        Row meta links.
+ * @param string        $plugin_file Plugin file the row belongs to.
+ * @return array<string>
+ */
+function amehp_add_row_meta( $meta, $plugin_file ) {
+	if ( plugin_basename( __FILE__ ) === $plugin_file ) {
+		$meta[] = '<a href="' . esc_url( AMEHP_SUPPORT_URL ) . '" target="_blank" rel="noopener noreferrer">'
+			. '<span class="dashicons dashicons-star-filled" style="font-size:14px;line-height:1.3;"></span> '
+			. esc_html__( 'Donate', 'account-menu-enhancer-for-hivepress' )
+			. '</a>';
+	}
+
+	return $meta;
+}
+
+add_filter( 'plugin_row_meta', 'amehp_add_row_meta', 10, 2 );

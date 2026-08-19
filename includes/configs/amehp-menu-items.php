@@ -13,6 +13,6 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-$amehp = hivepress()->account_menu_enhancer;
+$amehp = hivepress()->amehp_menu_enhancer;
 
 return $amehp ? $amehp->get_menu_item_options() : [];

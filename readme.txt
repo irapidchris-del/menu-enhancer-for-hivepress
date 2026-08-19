@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.5
+Stable tag: 2.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,12 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.6 =
+* Fixed: the author shown on the Plugins screen now reads "ChrisB @ HivePress Community", matching every other extension in the range.
+* Added: your settings are now kept when the plugin is deleted. A new "Delete All Data" tickbox under Removing the Plugin is the only thing that erases them, and it is off unless you turn it on. Previously deleting the plugin always wiped everything, so reinstalling meant setting it all up again.
+* Added: a "Donate" link on the Plugins screen and in the plugin details popup, for anyone who would like to support the work. It appears nowhere else and gates nothing.
+* Changed: the plugin's PHP class and one config file are now prefixed, so they cannot collide with HivePress or a future official extension. Your saved settings are unaffected.
 
 = 2.2.5 =
 * Fixed a PHP warning that HivePress core logged on every page load while the plugin was active, caused by the way the plugin registered itself with HivePress.
