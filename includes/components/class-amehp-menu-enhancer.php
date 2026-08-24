@@ -25,7 +25,21 @@ final class Amehp_Menu_Enhancer extends Component {
 	protected $suppressed = false;
 
 	/**
+	 * Whether a base HivePress menu is being built right now.
+	 *
+	 * Breaks the recursion described in get_base_hp_items(). Separate from $suppressed, which
+	 * answers a different question: that one stops this component altering a menu, this one stops
+	 * it starting a second build inside the first.
+	 *
+	 * @var bool
+	 */
+	protected $building_hp_items = false;
+
+	/**
 	 * Base HivePress menu items cache.
+	 *
+	 * Null until a menu has been built under ordinary conditions. A menu built inside another
+	 * plugin's menu pass is deliberately never stored here - see get_base_hp_items().
 	 *
 	 * @var array|null
 	 */
@@ -55,6 +69,18 @@ final class Amehp_Menu_Enhancer extends Component {
 
 			// Alter the HivePress account menu.
 			add_filter( 'hivepress/v1/menus/user_account', [ $this, 'alter_hp_menu' ], 1000 );
+
+			/*
+			 * The menu is filtered at TWO stages, and both matter. The filter above runs in
+			 * Menu::__construct() (hivepress/includes/menus/class-menu.php:94), BEFORE boot()
+			 * applies the second documented extension point, `.../user_account/items`
+			 * (class-menu.php:125). Stage ordering is structural: no priority on the constructor
+			 * filter can ever see an item another extension adds on the /items filter - and real
+			 * extensions register that way (Vendor Analytics adds its item there). Working only at
+			 * the constructor stage, this plugin could neither record such items nor hide them:
+			 * the hidden-key unset ran before the item existed, so "hiding" it did nothing.
+			 */
+			add_filter( 'hivepress/v1/menus/user_account/items', [ $this, 'alter_hp_menu_items' ], 1000 );
 
 			// Enqueue the front-end assets.
 			add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ], 20 );
@@ -135,6 +161,30 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
+	 * Gets every menu item key a saved styling row refers to.
+	 *
+	 * Deliberately looser than get_icon_rules(): a row counts here as soon as it names an item,
+	 * whether or not it also sets an icon. Used to keep saved keys selectable on the settings
+	 * screen, where dropping one costs the owner the whole row. See get_menu_item_options().
+	 *
+	 * @return array
+	 */
+	protected function get_styled_keys() {
+		$keys = [];
+		$rows = get_option( 'hp_amehp_icons' );
+
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( is_array( $row ) && ! empty( $row['item'] ) && is_string( $row['item'] ) ) {
+					$keys[] = (string) $row['item'];
+				}
+			}
+		}
+
+		return array_values( array_unique( $keys ) );
+	}
+
+	/**
 	 * Gets the icon assignments keyed by menu item.
 	 *
 	 * @return array
@@ -198,31 +248,204 @@ final class Amehp_Menu_Enhancer extends Component {
 	/**
 	 * Gets the HivePress account menu items without the plugin additions.
 	 *
+	 * MEMOISED, BUT ONLY WHEN THE MENU WAS BUILT UNDER ORDINARY CONDITIONS.
+	 *
+	 * This used to cache whatever the account menu looked like the first moment anything asked,
+	 * and "anything" includes another plugin. Building a `User_Account` menu fires
+	 * `hivepress/v1/menus/user_account/items`, this component answers on it, and answering calls
+	 * back in here - so a neighbour constructing a menu of its own for its own purposes filled
+	 * this cache from inside its callback, under whatever conditions that callback had set up.
+	 * The result stood for the rest of the request, including for the settings screen, which needs
+	 * the complete list. Caught in a control run on 2026-08-24: the cached menu came back
+	 * poisoned. Persistent Account Menu 1.6.6 works around it from its own side by standing this
+	 * component's callbacks down during its probe, but the fragility is ours, and the next plugin
+	 * to build a `User_Account` menu will not know to do that.
+	 *
+	 * So: a menu built while that filter is already running is used for the call that asked, and
+	 * NOT remembered. The next caller in an ordinary context gets a fresh, clean build and that
+	 * one is cached. The cost is at most a rebuild or two per request on a page where a neighbour
+	 * probes the menu; the alternative is a wrong menu for the whole request.
+	 *
+	 * The suppression flag is a different guard and still needed: it stops THIS component's own
+	 * additions and removals re-entering the menu it is building.
+	 *
 	 * @return array
 	 */
 	protected function get_base_hp_items() {
-		if ( ! isset( $this->hp_items ) ) {
-			$this->hp_items = [];
+		if ( isset( $this->hp_items ) ) {
+			return $this->hp_items;
+		}
 
-			if ( class_exists( '\HivePress\Menus\User_Account' ) ) {
-				$this->suppressed = true;
+		/*
+		 * Re-entrancy guard, and it has to be explicit.
+		 *
+		 * Building the menu below fires `hivepress/v1/menus/user_account/items`, and a callback on
+		 * that filter asking us for the base menu would start another build, for ever. The old
+		 * code survived that by accident: it assigned `$this->hp_items = []` BEFORE building, so a
+		 * re-entrant call hit the isset() and returned the empty array. That is a recursion guard
+		 * disguised as an initialiser, and removing the eager assignment - as the caching fix
+		 * above does - silently removed the guard with it. Proved by hanging a test process on
+		 * 2026-08-24. Keep this flag; the empty return is what breaks the cycle.
+		 */
+		if ( $this->building_hp_items ) {
+			return [];
+		}
 
-				try {
-					$this->hp_items = ( new \HivePress\Menus\User_Account() )->get_items();
-				} catch ( \Throwable $throwable ) {
+		$items = [];
 
-					// Third-party menu items can resolve their labels via
-					// route title callbacks that expect the front-end query
-					// context, so fall back to an empty base menu if the
-					// menu cannot be built in the current context.
-					$this->hp_items = [];
-				}
+		if ( class_exists( '\HivePress\Menus\User_Account' ) ) {
+			$this->building_hp_items = true;
+			$this->suppressed        = true;
 
-				$this->suppressed = false;
+			try {
+				$items = ( new \HivePress\Menus\User_Account() )->get_items();
+			} catch ( \Throwable $throwable ) {
+
+				// Third-party menu items can resolve their labels via
+				// route title callbacks that expect the front-end query
+				// context, so fall back to an empty base menu if the
+				// menu cannot be built in the current context.
+				$items = [];
+			}
+
+			$this->suppressed        = false;
+			$this->building_hp_items = false;
+		}
+
+		if ( ! $this->is_menu_context_borrowed() ) {
+			$this->hp_items = $items;
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Whether the account menu is being built inside somebody else's menu pass.
+	 *
+	 * `doing_filter()` answers for a specific hook and is true for the whole time that hook is
+	 * running, which is exactly the window in which a menu built here describes somebody else's
+	 * conditions rather than the site's. Both filters are named because either can be the outer
+	 * one: a neighbour probing the HivePress menu, or this component's own WooCommerce merge
+	 * running at priority 999 inside WooCommerce's list.
+	 *
+	 * @return bool
+	 */
+	protected function is_menu_context_borrowed() {
+		foreach ( [ 'hivepress/v1/menus/user_account/items', 'hivepress/v1/menus/user_account', 'woocommerce_account_menu_items' ] as $hook ) {
+			if ( doing_filter( $hook ) ) {
+				return true;
 			}
 		}
 
-		return $this->hp_items;
+		return false;
+	}
+
+	/**
+	 * Gets the WooCommerce account menu items without the plugin additions.
+	 *
+	 * @return array
+	 */
+	/**
+	 * Gets the WooCommerce account endpoints that can sensibly appear as menu items.
+	 *
+	 * Read from the registered query vars rather than from the menu, because those are declared by
+	 * whoever owns the endpoint and do not change with who is signed in.
+	 *
+	 * Most of what WooCommerce registers is not a menu item at all - the page behind one order, a
+	 * password reset, the actions on a saved card - so those are named and excluded. Anything else,
+	 * including endpoints added by other plugins, is offered.
+	 *
+	 * @return array Endpoint slugs mapped to a readable label.
+	 */
+	protected function get_registered_wc_endpoints() {
+		if ( ! function_exists( 'WC' ) || ! WC()->query || ! method_exists( WC()->query, 'get_query_vars' ) ) {
+			return [];
+		}
+
+		/**
+		 * Filters the account endpoints never offered as hideable menu items.
+		 *
+		 * @hook amehp/hidden_endpoint_exclusions
+		 * @param {array} $excluded Endpoint slugs.
+		 * @return {array} Endpoint slugs.
+		 */
+		$excluded = (array) apply_filters(
+			'amehp/hidden_endpoint_exclusions',
+			[
+				'order-pay',
+				'order-received',
+				'view-order',
+				'lost-password',
+				'add-payment-method',
+				'delete-payment-method',
+				'set-default-payment-method',
+				'view-subscription',
+				'subscription-payment-method',
+			]
+		);
+
+		$endpoints = [];
+
+		foreach ( array_keys( (array) WC()->query->get_query_vars() ) as $endpoint ) {
+			$endpoint = (string) $endpoint;
+
+			if ( ! $endpoint || in_array( $endpoint, $excluded, true ) ) {
+				continue;
+			}
+
+			$endpoints[ $endpoint ] = ucwords( str_replace( [ '-', '_' ], ' ', $endpoint ) );
+		}
+
+		return $endpoints;
+	}
+
+	/**
+	 * Gets the gap between a menu icon and its wording.
+	 *
+	 * Returned as a CSS length so the default can stay relative - the gap then grows with the
+	 * theme's text size, which suits most sites - while a number typed into the setting is honoured
+	 * exactly, in pixels, for an owner who wants it tighter than that.
+	 *
+	 * @return string
+	 */
+	protected function get_chosen_icon_spacing() {
+		$spacing = get_option( 'hp_amehp_icon_spacing' );
+
+		// A cleared box means "leave it alone"; a stored 0 means "no gap". Only a number counts.
+		if ( ! is_numeric( $spacing ) ) {
+			return '';
+		}
+
+		return max( 0, min( 60, (int) $spacing ) ) . 'px';
+	}
+
+	/**
+	 * Gets the gap between a menu item's icon and its text.
+	 *
+	 * @return string A CSS length, for use inside the icon rule.
+	 */
+	protected function get_icon_spacing() {
+		$spacing = $this->get_chosen_icon_spacing();
+
+		if ( '' === $spacing ) {
+			return '0.5em';
+		}
+
+		/*
+		 * Marked important, and only when the owner has actually typed a number.
+		 *
+		 * Themes and site customisers style these icons themselves, and they do it with selectors
+		 * that outrank ours: a real site was found carrying
+		 * `.hp-widget.hp-menu--user-account .hp-menu__item > a::before { margin-inline-end: 10px }`,
+		 * which is three classes to our two and therefore wins however we order the stylesheets. Our
+		 * rule was emitted correctly and simply had no effect, which reads to an owner as a setting
+		 * that does nothing - and it did nothing only on the account sidebar, where that rule
+		 * applied, so it appeared to work in one menu and not the other.
+		 *
+		 * Left empty, the default stays polite and lets the theme win, which is why the important is
+		 * on this branch alone: a number in this box is an owner overruling their theme on purpose.
+		 */
+		return $spacing . ' !important';
 	}
 
 	/**
@@ -274,6 +497,9 @@ final class Amehp_Menu_Enhancer extends Component {
 		if ( ! isset( $menu['items'] ) || ! is_array( $menu['items'] ) ) {
 			$menu['items'] = [];
 		}
+
+		// Recording moved to alter_hp_menu_items(): the /items stage sees the COMPLETE set,
+		// including items other extensions add after this constructor-stage filter has run.
 
 		$hidden = $this->get_hidden_keys();
 
@@ -1095,7 +1321,7 @@ final class Amehp_Menu_Enhancer extends Component {
 		}
 
 		// Add the base rule.
-		$base = implode( '::before,', $selectors ) . '::before{font-family:"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free";font-weight:900;font-style:normal;font-variant:normal;display:inline-block;width:1.25em;margin-inline-end:0.5em;text-align:center;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;color:var(--amehp-icon-colour,currentColor);}';
+		$base = implode( '::before,', $selectors ) . '::before{font-family:"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free";font-weight:900;font-style:normal;font-variant:normal;display:inline-block;width:1.25em;margin-inline-end:' . $this->get_icon_spacing() . ';text-align:center;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;color:var(--amehp-icon-colour,currentColor);}';
 
 		// Keep the icon next to its label, and the counter on the right, when
 		// the theme lays the menu link out as a flex row (some themes do this
@@ -1125,6 +1351,29 @@ final class Amehp_Menu_Enhancer extends Component {
 	 */
 	protected function get_appearance_css() {
 		$css = '';
+
+		/*
+		 * The icon gap, applied to every item in the account menu.
+		 *
+		 * The icon rule further up only names the items this plugin has been given an icon for, which
+		 * is the right scope for drawing an icon but the wrong scope for the gap. Plenty of sites draw
+		 * most of their menu icons themselves, in a theme or a customiser stylesheet, and on one of
+		 * those the setting appeared broken: it moved the two items this plugin owned and left the
+		 * other thirteen at the theme's spacing, which reads as "the setting does nothing".
+		 *
+		 * So the gap is also emitted once for the whole menu. Only the gap - no icon, no colour, no
+		 * width - so an icon somebody else drew keeps its own appearance and only moves closer to or
+		 * further from its label. An item with no icon at all has no ::before box to shift, so the
+		 * rule costs it nothing.
+		 *
+		 * Both are needed. This one is broad and would be overridden by the per-item rule's own
+		 * spacing; the per-item rule carries it too so the two always agree.
+		 */
+		$spacing = $this->get_chosen_icon_spacing();
+
+		if ( '' !== $spacing ) {
+			$css .= '.hp-menu--user-account .hp-menu__item > a::before,.woocommerce-MyAccount-navigation ul li > a::before{margin-inline-end:' . $spacing . ' !important;}';
+		}
 
 		// Set the menu item font weight.
 		$weight = (string) get_option( 'hp_amehp_menu_weight' );
@@ -1346,6 +1595,158 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
+	 * Records and hides on the /items stage, where late-registered items really exist.
+	 *
+	 * The boot() pass starts from the constructor-stage items, so by the time this filter runs the set is
+	 * complete: core, the constructor-stage additions, and everything other extensions add on this
+	 * same filter at lower priorities. Recording HERE is what makes an /items-registered item
+	 * appear on the settings screen, and unsetting HERE is what makes hiding it actually work -
+	 * the constructor-stage unset in alter_hp_menu() still runs, but an item added after it needs
+	 * this second pass.
+	 *
+	 * The suppression flag matters: get_base_hp_items() constructs a User_Account menu of its own
+	 * while building the settings screen, and this callback firing during that construction must
+	 * neither record (wrong context) nor hide (the settings screen needs the full list).
+	 *
+	 * @param array $items Menu items, complete.
+	 * @return array
+	 */
+	public function alter_hp_menu_items( $items ) {
+		if ( $this->suppressed || ! is_array( $items ) ) {
+			return $items;
+		}
+
+		$this->record_seen_items( $items );
+
+		foreach ( $this->get_hidden_keys() as $key ) {
+			if ( 0 === strpos( $key, 'hp:' ) ) {
+				unset( $items[ substr( $key, strlen( 'hp:' ) ) ] );
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Remembers the account menu items this site actually renders.
+	 *
+	 * The settings screen builds its list of hideable items by constructing the account menu in the
+	 * admin, and that list is incomplete through no fault of the extensions in it. An extension is
+	 * entitled to register its menu item inside `if ( ! is_admin() )` - the menu is a front-end thing
+	 * - and this plugin's own Notifications extension does exactly that. The item then renders
+	 * perfectly on the account page and is simply absent from the list of things an owner may hide,
+	 * which reads as this plugin having missed it.
+	 *
+	 * Guessing does not work either: the pinned list below covers the extensions known when it was
+	 * written, and an item name cannot be derived from a route name (the Gallery item is `gallery`
+	 * while its route is `gallery_edit_page`). The only reliable source is the menu as it is really
+	 * built, so it is recorded here, on the front end, where every extension has had its say.
+	 *
+	 * Items accumulate rather than replace, because the menu differs from one visitor to the next - a
+	 * vendor sees pages a buyer never does - and a buyer's page load must not erase the vendor-only
+	 * items from the owner's settings screen. Anything whose route has since stopped resolving is
+	 * dropped when the list is read, so deactivating an extension still clears its item.
+	 *
+	 * @param array $items Menu items, as registered and before any are hidden.
+	 */
+	protected function record_seen_items( $items ) {
+		$seen    = $this->get_seen_items();
+		$changed = false;
+
+		foreach ( $items as $name => $item ) {
+			if ( ! is_string( $name ) || ! is_array( $item ) ) {
+				continue;
+			}
+
+			$route = hp\get_array_value( $item, 'route' );
+			$route = is_string( $route ) ? $route : '';
+
+			// The label is usually still unset at this point, because core fills it in from the route
+			// after this filter has run. Resolve it the same way core will.
+			$label = hp\get_array_value( $item, 'label' );
+			$label = is_string( $label ) ? wp_strip_all_tags( $label ) : '';
+
+			if ( ! $label && $route ) {
+				$label = $this->get_route_title( $route );
+			}
+
+			if ( ! $label ) {
+				continue;
+			}
+
+			if ( isset( $seen[ $name ] ) && $seen[ $name ]['label'] === $label && $seen[ $name ]['route'] === $route ) {
+				continue;
+			}
+
+			$seen[ $name ] = [
+				'label' => $label,
+				'route' => $route,
+			];
+
+			$changed = true;
+		}
+
+		/*
+		 * Only ever written when something is genuinely new, so a settled site does no writes at
+		 * all. Autoloaded on purpose: the read above happens on every page view for every
+		 * logged-in user (the header dropdown builds this menu on every page, and page caches
+		 * bypass logged-in traffic), and a non-autoloaded option would make each of those views
+		 * pay one extra uncached SELECT forever. The payload is bounded - a name, a label and a
+		 * route per account menu item, a few kilobytes on the heaviest site - which is exactly
+		 * what alloptions is for.
+		 */
+		if ( $changed ) {
+			update_option( 'hp_amehp_seen_items', $seen, true );
+		}
+	}
+
+	/**
+	 * Gets the recorded account menu items.
+	 *
+	 * @return array<string, array{label: string, route: string}>
+	 */
+	protected function get_seen_items() {
+		$seen = get_option( 'hp_amehp_seen_items' );
+
+		if ( ! is_array( $seen ) ) {
+			return [];
+		}
+
+		$items = [];
+
+		foreach ( $seen as $name => $item ) {
+			if ( ! is_string( $name ) || ! is_array( $item ) ) {
+				continue;
+			}
+
+			$label = hp\get_array_value( $item, 'label' );
+			$route = hp\get_array_value( $item, 'route' );
+
+			// Stored from a front-end filter anything may have hooked, so cleaned again on the way
+			// out rather than trusting what went in.
+			$label = is_string( $label ) ? mb_substr( wp_strip_all_tags( $label ), 0, 100 ) : '';
+
+			if ( ! $label ) {
+				continue;
+			}
+
+			$route = is_string( $route ) ? $route : '';
+
+			// An item whose route no longer exists belongs to an extension that has been turned off.
+			if ( $route && ! hivepress()->router->get_route( $route ) ) {
+				continue;
+			}
+
+			$items[ $name ] = [
+				'label' => $label,
+				'route' => $route,
+			];
+		}
+
+		return $items;
+	}
+
+	/**
 	 * Gets the menu item options for the settings screen.
 	 *
 	 * @return array
@@ -1367,6 +1768,22 @@ final class Amehp_Menu_Enhancer extends Component {
 			if ( $label ) {
 				$options[ 'hp:' . $name ] = $label;
 			}
+		}
+
+		/*
+		 * Add the items seen on the front end that the admin-built menu could not show.
+		 *
+		 * Only items that came from a route. The account menu also carries the WooCommerce endpoints
+		 * that HivePress merges into it, and those have no route of their own; they are already
+		 * offered below under their WooCommerce names, so admitting them here would list Downloads,
+		 * Addresses and Account details twice on the settings screen.
+		 */
+		foreach ( $this->get_seen_items() as $name => $item ) {
+			if ( ! $item['route'] || isset( $options[ 'hp:' . $name ] ) ) {
+				continue;
+			}
+
+			$options[ 'hp:' . $name ] = $item['label'];
 		}
 
 		// Add the pinned HivePress menu items.
@@ -1391,11 +1808,44 @@ final class Amehp_Menu_Enhancer extends Component {
 				$wc_options[ 'wc:' . $endpoint ] = sprintf( esc_html__( '%s (WooCommerce)', 'account-menu-enhancer-for-hivepress' ), $label );
 			}
 
+			/*
+			 * Then every account endpoint that is registered but did not come back from the menu.
+			 *
+			 * wc_get_account_menu_items() is a filtered list, and plugins routinely add their item
+			 * only when the person looking has something to look at - WooCommerce Subscriptions adds
+			 * "Subscriptions" only for a user who already has one. Asked in wp-admin, on behalf of an
+			 * administrator who happens to have none, it answers without that item, and the owner
+			 * could never choose to hide a menu entry their members can plainly see.
+			 *
+			 * The registered endpoints do not depend on who is asking, so they fill the gap.
+			 */
+			foreach ( $this->get_registered_wc_endpoints() as $endpoint => $label ) {
+				if ( isset( $wc_options[ 'wc:' . $endpoint ] ) ) {
+					continue;
+				}
+
+				/* translators: %s: menu item label. */
+				$wc_options[ 'wc:' . $endpoint ] = sprintf( esc_html__( '%s (WooCommerce)', 'account-menu-enhancer-for-hivepress' ), $label );
+			}
+
 			$options = array_merge( $options, $wc_options );
 		}
 
-		// Keep the previously saved keys selectable.
-		$saved = array_merge( $this->get_hidden_keys(), array_keys( $this->get_icon_rules() ) );
+		/*
+		 * Keep the previously saved keys selectable.
+		 *
+		 * From the stored rows, NOT from get_icon_rules(). That method deliberately returns only
+		 * rows that have an icon, so a styling row carrying a text colour and no icon was missing
+		 * from this list - and a key missing here is a key the select field no longer offers. Once
+		 * the extension that provided the menu item was deactivated, the next save of this tab
+		 * found the stored value outside the options, sanitised it to null, and core's Repeater
+		 * drops any row whose required field came back null
+		 * (hivepress/includes/fields/class-repeater.php:107-116). The row was gone for good, the
+		 * screen said the settings had saved, and reactivating the extension brought nothing back.
+		 * Anything a saved row REFERS TO has to stay selectable, whatever else that row does or
+		 * does not set.
+		 */
+		$saved = array_merge( $this->get_hidden_keys(), $this->get_styled_keys() );
 
 		foreach ( $saved as $key ) {
 			if ( is_string( $key ) && '' !== $key && ! isset( $options[ $key ] ) ) {

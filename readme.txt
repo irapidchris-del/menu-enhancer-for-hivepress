@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.2.8
+Stable tag: 2.2.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,54 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 2.2.13 =
+* Fixed: a menu styling row that set a text colour but no icon is no longer lost. If the extension
+  providing that menu item was switched off and the tab was saved again, the row was silently
+  dropped and could not be recovered by switching the extension back on, while the screen still
+  said the settings had saved.
+* Fixed: the account menu is no longer remembered in a distorted form. Another plugin building its
+  own copy of the account menu could leave this one holding that copy for the rest of the request,
+  which affected both the merged menu and the settings screen.
+* Fixed: deleting the plugin now also clears the update check's own leftovers and cancels its
+  background update check.
+
+= 2.2.12 =
+* Fixed: HivePress filters the account menu at two stages, and extensions that add their item at the
+  second stage - Vendor Analytics registers this way - could neither be recorded nor actually hidden:
+  the hide ran before the item existed. Both now also run at the second stage, so those items appear
+  on the settings screen and hiding them genuinely removes them.
+* Fixed: the record of seen menu items was read on every page view for every signed-in visitor but
+  stored as a non-autoloaded option, costing one extra database query per page forever. It now loads
+  with the options WordPress fetches anyway.
+* Fixed: Delete All Data now also removes the icon spacing setting and the seen-items record, which
+  the uninstaller previously left behind.
+
+= 2.2.11 =
+* Fixed: the icon spacing setting only moved the icons this plugin draws. If your theme or a
+  customiser stylesheet supplies most of your menu icons, only the handful set up here moved and the
+  rest stayed where they were, which looked like the setting being ignored. A spacing you set now
+  applies to every item in the account menu, moving the icon closer to or further from its label
+  without changing the icon itself. Leaving the box empty still changes nothing.
+
+= 2.2.10 =
+* Fixed: the icon spacing setting appeared to do nothing. Themes and site customisers style these
+  icons with more specific selectors and simply outranked it. A spacing you have actually typed now
+  wins; leaving the box empty still defers to your theme as before.
+* Fixed: menu items added by extensions that register them only on the front end - including our own
+  Notifications - never appeared in the list of items you can hide. The account menu is now recorded
+  as it is really built, so every route-based item a visitor can see is an item you can hide.
+
+= 2.2.9 =
+* **Fixed - menu items added by other plugins were missing from Hidden Items.** WooCommerce
+  Subscriptions was the clearest case: its Subscriptions link is added only for somebody who
+  actually has a subscription, so when the list was built for an administrator who had none, the
+  item simply was not there and you could never choose to hide it, even while your members could see
+  it plainly. The list now also offers every account endpoint that is registered, which does not
+  depend on who is looking. Payment methods reappears for the same reason.
+* **Added - an Icon Spacing setting** for the gap between a menu icon and its wording. Leave it
+  empty and the gap scales with your theme text size as before; type a number and it is used
+  exactly, in pixels.
 
 = 2.2.8 =
 * Fixed - checking for updates no longer holds up an admin page. The check ran while WordPress was

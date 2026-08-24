@@ -234,6 +234,15 @@ $settings = [
 				'_order'      => 5,
 
 				'fields'      => [
+					'amehp_icon_spacing' => [
+						'label'       => esc_html__( 'Icon Spacing (px)', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'The gap between a menu icon and its wording. Leave it empty to let the gap scale with your theme text size, which suits most sites. The icons sit in a fixed-width column so the wording stays lined up, so the space you see is a little wider than the number you type.', 'account-menu-enhancer-for-hivepress' ),
+						'type'        => 'number',
+						'min_value'   => 0,
+						'max_value'   => 60,
+						'_order'      => 90,
+					],
+
 					'amehp_hidden_items' => [
 						'label'       => esc_html__( 'Hidden Items', 'account-menu-enhancer-for-hivepress' ),
 						'description' => esc_html__( 'Select the menu items that should be hidden from the account menus.', 'account-menu-enhancer-for-hivepress' ),
