@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.8
+Stable tag: 3.3.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,6 +46,16 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
 
+= 3.3.9 =
+* Changed: the instructions on the Menu Item Styling setting no longer say the cards can be dragged
+  into order. The card handles were removed in 3.3.4, and the wording now points to the Live preview
+  panel, which is where the menu order is arranged. Anyone translating the plugin should revisit
+  this wording.
+* Changed: the plugin's record of the menu items your site renders no longer keeps an entry for a
+  custom menu item you have deleted. The record exists so that every item can be offered on the
+  settings screen, and it grew a little each time a custom item was removed. Your custom items,
+  their icons and colours, and your menu order are all unaffected.
+
 = 3.3.8 =
 * Fixed: on sites where Account Menu is the first tab under HivePress > Settings, opening Settings
   from the menu could show that tab with none of its controls working - no quick links, no live
@@ -56,6 +66,8 @@ All settings live under HivePress, then Settings, then Account Menu.
   have ended up with two sets of them at once - two rows of quick links, two floating Save tabs,
   two back-to-top buttons. The extensions can now see each other's controls and only one set is
   drawn, whichever extension gets there first.
+* Changed: the hover tooltips on the settings screen are wider, so a two-sentence explanation
+  reads as a few short lines rather than a tall narrow ribbon of text.
 
 = 3.3.7 =
 * Fixed: a custom menu item added after the first no longer has its icon forced to black. Adding a
@@ -251,9 +263,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 * Fixed: the icon spacing setting appeared to do nothing. Themes and site customisers style these
   icons with more specific selectors and simply outranked it. A spacing you have actually typed now
   wins; leaving the box empty still defers to your theme as before.
-* Fixed: menu items added by extensions that register them only on the front end - including our own
-  Notifications - never appeared in the list of items you can hide. The account menu is now recorded
-  as it is really built, so every route-based item a visitor can see is an item you can hide.
+* Fixed: menu items added by extensions that register them only on the front end, Notifications for
+  HivePress among them, never appeared in the list of items you can hide. The account menu is now
+  recorded as it is really built, so every route-based item a visitor can see is an item you can hide.
 
 = 2.2.9 =
 * **Fixed - menu items added by other plugins were missing from Hidden Items.** WooCommerce

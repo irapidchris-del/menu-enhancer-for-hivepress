@@ -77,7 +77,20 @@ $amehp_settings = [
 
 					'amehp_icons'                => [
 						'label'       => esc_html__( 'Menu Item Styling', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'Choose a menu item, then optionally give it an icon, an icon weight and colours. Click a card header to collapse or expand it, and drag the handle to reorder the cards. Styling for custom items is set in the Custom Items section.', 'account-menu-enhancer-for-hivepress' ),
+
+						/*
+						 * The middle sentence used to read "and drag the handle
+						 * to reorder the cards", which stopped being true in
+						 * 3.3.4 when removeDragHandles() took the handles off
+						 * this plugin's repeater cards: the menu is arranged in
+						 * the Live preview panel, and a second set of handles
+						 * offered a way to order the menu that no longer ordered
+						 * it. Corrected in 3.3.9, which also says where the
+						 * ordering really happens rather than only removing the
+						 * claim - an owner who read the old sentence went looking
+						 * for a handle that is not there.
+						 */
+						'description' => esc_html__( 'Choose a menu item, then optionally give it an icon, an icon weight and colours. Click a card header to collapse or expand it. The order of the cards makes no difference to the menu; arrange the menu itself in the Live preview panel. Styling for custom items is set in the Custom Items section.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'repeater',
 						'caption'     => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
 						'_order'      => 30,

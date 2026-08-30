@@ -94,6 +94,19 @@ final class Amehp_Menu_Enhancer extends Component {
 	protected $seen_items;
 
 	/**
+	 * Whether the last read dropped a custom item's record that no longer
+	 * belongs to anything.
+	 *
+	 * Set by get_seen_items() alongside the cache above, and read by
+	 * record_seen_items() so the shrunken list is written back rather than
+	 * waiting for some unrelated change to carry it. See the pruning note in
+	 * get_seen_items() for why those records exist at all.
+	 *
+	 * @var bool
+	 */
+	protected $seen_items_compacted = false;
+
+	/**
 	 * Class constructor.
 	 *
 	 * @param array $args Component arguments.
@@ -2818,8 +2831,21 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * @param array $items Menu items, as registered and before any are hidden.
 	 */
 	protected function record_seen_items( $items ) {
-		$seen    = $this->get_seen_items();
-		$changed = false;
+		$seen = $this->get_seen_items();
+
+		/*
+		 * A record the read just pruned counts as a change.
+		 *
+		 * $seen is the CLEANED list, so a custom item deleted by the owner has
+		 * already gone from it, and the shrunken list would otherwise sit in
+		 * memory while the stored option kept the dead record - written back
+		 * only if something else happened to change on some later page view,
+		 * which on a settled site is never. Treating the prune as a change is
+		 * what makes the option actually get smaller, and it is self-limiting:
+		 * once written there is nothing left to prune, so the next build reads
+		 * a clean list and writes nothing.
+		 */
+		$changed = $this->seen_items_compacted;
 
 		foreach ( $items as $name => $item ) {
 			if ( ! is_string( $name ) || ! is_array( $item ) ) {
@@ -2913,12 +2939,15 @@ final class Amehp_Menu_Enhancer extends Component {
 		$seen = get_option( 'hp_amehp_seen_items' );
 
 		if ( ! is_array( $seen ) ) {
-			$this->seen_items = [];
+			$this->seen_items           = [];
+			$this->seen_items_compacted = false;
 
 			return $this->seen_items;
 		}
 
-		$items = [];
+		$items     = [];
+		$custom    = null;
+		$compacted = false;
 
 		foreach ( $seen as $name => $item ) {
 			if ( ! is_string( $name ) || ! is_array( $item ) ) {
@@ -2943,6 +2972,50 @@ final class Amehp_Menu_Enhancer extends Component {
 				continue;
 			}
 
+			/*
+			 * A CUSTOM ITEM'S RECORD, FOR AN ITEM THAT NO LONGER EXISTS.
+			 *
+			 * The route test above cannot reach these. It only fires when a
+			 * record HAS a route, and a custom item has none - so from 3.2.0,
+			 * when recording began, every custom item ever created left a
+			 * record here that nothing could ever remove. Measured on the
+			 * development install on 2026-08-30: 3,384 bytes, the sixth-largest
+			 * autoloaded option on the site and 2.2% of alloptions, holding
+			 * three dead custom-item records against one live item. This option
+			 * is autoloaded and read on every signed-in page view, so it is not
+			 * a place for anything to accumulate for ever.
+			 *
+			 * Dropping every route-less record is the WRONG fix and would cost
+			 * the owner real settings: the WooCommerce endpoints that HivePress
+			 * merges into the account menu (Downloads, Addresses, Account
+			 * details, Orders, Subscriptions) have no HivePress route either,
+			 * and the settings screen would lose them. So the test is narrowed
+			 * to this plugin's own item keys, and asks get_custom_items() - the
+			 * one place that decides what a custom item is called - whether the
+			 * item is still there.
+			 *
+			 * The same test is what writeOrder() applies to the stored menu
+			 * order in the settings screen (mergeOrder() in preview-logic.js,
+			 * "the one key that is dropped is a CUSTOM item that matches no
+			 * row"), and it is deliberately the same one: both are asking
+			 * whether an "amehp_item_" key still names something. Deriving the
+			 * key list a second way here is how the two would drift.
+			 *
+			 * Resolved lazily, so a site that has never created a custom item
+			 * pays nothing for this on a path that runs on every page view.
+			 */
+			if ( 0 === strpos( $name, 'amehp_item_' ) ) {
+				if ( null === $custom ) {
+					$custom = $this->get_custom_items();
+				}
+
+				if ( ! isset( $custom[ $name ] ) ) {
+					$compacted = true;
+
+					continue;
+				}
+			}
+
 			// Absent on a record written before 3.2.0, and on any item whose
 			// own registration carried no order, so it stays nullable.
 			$order = hp\get_array_value( $item, 'order' );
@@ -2954,7 +3027,8 @@ final class Amehp_Menu_Enhancer extends Component {
 			];
 		}
 
-		$this->seen_items = $items;
+		$this->seen_items           = $items;
+		$this->seen_items_compacted = $compacted;
 
 		return $items;
 	}

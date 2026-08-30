@@ -49,6 +49,7 @@ function amehp_test_reset() {
 			'suppressed'        => false,
 			'building_hp_items' => false,
 			'seen_items'        => null,
+			'seen_items_compacted' => false,
 		] as $name => $value
 	) {
 		set_priv( $MENU, $name, $value );
@@ -1171,13 +1172,22 @@ ok( ! isset( $seen['gone'] ), 'P7 an item whose route no longer resolves is drop
 ok( isset( $seen['stays'] ), 'P8 and one whose route still resolves is kept' );
 
 /*
- * A record with NO route survives, and that is the current behaviour rather
- * than an oversight this test endorses: the WooCommerce endpoints merged into
- * the account menu have no HivePress route, so route-less records have to be
- * kept or the settings screen would lose them. The cost is that a custom item's
- * record outlives the item itself, since those are route-less too - written up
- * in the 3.3.5 report. Pinned here so a change to the pruning rule shows up as
- * a deliberate decision rather than as a silent one.
+ * A record with NO route survives, and that is the whole trap in the pruning
+ * rule: the WooCommerce endpoints merged into the account menu have no
+ * HivePress route, so "drop everything route-less" would take Downloads,
+ * Addresses, Account details, Orders and Subscriptions off the settings screen.
+ *
+ * WHAT P9 ASSERTED UNTIL 3.3.9. Only this line, and the comment above it went
+ * on to say that a custom item's record outliving the item was the accepted
+ * cost of keeping route-less records - custom items being route-less too, and
+ * the route test only firing inside `if ( $route && ... )`. That cost turned
+ * out to be unbounded: every custom item ever created left a record nothing
+ * could remove, and on the development install the option had reached 3,384
+ * bytes, sixth-largest of the autoloaded options, holding three dead records
+ * against one live item. 3.3.9 narrows the prune to this plugin's own
+ * "amehp_item_" keys and asks get_custom_items() whether the item still
+ * exists, so P9's own assertion is unchanged and P9a to P9c below pin the part
+ * that did change.
  */
 amehp_test_reset();
 $GLOBALS['_options']['hp_amehp_seen_items'] = [
@@ -1188,6 +1198,96 @@ $GLOBALS['_options']['hp_amehp_seen_items'] = [
 	],
 ];
 ok( isset( call_priv( $MENU, 'get_seen_items' )['downloads'] ), 'P9 a record with no route at all is kept, because the merged WooCommerce rows have none' );
+
+/*
+ * The narrowed prune, with all three kinds of route-less record present at
+ * once: a WooCommerce row, a live custom item, and two dead custom items - one
+ * whose id belongs to no row any more, and one under the positional name the
+ * 3.3.0 id migration superseded. Both dead shapes were found side by side on
+ * the development install, the second of them naming the SAME item as the
+ * live record next to it.
+ */
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'uid'   => '6b7aca0b5757',
+		'label' => 'Help',
+	],
+];
+
+/*
+ * The one WooCommerce row is stored exactly as record_seen_items() would have
+ * written it from base_menu( [ 'downloads' => 63 ] ), so the menu built below
+ * introduces nothing new and the prune is the ONLY thing that can trigger a
+ * write. Recorded against a base_menu() label, which is the item name in
+ * capitals.
+ */
+$GLOBALS['_options']['hp_amehp_seen_items'] = [
+	'downloads'               => [
+		'label' => 'DOWNLOADS',
+		'route' => '',
+		'order' => 63,
+	],
+	'amehp_item_6b7aca0b5757' => [
+		'label' => 'Help',
+		'route' => '',
+		'order' => 100,
+	],
+	'amehp_item_qmlo3qhjsjaf' => [
+		'label' => 'Deleted item',
+		'route' => '',
+		'order' => 101,
+	],
+	'amehp_item_1'            => [
+		'label' => 'Help',
+		'route' => '',
+		'order' => 100,
+	],
+];
+
+$seen = call_priv( $MENU, 'get_seen_items' );
+ok( isset( $seen['downloads'] ), 'P9a the WooCommerce row is untouched by the custom item prune' );
+ok( isset( $seen['amehp_item_6b7aca0b5757'] ), 'P9b a custom item that still exists keeps its record' );
+ok(
+	! isset( $seen['amehp_item_qmlo3qhjsjaf'] ) && ! isset( $seen['amehp_item_1'] ),
+	'P9c a record for a deleted custom item, and a positional name the id migration superseded, are both dropped'
+);
+
+// The shrunken list has to reach the database, or a settled site stores the
+// dead records for ever: nothing else changes, so nothing else triggers a write.
+$GLOBALS['_option_writes'] = [];
+$MENU->alter_hp_menu_items( base_menu( [ 'downloads' => 63 ] ) );
+ok( in_array( 'hp_amehp_seen_items', $GLOBALS['_option_writes'], true ), 'P9d and the pruned list is written back rather than waiting for an unrelated change' );
+
+$stored = $GLOBALS['_options']['hp_amehp_seen_items'];
+ok(
+	! isset( $stored['amehp_item_qmlo3qhjsjaf'] ) && ! isset( $stored['amehp_item_1'] ),
+	'P9e so the stored option loses the dead records'
+);
+ok(
+	isset( $stored['downloads'], $stored['amehp_item_6b7aca0b5757'] ),
+	'P9f and keeps the WooCommerce row and the live custom item'
+);
+
+// Safe to run again: there is nothing left to prune, so the next build writes
+// nothing at all.
+$GLOBALS['_option_writes'] = [];
+$MENU->alter_hp_menu_items( base_menu( [ 'downloads' => 63 ] ) );
+ok( [] === $GLOBALS['_option_writes'], 'P9g and running it again writes nothing, so the compaction cannot loop' );
+
+// A site that has never added a custom item has nothing to prune and nothing to
+// write, and never even asks what the custom items are.
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_seen_items'] = [
+	'downloads' => [
+		'label' => 'DOWNLOADS',
+		'route' => '',
+		'order' => 63,
+	],
+];
+$GLOBALS['_option_writes'] = [];
+$MENU->alter_hp_menu_items( base_menu( [ 'downloads' => 63 ] ) );
+ok( [] === $GLOBALS['_option_writes'], 'P9h a site with no custom items at all is left completely alone' );
 
 // The stored value comes from a front-end filter anything may have hooked, so
 // it is cleaned again on the way out rather than trusted as it went in.
