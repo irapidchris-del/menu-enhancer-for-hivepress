@@ -1771,10 +1771,18 @@ final class Amehp_Menu_Enhancer extends Component {
 				// and lets them drift when the theme's font changes.
 				'headingFontUrl'   => $family ? $this->get_heading_font_url( $family ) : '',
 
-				// The real front-end order, and the owner's own arrangement of
-				// it, so the preview can list the items the way the site does.
+				// The real front-end order, so the preview can list the items the
+				// way the site does.
+				//
+				// The owner's own arrangement is deliberately NOT sent here. It
+				// used to be, as 'menuOrder', and nothing ever read it: the
+				// preview takes the arrangement from the hidden form field
+				// instead (admin-preview.js, storedOrder()), which is the only
+				// correct source, because that value changes as the owner drags
+				// while a localised copy is frozen at page build. Removed in
+				// 3.3.11. Do not add it back without a reader that needs the
+				// saved value specifically rather than the live one.
 				'itemOrders'       => $this->get_preview_orders(),
-				'menuOrder'        => $this->get_menu_order(),
 
 				// The WooCommerce-named items that are in the HivePress menu
 				// whether or not the integration is on, so the HivePress panel

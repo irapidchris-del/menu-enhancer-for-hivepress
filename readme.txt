@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.10
+Stable tag: 3.3.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,12 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.3.11 =
+* Changed: internal tidying only, with no change to how anything looks or behaves. The settings
+  screen was being sent a copy of your saved menu arrangement that nothing used, because the
+  live preview reads the arrangement from the page itself so that it follows you as you drag.
+  The unused copy has been removed.
 
 = 3.3.10 =
 * Fixed: the Placed Orders item, which HivePress adds to the account menu once a member has an

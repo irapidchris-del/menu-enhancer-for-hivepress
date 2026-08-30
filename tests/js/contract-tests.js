@@ -125,14 +125,35 @@ ok( null !== DEPS && -1 !== DEPS[ 0 ].indexOf( "'amehp-preview-logic'" ), 'O4 an
  */
 const BROWSER_CODE = PREVIEW_CODE + code( read( 'assets/js/backend.js' ) );
 
-// "menuOrder" is deliberately NOT in this list. It is localised but never read:
-// the preview takes the arrangement from the hidden form field instead, because
-// that one changes as the owner drags while the localised copy is whatever the
-// page was built with. Adding it here would pin a payload nothing consumes.
 [ 'itemOrders', 'customOrders', 'hpMenuWcKeys', 'placeholderPages' ].forEach( function ( name ) {
 	ok( -1 !== BROWSER_CODE.indexOf( name ), 'O5 a browser script reads "' + name + '"' );
 	ok( -1 !== COMPONENT_SOURCE.indexOf( "'" + name + "'" ), 'O6 and the component sends "' + name + '"' );
 } );
+
+/*
+ * The reverse check, which is what this section was missing.
+ *
+ * Until 3.3.11 the component also sent "menuOrder", the owner's saved
+ * arrangement, and no browser script ever read it. That was recorded here as a
+ * comment saying it was deliberately excluded from the list above - which
+ * documented the dead payload rather than preventing it, and left it sitting in
+ * every page build for several releases.
+ *
+ * The arrangement must come from the hidden form field (admin-preview.js,
+ * storedOrder()), because that changes as the owner drags while a localised
+ * copy is frozen at page build. So sending it is not merely wasteful, it is a
+ * second source of truth that can disagree with the first.
+ */
+/*
+ * Match the array KEY, not any mention of the name. The component carries a
+ * comment explaining why the payload was removed, and that comment quotes the
+ * name - a bare indexOf( "'menuOrder'" ) fails on the explanation itself, which
+ * is how the first version of this assertion behaved.
+ */
+ok(
+	! /'menuOrder'\s*=>/.test( COMPONENT_SOURCE ),
+	'O7 the component does not send "menuOrder" - the live form field is the only source for the arrangement'
+);
 
 /* ===================== P. the harness never ships ===================== */
 section( '[P] where the harness lives' );
