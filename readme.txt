@@ -16,19 +16,21 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 
 **Features**
 
-* **One account layout.** Renders the remaining WooCommerce account pages inside the HivePress account template, using the same mechanism HivePress core already uses for the Orders page, so every account page shares one sidebar menu.
-* **Menu merging.** Optionally lists the WooCommerce account links in the HivePress menu and the HivePress account links in the WooCommerce menu, so both menus match wherever they appear.
-* **Icons and colours.** Assign any of the 1,000 Font Awesome icons bundled with HivePress to any menu item, each with an optional colour, using the native HivePress icon dropdown with previews.
-* **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, position, menu targeting and per-role visibility.
+* **One account layout, one menu.** A single WooCommerce Integration switch renders the remaining WooCommerce account pages inside the HivePress account template, using the same mechanism HivePress core already uses for the Orders page, and lists the WooCommerce account links in the HivePress menu and the HivePress account links in the WooCommerce menu, so every account page shares one sidebar and both menus match wherever they appear.
+* **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a dropdown with previews: the Font Awesome icons bundled with HivePress, the names added in Font Awesome 6 and 7, and a set of brand icons such as Stripe, PayPal and WhatsApp. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
+* **Live preview and drag ordering.** The settings tab shows your real account menu as your site will render it, and you drag the items into the order you want, or move them with arrow buttons. The order applies to the HivePress account dropdown, the HivePress account sidebar and the WooCommerce account sidebar alike.
+* **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, menu targeting and per-role visibility, placed wherever you drag them.
 * **Hidden items.** Hide any HivePress or WooCommerce menu item.
-* **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when the menus are merged.
-* **Menu styling.** Set the menu item font weight, recolour individual menu item text, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
+* **Persistent menu items.** Keep chosen account menu items visible even when their pages are empty, instead of letting them disappear.
+* **Placeholder pages.** Give each empty account page its own icon, message, button label and button URL, so it explains itself and points somewhere useful.
+* **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when WooCommerce Integration is switched on.
+* **Menu styling.** Set the menu item font weight, apply the theme's Heading Font to the sidebar account menus, recolour individual menu item text, hide the theme's navigation arrows, and hide the page header on WooCommerce account pages so they match the HivePress account pages.
 
 All settings live under HivePress, then Settings, then Account Menu.
 
 **Notes**
 
-* Icons are rendered with CSS using Font Awesome codepoints, so they work with the Font Awesome 5 Free files bundled with HivePress as well as self-hosted Font Awesome 6 or 7. If you subset Font Awesome yourself, make sure the icons you select here are included in your subset.
+* Icons are rendered with CSS using Font Awesome codepoints. The icons HivePress bundles work on their own; when you choose a Font Awesome 6 or 7 name, or a brand icon, the plugin loads the copy of Font Awesome 7 it ships with so the icon renders. If you subset Font Awesome yourself, make sure the icons you select here are included in your subset.
 * The WooCommerce settings only appear while WooCommerce is active.
 * If you use a performance plugin that removes unused CSS (for example Perfmatters or FlyingPress), exclude this plugin's stylesheet from that feature, otherwise the menu counters can render unstyled because they are added to the page after the used CSS is sampled.
 * Once an item is given an icon, the icon colour comes from this plugin's settings (or the menu text colour when no colour is set), taking precedence over icon colour rules added by themes or custom CSS.
@@ -50,6 +52,10 @@ All settings live under HivePress, then Settings, then Account Menu.
   preview and no colour pickers, with nothing to say why. The plugin now recognises its own tab
   from what is actually on the page rather than from the web address, so it works however you
   reach it.
+* Fixed: if another extension in this family also adds these controls to a settings tab, you could
+  have ended up with two sets of them at once - two rows of quick links, two floating Save tabs,
+  two back-to-top buttons. The extensions can now see each other's controls and only one set is
+  drawn, whichever extension gets there first.
 
 = 3.3.7 =
 * Fixed: a custom menu item added after the first no longer has its icon forced to black. Adding a
@@ -163,6 +169,8 @@ All settings live under HivePress, then Settings, then Account Menu.
   whether you left it open.
 * Added: a floating Save Changes tab on the edge of the settings page, a quick-links bar that stays
   with you as you scroll, and a back-to-top button.
+* Fixed: the settings section headings keep the ids WordPress already gives them instead of being
+  renumbered, so a link or a bookmark pointing at a section carries on working.
 * Improved: on a phone the preview now sits at the bottom of the settings page instead of above
   them, with a "Live preview" quick link to reach it.
 
