@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Plugin URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
- * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, and the option to hide any item.
- * Version: 2.2.13
+ * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, the option to hide any item, and persistent menu items that stay visible with a helpful notice when their pages are empty.
+ * Version: 3.3.8
  * Author: ChrisB @ HivePress Community
  * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.8
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '2.2.13' );
+	define( 'AMEHP_VERSION', '3.3.8' );
 }
 
 // Define the plugin file.
@@ -117,11 +117,13 @@ function amehp_add_settings_link( $links ) {
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'amehp_add_settings_link' );
 
 /**
- * Migrates settings from plugin version 1.x once.
+ * Migrates stored settings once per upgrade step.
  *
- * Version 1.x stored everything in a single "amehp_settings" option. Version 2
- * saves each setting as a separate HivePress option. The legacy option is kept
- * untouched so that rolling back remains possible.
+ * Version 1.x stored everything in a single "amehp_settings" option; version 2
+ * saves each setting as a separate HivePress option. Version 3.0.0 merged the
+ * two WooCommerce checkboxes into one and absorbed the Persistent Account Menu
+ * plugin, whose hp_hppam_* options are copied to hp_amehp_* keys. Every legacy
+ * option is kept untouched so that rolling back remains possible.
  */
 function amehp_maybe_migrate() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -129,9 +131,44 @@ function amehp_maybe_migrate() {
 	}
 
 	// Check the installed version.
-	if ( version_compare( (string) get_option( 'amehp_version' ), '2.0.0', '>=' ) ) {
+	$installed = (string) get_option( 'amehp_version' );
+
+	/*
+	 * Nothing to do only when the record is already the version now running.
+	 *
+	 * This used to return early on anything at or above 3.3.0, which left
+	 * amehp_version stuck at 3.3.0 for ever: the option stopped meaning "the
+	 * version that last ran" and became "the version that last had a
+	 * migration", which is not what the next person to add one will read it
+	 * as. Each migration below is still gated on its own version, so they run
+	 * exactly once whatever this records.
+	 */
+	if ( AMEHP_VERSION === $installed ) {
 		return;
 	}
+
+	if ( version_compare( $installed, '2.0.0', '<' ) ) {
+		amehp_migrate_v1_settings();
+	}
+
+	if ( version_compare( $installed, '3.0.0', '<' ) ) {
+		amehp_migrate_v3_settings();
+	}
+
+	if ( version_compare( $installed, '3.3.0', '<' ) ) {
+		amehp_migrate_v330_settings();
+	}
+
+	// Record the version that has now run, migrations or not.
+	update_option( 'amehp_version', AMEHP_VERSION );
+}
+
+add_action( 'admin_init', 'amehp_maybe_migrate' );
+
+/**
+ * Migrates the version 1.x settings.
+ */
+function amehp_migrate_v1_settings() {
 
 	// Get the legacy settings.
 	$legacy = get_option( 'amehp_settings' );
@@ -197,12 +234,200 @@ function amehp_maybe_migrate() {
 			}
 		}
 	}
-
-	// Flag the migration as complete.
-	update_option( 'amehp_version', AMEHP_VERSION );
 }
 
-add_action( 'admin_init', 'amehp_maybe_migrate' );
+/**
+ * Migrates the version 2.x settings to the 3.0.0 keys.
+ *
+ * Two parts. The old "Menu Merging" and "WooCommerce Integration" checkboxes
+ * became the single "hp_amehp_wc_integration" switch: it is on when EITHER of
+ * the old pair was on, so nobody loses a feature they had, and it is only
+ * written when at least one old value exists so a fresh install keeps the
+ * plain default. Then every option of the absorbed Persistent Account Menu
+ * plugin is copied to its new hp_amehp_* key, never overwriting a value this
+ * plugin has already stored, so re-running can never clobber newer settings.
+ */
+function amehp_migrate_v3_settings() {
+
+	// Merge the WooCommerce checkbox pair.
+	$merge = get_option( 'hp_amehp_merge_menus', null );
+	$unify = get_option( 'hp_amehp_unify_account', null );
+
+	if ( null !== $merge || null !== $unify ) {
+		update_option( 'hp_amehp_wc_integration', ( $merge || $unify ) ? '1' : '' );
+	}
+
+	// Copy the Persistent Account Menu options. The item names are the fixed
+	// managed set from that plugin, so its per-item button options can be
+	// enumerated without loading anything of it.
+	$amehp_map = [
+		'hp_hppam_items'       => 'hp_amehp_persistent_items',
+		'hp_hppam_known_items' => 'hp_amehp_persistent_known_items',
+	];
+
+	$amehp_items = [
+		'listings_edit',
+		'requests_edit',
+		'offers_view',
+		'listings_favorite',
+		'vendor_calendar',
+		'search_alerts_view',
+		'bookings_view',
+		'messages_thread',
+		'memberships_view',
+		'orders_edit',
+		'payouts_view',
+		'orders_view',
+		'subscriptions_view',
+	];
+
+	foreach ( $amehp_items as $amehp_item ) {
+		$amehp_map[ 'hp_hppam_button_label_' . $amehp_item ] = 'hp_amehp_button_label_' . $amehp_item;
+		$amehp_map[ 'hp_hppam_button_url_' . $amehp_item ]   = 'hp_amehp_button_url_' . $amehp_item;
+	}
+
+	foreach ( $amehp_map as $amehp_old_key => $amehp_new_key ) {
+		$amehp_value = get_option( $amehp_old_key, null );
+
+		if ( null !== $amehp_value && null === get_option( $amehp_new_key, null ) ) {
+			update_option( $amehp_new_key, $amehp_value );
+		}
+	}
+}
+
+/**
+ * Gives every custom menu item a stable id, and repoints the stored order.
+ *
+ * WHY THIS HAS TO HAPPEN IN ONE PASS. A custom item used to be identified by
+ * its ROW POSITION, as "amehp_item_3", and the menu order saved in 3.2.0
+ * refers to items by exactly that name. Stamping ids on without rewriting the
+ * order would rename every item and leave the whole saved arrangement pointing
+ * at items that no longer answer to those names, so an owner who had arranged
+ * their menu would find it back in its default order. Rewriting both together
+ * is what makes the change invisible.
+ *
+ * The positional names are worked out here the same way get_custom_items()
+ * built them - counting every stored row, including one with no label, which
+ * that method skips but still counts - so the two agree row for row.
+ *
+ * @return void
+ */
+function amehp_migrate_v330_settings() {
+	$amehp_rows = get_option( 'hp_amehp_custom_items' );
+
+	if ( ! is_array( $amehp_rows ) || ! $amehp_rows ) {
+		return;
+	}
+
+	$amehp_rows    = array_values( $amehp_rows );
+	$amehp_renamed = [];
+	$amehp_changed = false;
+
+	foreach ( $amehp_rows as $amehp_index => $amehp_row ) {
+		if ( ! is_array( $amehp_row ) ) {
+			continue;
+		}
+
+		// Leave a row that already has one, so this is safe to run twice.
+		if ( isset( $amehp_row['uid'] ) && is_string( $amehp_row['uid'] ) && preg_match( '/^[A-Za-z0-9]{6,32}$/', $amehp_row['uid'] ) ) {
+			continue;
+		}
+
+		$amehp_uid = substr( md5( uniqid( (string) $amehp_index, true ) ), 0, 12 );
+
+		$amehp_rows[ $amehp_index ]['uid'] = $amehp_uid;
+
+		$amehp_renamed[ 'amehp_item_' . ( $amehp_index + 1 ) ] = 'amehp_item_' . $amehp_uid;
+
+		$amehp_changed = true;
+	}
+
+	if ( ! $amehp_changed ) {
+		return;
+	}
+
+	update_option( 'hp_amehp_custom_items', $amehp_rows );
+
+	// Repoint the saved arrangement at the new names, keeping every other
+	// entry in it exactly where it was.
+	$amehp_order = get_option( 'hp_amehp_menu_order' );
+
+	if ( ! is_string( $amehp_order ) || '' === $amehp_order ) {
+		return;
+	}
+
+	$amehp_keys = [];
+
+	foreach ( explode( ',', $amehp_order ) as $amehp_key ) {
+		$amehp_key = trim( $amehp_key );
+
+		if ( '' === $amehp_key ) {
+			continue;
+		}
+
+		$amehp_keys[] = isset( $amehp_renamed[ $amehp_key ] ) ? $amehp_renamed[ $amehp_key ] : $amehp_key;
+	}
+
+	update_option( 'hp_amehp_menu_order', implode( ',', $amehp_keys ) );
+}
+
+/*
+ * -------------------------------------------------------------------------
+ * Taking over from Persistent Account Menu
+ *
+ * Version 3.0.0 absorbed the Persistent Account Menu for HivePress plugin.
+ * While the old plugin is still active alongside, its behaviour would run
+ * twice - two forcing filters, two notices, two settings tabs - so its
+ * feature hooks are unhooked and this plugin's own component does the work
+ * alone. The old plugin is deliberately NOT deactivated: its updater and
+ * Plugins-screen rows are left working, and a notice recommends the owner
+ * deactivate it themselves.
+ * -------------------------------------------------------------------------
+ */
+
+/**
+ * Stands the old Persistent Account Menu plugin down while it is active.
+ *
+ * The old plugin registers everything at file load, before `plugins_loaded`
+ * fires, so removing its callbacks here catches them all before any of the
+ * hooks run. Only the feature hooks are removed; its updater, notices and
+ * Plugins-screen links are left alone so the plugin can still be updated or
+ * cleanly deleted.
+ */
+function amehp_take_over_persistent_menu() {
+	if ( ! function_exists( 'PersistentAccountMenu\get_items' ) ) {
+		return;
+	}
+
+	remove_filter( 'hivepress/v1/settings', 'PersistentAccountMenu\alter_settings' );
+	remove_filter( 'hivepress/v1/routes', 'PersistentAccountMenu\alter_routes', 500 );
+	remove_filter( 'hivepress/v1/menus/user_account', 'PersistentAccountMenu\alter_account_menu', 500 );
+	remove_filter( 'hivepress/v1/templates/user_account_page', 'PersistentAccountMenu\alter_account_page', 200 );
+	remove_filter( 'hivepress/v1/templates/vendor_calendar_page', 'PersistentAccountMenu\alter_account_page', 200 );
+	remove_action( 'wp_enqueue_scripts', 'PersistentAccountMenu\enqueue_styles' );
+	remove_action( 'admin_init', 'PersistentAccountMenu\reconcile_items' );
+}
+
+add_action( 'plugins_loaded', 'amehp_take_over_persistent_menu', 20 );
+
+/**
+ * Recommends deactivating the old Persistent Account Menu plugin.
+ *
+ * Dismissible, because an undismissable notice on every admin screen is
+ * admin hijacking even when the thing it says is true. WordPress only hides
+ * it for the current page load, so it returns until the old plugin is
+ * actually deactivated - which is the point: nothing is broken while both
+ * are active, but the old plugin is doing nothing and should go.
+ */
+function amehp_show_persistent_menu_notice() {
+	if ( ! function_exists( 'PersistentAccountMenu\get_items' ) || ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+
+	echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Account Menu Enhancer for HivePress now includes everything Persistent Account Menu for HivePress did, and your settings have been carried over to the Account Menu tab. The old plugin is doing nothing while both are active, so you can safely deactivate and delete Persistent Account Menu for HivePress.', 'account-menu-enhancer-for-hivepress' ) . '</p></div>';
+}
+
+add_action( 'admin_notices', 'amehp_show_persistent_menu_notice' );
 
 /*
  * -------------------------------------------------------------------------

@@ -2,9 +2,9 @@
 Contributors: chrisb
 Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.13
+Stable tag: 3.3.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,172 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.3.8 =
+* Fixed: on sites where Account Menu is the first tab under HivePress > Settings, opening Settings
+  from the menu could show that tab with none of its controls working - no quick links, no live
+  preview and no colour pickers, with nothing to say why. The plugin now recognises its own tab
+  from what is actually on the page rather than from the web address, so it works however you
+  reach it.
+
+= 3.3.7 =
+* Fixed: a custom menu item added after the first no longer has its icon forced to black. Adding a
+  row filled its Icon Colour box with black without you opening the colour picker, and saving kept
+  it, so that item's icon ignored your Icon Colour setting and your theme. New rows now start with
+  no colour, and a colour you did choose is untouched.
+* Fixed: an account menu whose first item links to another website no longer sends visitors to the
+  WordPress dashboard. Your account page sends people to the first thing in the menu, and an
+  off-site link could not be used for that, so they landed somewhere they had no business being.
+  They are now sent to the first item that is on your own site, or to your home page if none is.
+  The off-site item itself is unchanged: it stays where you put it and still links where you set it.
+
+= 3.3.6 =
+* Changed: internal tidying only, with no change to how anything looks or behaves. The code
+  behind the live preview on the settings screen was split so that it can be checked
+  automatically, which means the ordering of your menu items is now tested on every change
+  rather than only by eye.
+
+= 3.3.5 =
+* Changed: internal tidying only, with no change to how anything looks or behaves. Some
+  leftovers from the last few releases were removed and the account pages now do less
+  repeated work on every page view, so they are a little quicker to build.
+
+= 3.3.4 =
+* Changed: the icon library is now included with the plugin instead of being loaded from a
+  third-party server, which is faster and keeps requests on your own site.
+* Changed: outline icon styles now render as outlines. An icon set to an outline style
+  previously appeared filled in, because only the solid style was included with the plugin
+  and your browser quietly used that instead.
+
+= 3.3.3 =
+* Changed: the Account Menu settings screen no longer contacts Google unless you are using the
+  Sidebar Menu Font option. Previously it fetched that font from Google every time you opened the
+  tab, whether or not the option was switched on, which told Google your IP address for no benefit.
+  With the option on it still loads, because the live preview needs it to show you the real font,
+  and the setting now says so.
+
+= 3.3.2 =
+* Fixed: dragging one of your own custom menu items in the Live preview moved it the wrong way.
+  An item dragged to the top of the menu was saved to the very bottom, below Sign Out, and the
+  preview showed it somewhere your site did not. Custom items now move exactly where you put them.
+  Any leftover entries from this are tidied up the next time you rearrange the menu.
+* Fixed: web addresses could be quietly damaged when saved. An address containing an encoded
+  character, such as a space written as %20 or an accented letter, had that part silently removed,
+  so the link went to the wrong place. This affected the Button URL on placeholder pages and the
+  Custom URL on your own menu items. Addresses already saved are unaffected; re-save any that
+  stopped working.
+* Fixed: a menu item's saved position could be handed to the wrong item if one of your custom item
+  rows had been left without a label.
+* Fixed: a damaged "Hidden Items" setting could take the whole site down with a critical error.
+  It is now ignored safely instead.
+* Fixed: the plugin now records its own version correctly after an update.
+
+= 3.3.1 =
+* Fixed: each placeholder page's settings now sit inside that page's card. They were rendering
+  underneath it, on the page background, so an opened card appeared to contain nothing and its
+  settings looked as though they belonged to the section rather than to the page. Your saved
+  values are unaffected.
+* Changed: the settings inside a placeholder card are labelled "Icon", "Page text", "Button label"
+  and "Button URL". The page name is on the card, so it no longer appears on every field as well.
+* Fixed: placeholder cards are now the same width as the item cards elsewhere on the tab, instead
+  of stretching with the window. They still fill the screen on a phone, as the item cards do.
+
+= 3.3.0 =
+* Added: "Empty Page Buttons" is now "Placeholder Pages", and each page has its own icon, message,
+  button label and button URL, so an empty account page can be customised completely. Each page
+  folds away behind its own heading. Anything you had set before is kept exactly as it was, and a
+  field left blank keeps what that page shows today.
+* Added: the placeholder page icon uses the same icon picker as the menu items, brand icons
+  included, and follows the icon colour, weight and size settings in the Appearance section.
+* Changed: the drag handles have been removed from the Menu Item Styling and Custom Items cards.
+  The menu is ordered by dragging the Live preview, and a second set of handles that no longer
+  ordered anything was only confusing. The collapsible headers and remove buttons are unchanged.
+* Fixed: custom menu items now keep their identity when you delete or reorder rows. Previously an
+  item was identified by its position, so deleting one custom item handed its saved place in the
+  menu to the next one down. Existing items are updated automatically and keep their positions.
+* Changed: Icon Colour and Text Colour now sit side by side in the item cards, so the cards are
+  shorter. They return to separate lines on small screens.
+* Changed: "Reset to default order" now asks for confirmation first, and says that nothing is
+  saved until you press Save Changes.
+* Changed: the quick links bar now opens with "Jump to a section:".
+* Changed: clearer wording on the WooCommerce Integration checkbox.
+* Fixed: the floating Save button now matches the real Save Changes button under every Admin Colour
+  Scheme. It used to be painted with the default scheme's blue, so on Modern, Midnight, Coffee and
+  the rest it was a different colour from the button it stands in for. The back-to-top button takes
+  its colour from your scheme in the same way.
+* Fixed: the tick on the mobile save bar and the arrow in the back-to-top button are now properly
+  centred.
+* Fixed: with the drag handles gone, the collapse arrow on each item card now sits at the left edge
+  of the card instead of leaving an empty gap where the handle used to be.
+
+= 3.2.0 =
+* Added: drag any account menu item into the order you want, in the Live preview panel itself.
+  Grab an item by its handle, or use the arrow buttons if you prefer the keyboard, and press Save
+  Changes. The order applies to all three menus this plugin manages: the HivePress account
+  dropdown, the HivePress account sidebar and the WooCommerce account sidebar. A "Reset to default
+  order" button hands every item back to its normal position.
+* Changed: the preview now lists items in the order your site really renders them, instead of the
+  alphabetical order of the dropdown. Custom items sit where their Order box puts them, and the
+  order is worked out by the same code that builds the front-end menu, so the two cannot disagree.
+* Note: an account page added later, by an extension you install after arranging the menu, joins
+  the end of the list rather than guessing a place for itself. Hiding an item does not disturb the
+  position of anything else, and unhiding it puts it back where you had left it.
+* Changed: the Order box has been removed from custom items, because dragging the preview says the
+  same thing in front of the menu it changes. A number you set previously still decides where that
+  item sits until you drag it, so nothing moves on upgrade.
+* Added: with the WooCommerce integration switched off, the panel now shows two previews, one for
+  each account menu, since that is what your site renders. Each lists only the items that menu
+  actually has, and your custom items appear in whichever menus you assigned them to.
+* Added: each preview folds away from its own header, the same way the item cards do, and remembers
+  whether you left it open.
+* Added: a floating Save Changes tab on the edge of the settings page, a quick-links bar that stays
+  with you as you scroll, and a back-to-top button.
+* Improved: on a phone the preview now sits at the bottom of the settings page instead of above
+  them, with a "Live preview" quick link to reach it.
+
+= 3.1.1 =
+* Improved: the preview shows your site's real account menu items rather than two samples, and
+  follows the Hidden Items and WooCommerce Integration settings as you change them.
+* Improved: the preview panel sits beside the settings on more screens, and scrolls within itself
+  when the menu is long.
+
+= 3.1.0 =
+* Added: the item cards in Menu Item Styling and Custom Items collapse to a compact header showing
+  the item's name and chosen icon. Click a header to collapse or expand it; the state is remembered
+  in your browser, and filled cards start collapsed when there is more than one.
+* Added: a live preview panel on the settings tab, showing a sample sidebar account menu that
+  follows every change as you make it - icons (including brand icons), icon colour, size, weight
+  and background, menu font weight, the Heading Font toggle, chevron hiding and your custom items.
+  Nothing is stored until you press Save Changes. On wide screens the panel sits in its own column
+  and follows you down the page.
+* Improved: the item cards can be dragged into a new order by their handle, which now shows a grab
+  cursor and a tooltip, and the order is kept when you save. For custom items with an empty Order
+  box, the card order now decides the menu order; a typed number still places an item among the
+  built-in ones.
+
+= 3.0.0 =
+* Added: everything Persistent Account Menu for HivePress did is now built in. Chosen account menu
+  items stay visible even when their pages are empty, and each empty page shows a helpful notice,
+  icon and customisable button. Settings saved in the old plugin are carried over automatically,
+  and a notice recommends deactivating it if it is still active.
+* Changed: the two WooCommerce checkboxes (layout unification and menu merging) are now one
+  "WooCommerce Integration" switch. It is on for you if either of the old pair was on.
+* Added: the icon dropdowns now offer the Font Awesome 6 and 7 icon names and a set of brand icons
+  (Stripe, PayPal, WhatsApp and many more). When a chosen icon is not in the Font Awesome files
+  bundled with HivePress, the full Font Awesome library is loaded automatically so it renders.
+* Added: an Icon Size setting, an Icon Weight setting (thickens the icons, per item or for all of
+  them), and an Icon Background Colour setting that draws a round colour chip behind every icon.
+* Added: a Sidebar Menu Font setting that applies the theme Customiser's Heading Font to the
+  HivePress and WooCommerce sidebar account menus, matching the account dropdown.
+* Changed: the Icon Colour setting now sits above Menu Item Styling, so the recolour-everything
+  option is found before colouring items one by one.
+* Added: the settings tab now starts with quick links that jump to each section, with dividers
+  between sections.
+* Fixed: account menu items keep their left alignment even when an icon is drawn by the theme or
+  custom CSS rather than by this plugin.
+* Fixed: hiding the theme navigation arrows now works on sites whose theme re-enables them with
+  more specific styling.
+* Fixed: the button on an empty account page no longer turns its text blue on hover.
 
 = 2.2.13 =
 * Fixed: a menu styling row that set a text colour but no icon is no longer lost. If the extension

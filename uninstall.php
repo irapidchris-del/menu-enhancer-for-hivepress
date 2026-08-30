@@ -56,22 +56,56 @@ if ( ! get_option( 'hp_amehp_delete_data' ) ) {
 $amehp_options = [
 	'hp_amehp_icons',
 	'hp_amehp_icon_colour',
+	'hp_amehp_icon_background',
+	'hp_amehp_icon_size',
+	'hp_amehp_icon_weight',
 	'hp_amehp_menu_weight',
 	'hp_amehp_hide_chevrons',
+	'hp_amehp_sidebar_heading_font',
 	'hp_amehp_custom_items',
 	'hp_amehp_hidden_items',
+	'hp_amehp_menu_order',
+	'hp_amehp_wc_integration',
 	'hp_amehp_unify_account',
 	'hp_amehp_merge_menus',
 	'hp_amehp_wc_badges',
 	'hp_amehp_hide_wc_header',
 	'hp_amehp_icon_spacing',
 	'hp_amehp_seen_items',
+	'hp_amehp_persistent_items',
+	'hp_amehp_persistent_known_items',
 	'amehp_version',
 	'amehp_settings',
 ];
 
 foreach ( $amehp_options as $amehp_option ) {
 	delete_option( $amehp_option );
+}
+
+/*
+ * The per-page button options absorbed from Persistent Account Menu in 3.0.0.
+ *
+ * Swept by prefix because the set is dynamic: one label and one URL per
+ * managed menu item, and which items exist depends on the extensions that
+ * were active. This runs once, while the plugin is being deleted, so there is
+ * nothing worth caching.
+ */
+global $wpdb;
+
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+$amehp_button_options = $wpdb->get_col(
+	$wpdb->prepare(
+		"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+		$wpdb->esc_like( 'hp_amehp_button_label_' ) . '%',
+		$wpdb->esc_like( 'hp_amehp_button_url_' ) . '%',
+		// The icon and message added to each placeholder page in 3.3.0.
+		$wpdb->esc_like( 'hp_amehp_page_icon_' ) . '%',
+		$wpdb->esc_like( 'hp_amehp_page_text_' ) . '%'
+	)
+);
+
+foreach ( (array) $amehp_button_options as $amehp_button_option ) {
+	delete_option( $amehp_button_option );
 }
 
 /**

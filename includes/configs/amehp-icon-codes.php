@@ -1014,4 +1014,452 @@ return [
 	'x-ray'                               => 'f497',
 	'yen-sign'                            => 'f157',
 	'yin-yang'                            => 'f6ad',
+
+	/*
+	 * ----------------------------------------------------------------------
+	 * Font Awesome 6/7 solid names (added in plugin version 3.0.0).
+	 *
+	 * Font Awesome 6 renamed a large part of the set and version 7 keeps the
+	 * version 6 names, so these are the names an owner finds on
+	 * fontawesome.com today. Renamed icons keep their original codepoint
+	 * (Font Awesome documents unicode values as stable across the rename),
+	 * which is why most entries below share a codepoint with a version 5
+	 * name above; the "e"-prefixed codepoints are icons new in version 6.
+	 *
+	 * Array entries mark icons that are NOT in the Font Awesome 5 solid font
+	 * bundled with HivePress, so the component loads the full Font Awesome
+	 * library when one is chosen (see Amehp_Menu_Enhancer::get_icon_code()
+	 * and ::enqueue_fontawesome()).
+	 * ----------------------------------------------------------------------
+	 */
+	'arrow-right-from-bracket'            => 'f08b',
+	'arrow-right-to-bracket'              => 'f090',
+	'arrow-trend-down'                    => [ 'code' => 'e097' ],
+	'arrow-trend-up'                      => [ 'code' => 'e098' ],
+	'arrows-rotate'                       => 'f021',
+	'apple-whole'                         => 'f5d1',
+	'bag-shopping'                        => 'f290',
+	'basket-shopping'                     => 'f291',
+	'beer-mug-empty'                      => 'f0fc',
+	'box-archive'                         => 'f187',
+	'boxes-stacked'                       => 'f468',
+	'building-columns'                    => 'f19c',
+	'burger'                              => 'f805',
+	'cake-candles'                        => 'f1fd',
+	'calendar-days'                       => 'f073',
+	'cart-shopping'                       => 'f07a',
+	'champagne-glasses'                   => 'f79f',
+	'circle-check'                        => 'f058',
+	'circle-dollar-to-slot'               => 'f4b9',
+	'circle-exclamation'                  => 'f06a',
+	'circle-info'                         => 'f05a',
+	'circle-minus'                        => 'f056',
+	'circle-plus'                         => 'f055',
+	'circle-question'                     => 'f059',
+	'circle-user'                         => 'f2bd',
+	'circle-xmark'                        => 'f057',
+	'clock-rotate-left'                   => 'f1da',
+	'cloud-arrow-down'                    => 'f0ed',
+	'cloud-arrow-up'                      => 'f0ee',
+	'compass-drafting'                    => 'f568',
+	'droplet'                             => 'f043',
+	'earth-americas'                      => 'f57d',
+	'earth-europe'                        => 'f7a2',
+	'envelopes-bulk'                      => 'f674',
+	'eye-low-vision'                      => 'f2a8',
+	'face-frown'                          => 'f119',
+	'face-meh'                            => 'f11a',
+	'face-smile'                          => 'f118',
+	'file-lines'                          => 'f15c',
+	'floppy-disk'                         => 'f0c7',
+	'gauge-high'                          => 'f3fd',
+	'gear'                                => 'f013',
+	'gears'                               => 'f085',
+	'hand-holding-dollar'                 => 'f4c0',
+	'house'                               => 'f015',
+	'list-check'                          => 'f0ae',
+	'location-dot'                        => 'f3c5',
+	'magnifying-glass'                    => 'f002',
+	'map-location-dot'                    => 'f5a0',
+	'martini-glass'                       => 'f57b',
+	'message'                             => 'f27a',
+	'mobile-screen-button'                => 'f3cd',
+	'money-bill-1'                        => 'f3d1',
+	'money-bill-trend-up'                 => [ 'code' => 'e529' ],
+	'money-check-dollar'                  => 'f53d',
+	'mug-saucer'                          => 'f0f4',
+	'paintbrush'                          => 'f1fc',
+	'pen-to-square'                       => 'f044',
+	'person-running'                      => 'f70c',
+	'right-from-bracket'                  => 'f2f5',
+	'right-to-bracket'                    => 'f2f6',
+	'rotate'                              => 'f2f1',
+	'rotate-left'                         => 'f2ea',
+	'rotate-right'                        => 'f2f9',
+	'sack-dollar'                         => 'f81d',
+	'scale-balanced'                      => 'f24e',
+	'scissors'                            => 'f0c4',
+	'screwdriver-wrench'                  => 'f7d9',
+	'share-nodes'                         => 'f1e0',
+	'shield-halved'                       => 'f3ed',
+	'shop'                                => 'f54f',
+	'sliders'                             => 'f1de',
+	'table-list'                          => 'f00b',
+	'tablet-screen-button'                => 'f3fa',
+	'ticket-simple'                       => 'f3ff',
+	'tower-broadcast'                     => 'f519',
+	'trash-can'                           => 'f2ed',
+	'truck-fast'                          => 'f48b',
+	'truck-ramp-box'                      => 'f4de',
+	'user-gear'                           => 'f4fe',
+	'user-group'                          => 'f500',
+	'user-pen'                            => 'f4ff',
+	'volume-high'                         => 'f028',
+	'wand-magic'                          => 'f0d0',
+	'xmark'                               => 'f00d',
+
+	/*
+	 * ----------------------------------------------------------------------
+	 * Brand icons (added in plugin version 3.0.0).
+	 *
+	 * Brands live in a separate Font Awesome font, "Font Awesome {N} Brands"
+	 * at weight 400, so every entry carries the family marker: the component
+	 * emits the brands font-family for these and loads the full Font Awesome
+	 * library, which HivePress does not bundle. Codepoints are from the
+	 * official Font Awesome metadata and are stable across versions 5 to 7;
+	 * the "e"-prefixed ones are brands added in version 6.
+	 * ----------------------------------------------------------------------
+	 */
+	'airbnb'                              => [
+		'code'   => 'f834',
+		'family' => 'brands',
+	],
+	'amazon'                              => [
+		'code'   => 'f270',
+		'family' => 'brands',
+	],
+	'amazon-pay'                          => [
+		'code'   => 'f42c',
+		'family' => 'brands',
+	],
+	'android'                             => [
+		'code'   => 'f17b',
+		'family' => 'brands',
+	],
+	'app-store'                           => [
+		'code'   => 'f36f',
+		'family' => 'brands',
+	],
+	'apple'                               => [
+		'code'   => 'f179',
+		'family' => 'brands',
+	],
+	'apple-pay'                           => [
+		'code'   => 'f415',
+		'family' => 'brands',
+	],
+	'behance'                             => [
+		'code'   => 'f1b4',
+		'family' => 'brands',
+	],
+	'bitcoin'                             => [
+		'code'   => 'f379',
+		'family' => 'brands',
+	],
+	'bluesky'                             => [
+		'code'   => 'e671',
+		'family' => 'brands',
+	],
+	'btc'                                 => [
+		'code'   => 'f15a',
+		'family' => 'brands',
+	],
+	'cc-amazon-pay'                       => [
+		'code'   => 'f42d',
+		'family' => 'brands',
+	],
+	'cc-amex'                             => [
+		'code'   => 'f1f3',
+		'family' => 'brands',
+	],
+	'cc-apple-pay'                        => [
+		'code'   => 'f416',
+		'family' => 'brands',
+	],
+	'cc-diners-club'                      => [
+		'code'   => 'f24c',
+		'family' => 'brands',
+	],
+	'cc-discover'                         => [
+		'code'   => 'f1f2',
+		'family' => 'brands',
+	],
+	'cc-jcb'                              => [
+		'code'   => 'f24b',
+		'family' => 'brands',
+	],
+	'cc-mastercard'                       => [
+		'code'   => 'f1f1',
+		'family' => 'brands',
+	],
+	'cc-paypal'                           => [
+		'code'   => 'f1f4',
+		'family' => 'brands',
+	],
+	'cc-stripe'                           => [
+		'code'   => 'f1f5',
+		'family' => 'brands',
+	],
+	'cc-visa'                             => [
+		'code'   => 'f1f0',
+		'family' => 'brands',
+	],
+	'chrome'                              => [
+		'code'   => 'f268',
+		'family' => 'brands',
+	],
+	'discord'                             => [
+		'code'   => 'f392',
+		'family' => 'brands',
+	],
+	'dribbble'                            => [
+		'code'   => 'f17d',
+		'family' => 'brands',
+	],
+	'dropbox'                             => [
+		'code'   => 'f16b',
+		'family' => 'brands',
+	],
+	'ebay'                                => [
+		'code'   => 'f4f4',
+		'family' => 'brands',
+	],
+	'etsy'                                => [
+		'code'   => 'f2d7',
+		'family' => 'brands',
+	],
+	'facebook'                            => [
+		'code'   => 'f09a',
+		'family' => 'brands',
+	],
+	'facebook-f'                          => [
+		'code'   => 'f39e',
+		'family' => 'brands',
+	],
+	'facebook-messenger'                  => [
+		'code'   => 'f39f',
+		'family' => 'brands',
+	],
+	'figma'                               => [
+		'code'   => 'f799',
+		'family' => 'brands',
+	],
+	'github'                              => [
+		'code'   => 'f09b',
+		'family' => 'brands',
+	],
+	'google'                              => [
+		'code'   => 'f1a0',
+		'family' => 'brands',
+	],
+	'google-drive'                        => [
+		'code'   => 'f3aa',
+		'family' => 'brands',
+	],
+	'google-pay'                          => [
+		'code'   => 'e079',
+		'family' => 'brands',
+	],
+	'google-play'                         => [
+		'code'   => 'f3ab',
+		'family' => 'brands',
+	],
+	'instagram'                           => [
+		'code'   => 'f16d',
+		'family' => 'brands',
+	],
+	'kickstarter'                         => [
+		'code'   => 'f3bb',
+		'family' => 'brands',
+	],
+	'linkedin'                            => [
+		'code'   => 'f08c',
+		'family' => 'brands',
+	],
+	'linkedin-in'                         => [
+		'code'   => 'f0e1',
+		'family' => 'brands',
+	],
+	'mailchimp'                           => [
+		'code'   => 'f59e',
+		'family' => 'brands',
+	],
+	'mastodon'                            => [
+		'code'   => 'f4f6',
+		'family' => 'brands',
+	],
+	'medium'                              => [
+		'code'   => 'f23a',
+		'family' => 'brands',
+	],
+	'microsoft'                           => [
+		'code'   => 'f3ca',
+		'family' => 'brands',
+	],
+	'patreon'                             => [
+		'code'   => 'f3d9',
+		'family' => 'brands',
+	],
+	'paypal'                              => [
+		'code'   => 'f1ed',
+		'family' => 'brands',
+	],
+	'pinterest'                           => [
+		'code'   => 'f0d2',
+		'family' => 'brands',
+	],
+	'pinterest-p'                         => [
+		'code'   => 'f231',
+		'family' => 'brands',
+	],
+	'reddit'                              => [
+		'code'   => 'f1a1',
+		'family' => 'brands',
+	],
+	'shopify'                             => [
+		'code'   => 'e057',
+		'family' => 'brands',
+	],
+	'skype'                               => [
+		'code'   => 'f17e',
+		'family' => 'brands',
+	],
+	'slack'                               => [
+		'code'   => 'f198',
+		'family' => 'brands',
+	],
+	'snapchat'                            => [
+		'code'   => 'f2ab',
+		'family' => 'brands',
+	],
+	'soundcloud'                          => [
+		'code'   => 'f1be',
+		'family' => 'brands',
+	],
+	'spotify'                             => [
+		'code'   => 'f1bc',
+		'family' => 'brands',
+	],
+	'square-facebook'                     => [
+		'code'   => 'f082',
+		'family' => 'brands',
+	],
+	'square-instagram'                    => [
+		'code'   => 'e055',
+		'family' => 'brands',
+	],
+	'square-whatsapp'                     => [
+		'code'   => 'f40c',
+		'family' => 'brands',
+	],
+	'square-x-twitter'                    => [
+		'code'   => 'e61a',
+		'family' => 'brands',
+	],
+	'squarespace'                         => [
+		'code'   => 'f5be',
+		'family' => 'brands',
+	],
+	'stack-overflow'                      => [
+		'code'   => 'f16c',
+		'family' => 'brands',
+	],
+	'strava'                              => [
+		'code'   => 'f428',
+		'family' => 'brands',
+	],
+	'stripe'                              => [
+		'code'   => 'f429',
+		'family' => 'brands',
+	],
+	'stripe-s'                            => [
+		'code'   => 'f42a',
+		'family' => 'brands',
+	],
+	'telegram'                            => [
+		'code'   => 'f2c6',
+		'family' => 'brands',
+	],
+	'threads'                             => [
+		'code'   => 'e618',
+		'family' => 'brands',
+	],
+	'tiktok'                              => [
+		'code'   => 'e07b',
+		'family' => 'brands',
+	],
+	'trello'                              => [
+		'code'   => 'f181',
+		'family' => 'brands',
+	],
+	'tumblr'                              => [
+		'code'   => 'f173',
+		'family' => 'brands',
+	],
+	'twitch'                              => [
+		'code'   => 'f1e8',
+		'family' => 'brands',
+	],
+	'twitter'                             => [
+		'code'   => 'f099',
+		'family' => 'brands',
+	],
+	'uber'                                => [
+		'code'   => 'f402',
+		'family' => 'brands',
+	],
+	'viber'                               => [
+		'code'   => 'f409',
+		'family' => 'brands',
+	],
+	'vimeo'                               => [
+		'code'   => 'f40a',
+		'family' => 'brands',
+	],
+	'waze'                                => [
+		'code'   => 'f83f',
+		'family' => 'brands',
+	],
+	'whatsapp'                            => [
+		'code'   => 'f232',
+		'family' => 'brands',
+	],
+	'windows'                             => [
+		'code'   => 'f17a',
+		'family' => 'brands',
+	],
+	'wix'                                 => [
+		'code'   => 'f5cf',
+		'family' => 'brands',
+	],
+	'wordpress'                           => [
+		'code'   => 'f19a',
+		'family' => 'brands',
+	],
+	'x-twitter'                           => [
+		'code'   => 'e61b',
+		'family' => 'brands',
+	],
+	'xing'                                => [
+		'code'   => 'f168',
+		'family' => 'brands',
+	],
+	'yelp'                                => [
+		'code'   => 'f1e9',
+		'family' => 'brands',
+	],
+	'youtube'                             => [
+		'code'   => 'f167',
+		'family' => 'brands',
+	],
 ];
