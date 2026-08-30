@@ -1,5 +1,310 @@
 /* Account Menu Enhancer for HivePress: settings screen styles. */
 
+/* ==========================================================================
+ * SHARED SETTINGS CHROME
+ *
+ * The quick-links nav, the floating Save control and the back-to-top button,
+ * all injected by backend.js. Written to be copied into the sibling plugins,
+ * so this block is self-contained and only the `amehp-` prefix changes.
+ *
+ * Every piece carries a shared marker class as well as the prefixed one
+ * (resources/hivepress-settings.md, "The settings anchor nav: one shared
+ * marker class"). THE MARKERS ARE NEVER STYLED: they exist so a sibling can
+ * find a nav that is already there and stand down. Style only the prefixed
+ * class, so one plugin's chrome can never restyle another's.
+ *
+ * The admin bar is fixed and overlays the top of the page, so anything that
+ * sticks, and every scroll target, has to clear it: 32px normally, 46px below
+ * 783px where WordPress makes it taller. The nav is the sticky thing here, so
+ * a heading has to clear the admin bar AND the nav, which is why the
+ * scroll-margin values are larger than the offsets.
+ * ========================================================================== */
+
+:root {
+	--amehp-admin-bar: 32px;
+	--amehp-nav-height: 46px;
+}
+
+@media screen and (max-width: 782px) {
+	:root {
+		--amehp-admin-bar: 46px;
+	}
+}
+
+/*
+ * The admin bar stops being fixed below 601px and scrolls away with the page,
+ * so nothing needs to clear it there.
+ */
+@media screen and (max-width: 600px) {
+	:root {
+		--amehp-admin-bar: 0px;
+	}
+}
+
+/*
+ * Quick links to each settings section, injected above the first heading
+ * because WordPress renders sections as bare <h2>s with no anchors.
+ *
+ * Sticky, so a long tab can be navigated from anywhere on it. The z-index sits
+ * above the form but below the admin bar's own 99999, and the background is
+ * opaque so the fields scroll underneath rather than through it.
+ */
+.amehp-settings-nav {
+	position: sticky;
+	top: var(--amehp-admin-bar);
+	z-index: 100;
+	display: flex;
+	flex-wrap: wrap;
+
+	/*
+	 * Centre the row's contents on their line.
+	 *
+	 * Without this the flex default of `stretch` applies: the pill links are
+	 * inline-block and take their own height, while the bare label span is
+	 * stretched to the full height of the line and its text then renders at
+	 * the TOP of that stretched box, sitting visibly higher than the pills.
+	 * The fix belongs here rather than on the label, because a margin or a
+	 * relative nudge would only paper over it and would come apart the moment
+	 * the links wrap to a second line - which they do at narrow widths. With
+	 * this, each line centres its own contents however many lines there are.
+	 */
+	align-items: center;
+	gap: 6px 8px;
+	margin: 16px 0 8px;
+	padding: 12px 16px;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	background: #fff;
+}
+
+/*
+ * The bar names itself before its links. Part of the house chrome spec, so
+ * this rule is the reference the sibling plugins copy.
+ */
+.amehp-settings-nav__label {
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.6;
+	color: #50575e;
+}
+
+.amehp-settings-nav a {
+	display: inline-block;
+	padding: 3px 10px;
+	border: 1px solid #dcdcde;
+	border-radius: 9999px;
+	text-decoration: none;
+	font-size: 12px;
+	line-height: 1.6;
+}
+
+.amehp-settings-nav a:hover,
+.amehp-settings-nav a:focus {
+	border-color: #2271b1;
+}
+
+/*
+ * Section dividers, and room for the admin bar AND the sticky nav above them,
+ * so a quick link never lands a heading underneath the bar it was clicked in.
+ */
+.hp-page .hp-form--table h2.amehp-section-heading {
+	margin-top: 8px;
+	padding-top: 24px;
+	border-top: 1px solid #dcdcde;
+	scroll-margin-top: calc(var(--amehp-admin-bar) + var(--amehp-nav-height) + 16px);
+}
+
+.hp-page .hp-form--table h2.amehp-section-heading--first {
+	padding-top: 0;
+	border-top: 0;
+}
+
+/*
+ * The floating Save control: a genuine sideways tab on the right edge, always
+ * within reach on a long tab. It presses the form's own submit button rather
+ * than saving by itself, so there is only one save path.
+ *
+ * `writing-mode: vertical-rl` is what makes it sideways, and the choice is not
+ * cosmetic: it turns the LAYOUT BOX on its side, so the control is about 36px
+ * wide and as tall as its label. Rotating a horizontal box with `transform`
+ * instead leaves the box its original width - the element still reserves a
+ * ~150px-wide strip of the page, which is what put an earlier version of this
+ * button on top of the live preview panel while the CSS looked correct.
+ *
+ * The tick icon is dropped here and kept only for the mobile bar below: a
+ * dashicons glyph inside a vertical-rl flow is laid on its side with the text,
+ * and a sideways tick reads as a stray mark rather than as a tick.
+ *
+ * NOTHING HERE PAINTS THE CONTROL. It carries core's own `button
+ * button-primary` classes and WordPress supplies the background, border, text
+ * colour, hover, focus ring and disabled state. That is not tidiness: every
+ * user picks an Admin Colour Scheme under Users > Profile and each one
+ * repaints .wp-core-ui .button-primary, so a hex here matches the default
+ * scheme and no other. Measured on 2026-08-30 under Modern, with the old
+ * hardcoded #2271b1 still in place: the real Save button rendered
+ * rgb(56,88,233) and this tab rgb(34,113,177), on the same screen, one
+ * pretending to be the other. Add a colour here and it will be wrong again on
+ * seven of the eight schemes.
+ *
+ * The selector carries .wp-core-ui so these layout rules tie with core's own
+ * .wp-core-ui .button on specificity and win on order, since this stylesheet
+ * is enqueued after the admin's. Layout is all they may set.
+ */
+.wp-core-ui .amehp-settings-save {
+	position: fixed;
+	top: 50%;
+
+	/*
+	 * Physical `right`, not `inset-inline-end`, and that is a consequence of
+	 * the vertical writing mode rather than an oversight. A logical inset
+	 * resolves against the ELEMENT'S OWN writing mode, so on a vertical-rl
+	 * box the inline axis is the vertical one: `inset-inline-end: 0` set a
+	 * vertical offset, left nothing horizontal, and pinned the tab to the
+	 * LEFT edge of the screen. Measured on 2026-08-30, at 1440px.
+	 */
+	right: 0;
+	z-index: 100;
+	display: block;
+
+	/*
+	 * The padding is given in the rotated box's own terms. Core's button
+	 * padding is horizontal-first, and on a vertical-rl box those axes swap,
+	 * so core's own values would pad the wrong edges: 14px is the space above
+	 * and below the sideways label, 10px the space either side of it.
+	 * Measured at 1440px rather than reasoned about.
+	 */
+	writing-mode: vertical-rl;
+	height: auto;
+	padding: 14px 10px;
+	transform: translateY(-50%);
+
+	/* Rounded on the side that is not against the edge of the screen. */
+	border-inline-end: 0;
+	border-radius: 4px 0 0 4px;
+	font-size: 13px;
+	line-height: 1.4;
+	letter-spacing: 0.2px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.amehp-settings-save .dashicons {
+	display: none;
+}
+
+/*
+ * The one core declaration these two controls have to undo.
+ *
+ * wp-admin/css/buttons.css carries
+ * `.wp-core-ui .button .dashicons, .wp-core-ui .button-primary .dashicons,
+ * .wp-core-ui .button-secondary .dashicons { line-height: 1.9 }`, which beats
+ * the `line-height: 1` dashicons.css gives every icon. That 1.9 exists to drop
+ * a dashicon onto the text baseline of an ordinary horizontal button, and it
+ * is right there. It is wrong here, because both of these controls centre
+ * their glyph with flexbox instead: the glyph keeps its 20px box but is drawn
+ * inside a 38px line box (1.9 x 20px, measured), so it paints low and off
+ * centre while the BOX it sits in measures as perfectly centred - which is why
+ * this reads as an alignment bug with nothing visibly misaligned.
+ *
+ * Only line-height is restored, and only on our own two controls, so
+ * everything else core does to a button icon still applies. The selectors
+ * score the same as core's and this stylesheet is enqueued after the admin's,
+ * so they win on order without !important and without a magic offset.
+ */
+.wp-core-ui .amehp-settings-save .dashicons,
+.wp-core-ui .amehp-settings-top .dashicons {
+	line-height: 1;
+}
+
+/*
+ * The back-to-top button, above the Save tab's own corner so the two never
+ * overlap. Hidden by the script until the page has actually scrolled.
+ *
+ * Painted by core as well, through its plain `button` class - the secondary
+ * button's blue is the admin scheme's blue, and the old hardcoded #2271b1 and
+ * #c3c4c7 were the default scheme's alone. Only the round shape and the
+ * position belong here.
+ */
+.wp-core-ui .amehp-settings-top {
+	position: fixed;
+	inset-inline-end: 20px;
+	bottom: 20px;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border-radius: 50%;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.wp-core-ui .amehp-settings-top[hidden] {
+	display: none;
+}
+
+/*
+ * On a phone the sideways Save tab would sit over the fields, and the two
+ * round buttons would fight for the same corner, so Save becomes a bar along
+ * the bottom and the back-to-top button sits above it. 782px is where wp-admin
+ * itself switches to its touch layout.
+ */
+@media screen and (max-width: 782px) {
+
+	/*
+	 * The .wp-core-ui prefix is carried down here too. Without it these rules
+	 * score below the desktop ones above and the tab would stay sideways on a
+	 * phone: a media query grants no extra specificity.
+	 */
+	.wp-core-ui .amehp-settings-save {
+		top: auto;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		writing-mode: horizontal-tb;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		transform: none;
+
+		/* Square across the full width, and the border only along the top. */
+		border-inline-end: 0;
+		border-radius: 0;
+		padding: 12px;
+	}
+
+	/* The text runs left to right again down here, so the tick reads. */
+	.amehp-settings-save .dashicons {
+		display: inline-flex;
+		font-size: 16px;
+		width: 16px;
+		height: 16px;
+	}
+
+	.wp-core-ui .amehp-settings-top {
+		bottom: 68px;
+	}
+
+	/* Room for the bar, so it never covers the last field on the page. */
+	.hp-page .hp-form--table {
+		padding-bottom: 56px;
+	}
+}
+
+/*
+ * Readable line lengths. Section descriptions render as full-width
+ * paragraphs directly under each heading, and the field tooltips grow as
+ * wide as their text; both wrap at a readable measure instead.
+ */
+.hp-page .hp-form--table > p {
+	max-width: 640px;
+}
+
+.hp-page .hp-form--table .hp-tooltip__text {
+	max-width: 320px;
+}
+
 /*
  * Turn each repeater row into a vertical card on every screen size. The
  * default HivePress repeater lays a row out as a horizontal table row, which
@@ -13,14 +318,29 @@ div[data-component="repeater"] table.hp-table > tbody {
 	width: 100%;
 }
 
-div[data-component="repeater"] table.hp-table > tbody > tr {
-	display: block;
-	position: relative;
+/*
+ * THE CARD SURFACE, DEFINED ONCE.
+ *
+ * Two different things are drawn as a card on this screen: a repeater row,
+ * which core renders and this stylesheet cannot add a class to, and a
+ * Placeholder Pages group, which backend.js builds and can. Rather than write
+ * the same white-panel look twice and let the two drift - the failure the
+ * house rules warn about, and this look is about to be copied into fifteen
+ * sibling plugins - both selectors share this one block. Anything specific to
+ * being a repeater row stays in the rule below it.
+ */
+div[data-component="repeater"] table.hp-table > tbody > tr,
+.amehp-card-surface {
 	margin-bottom: 16px;
-	padding: 46px 20px 20px;
 	border: 1px solid #dcdcde;
 	border-radius: 6px;
 	background: #fff;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr {
+	display: block;
+	position: relative;
+	padding: 46px 20px 20px;
 }
 
 div[data-component="repeater"] table.hp-table > tbody > tr > td {
@@ -31,28 +351,43 @@ div[data-component="repeater"] table.hp-table > tbody > tr > td {
 	border: 0;
 }
 
-div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
-	margin-bottom: 0;
+/*
+ * The drag handle's cell, which no longer holds a handle.
+ *
+ * Core renders one for every repeater row and 3.3.0 takes the handle out of
+ * ours, because the menu is ordered by dragging the live preview and a second
+ * set of handles ordered nothing. The cell itself is kept rather than removed
+ * - core clones the first row to build a new one, so a row with one cell fewer
+ * would produce new rows that no longer line up - and hidden here, otherwise
+ * an empty block would sit at the top of every card holding a 12px gap open.
+ *
+ * Two selectors because the handle leaves in two stages. The first matches the
+ * markup as rendered, so the cell is never visible even for the frame before
+ * the script runs; the second matches the class the script leaves behind once
+ * it has removed the handle, when the first no longer can. Both are live: drop
+ * either and the cell reappears at one end or the other of that moment.
+ */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:has(> [data-sort]),
+div[data-component="repeater"] table.hp-table > tbody > tr > td.amehp-card-sort {
+	display: none;
 }
 
-/* Pin the drag handle to the top-left and the remove button to the top-right. */
-div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child,
+/*
+ * Pin the remove button to the top-right of the card.
+ *
+ * The `margin: 0` here is what zeroes the 12px bottom margin the block above
+ * gives every cell; a separate `td:last-child { margin-bottom: 0 }` rule sat
+ * above this one until 3.3.5, saying the same thing at the same specificity and
+ * being overwritten by this shorthand every time. Keep the shorthand.
+ */
 div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
 	position: absolute;
 	top: 8px;
+	inset-inline-end: 14px;
 	width: auto;
 	margin: 0;
 }
 
-div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
-	inset-inline-start: 14px;
-}
-
-div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
-	inset-inline-end: 14px;
-}
-
-div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
 div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
 	display: inline-flex;
 	align-items: center;
@@ -60,6 +395,39 @@ div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-l
 	width: 30px;
 	height: 30px;
 	font-size: 15px;
+}
+
+/*
+ * The row's own id, which is never edited, so its cell is taken off the card
+ * rather than left as an empty gap between two fields.
+ *
+ * Matched on the field's NAME. HivePress's hidden field renders as
+ * `hp-field hp-field--hidden` and drops any class passed to it, so a class
+ * hook here would never match - it did not, and the cell held a 12px gap open
+ * in every custom item card until this was measured on 2026-08-30.
+ */
+div[data-component="repeater"] table.hp-table > tbody > tr > td:has(> input[name$="[uid]"]) {
+	display: none;
+}
+
+/*
+ * The two colour pickers share one line.
+ *
+ * Icon Colour and Text Colour are narrow controls that were each taking a
+ * full-width row, which made a card with an icon, a weight and two colours
+ * tall enough to need scrolling past. They are adjacent fields in both
+ * repeaters, so pairing them here needs no markup change. The labels the
+ * script adds sit above each one and stay visible.
+ *
+ * Below 782px, where wp-admin switches to its touch layout and the picker
+ * grows, two of them will not fit, so they go back to a line each.
+ */
+@media screen and (min-width: 783px) {
+	div[data-component="repeater"] table.hp-table > tbody > tr > td:has(input.amehp-colour) {
+		display: inline-block;
+		width: calc(50% - 4px);
+		vertical-align: top;
+	}
 }
 
 /* Let the field controls fill the row width. */
@@ -110,24 +478,648 @@ div[data-component="repeater"] .amehp-field-label {
 	color: #1d2327;
 }
 
+/* --------------------------------------------------------------------------
+ * Collapsible cards
+ *
+ * backend.js inserts a header bar (td.amehp-card-head) into the reserved top
+ * strip of every repeater card and toggles .amehp-card--collapsed on the row.
+ * The strip holds two things: this bar, which fills it from the left, and the
+ * remove button pinned to its right.
+ *
+ * The bar starts at 14px, which is where the drag handle used to be. It began
+ * at 52px, clearing the handle's lane, and when the handle went in 3.3.0 that
+ * inset was left behind - so the chevron floated inward with an empty lane to
+ * its left and the card looked as though something were missing from it. The
+ * end inset stays at 52px because the remove button is still there: 14px of
+ * margin plus its own 30px, plus room not to touch it.
+ * ----------------------------------------------------------------------- */
+
+div[data-component="repeater"] table.hp-table > tbody > tr > td.amehp-card-head {
+	position: absolute;
+	top: 8px;
+	inset-inline-start: 14px;
+	inset-inline-end: 52px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: auto;
+	margin: 0;
+	height: 30px;
+	overflow: hidden;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.amehp-card-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 3px;
+	background: transparent;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.amehp-card-toggle:hover,
+.amehp-card-toggle:focus {
+	color: #2271b1;
+}
+
 /*
- * Narrow the fields and enlarge the handles on small screens, where the admin
- * controls are larger and touch friendly.
+ * The chevron turns as the thing it controls opens and closes. A reader who
+ * has asked for reduced motion gets the same states with no movement.
+ */
+.amehp-card-toggle .dashicons {
+	transition: transform 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.amehp-card-toggle .dashicons {
+		transition: none;
+	}
+}
+
+.amehp-card-icon {
+	font-size: 14px;
+	color: #50575e;
+}
+
+/* An empty <i> when no icon is chosen; keep it from reserving space. */
+.amehp-card-icon:empty:not([class*="fa-"]) {
+	display: none;
+}
+
+.amehp-card-name {
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+	text-overflow: ellipsis;
+}
+
+/* Collapsed: only the top strip (drag, header, remove) remains. */
+div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed {
+	padding-bottom: 6px;
+}
+
+div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed > td:not(:last-child):not(.amehp-card-head) {
+	display: none;
+}
+
+/*
+ * There is deliberately no `cursor: grab` rule for `[data-sort]` here.
+ *
+ * One stood until 3.3.5 and could never have been seen: the cell holding the
+ * handle is `display: none` from the first paint (the `:has(> [data-sort])`
+ * rule above), and backend.js then removes the handle outright. A cursor on a
+ * control that is never painted is dead weight, and the only markup it could
+ * still have matched is ANOTHER plugin's repeater on this screen, which is not
+ * ours to restyle.
+ */
+
+/* --------------------------------------------------------------------------
+ * Placeholder Pages groups
+ *
+ * backend.js inserts a header row before each page's four settings and folds
+ * them away behind it. The chevron is the repeater cards' own, so the gesture
+ * is the same one everywhere on this screen.
+ * ----------------------------------------------------------------------- */
+
+/*
+ * The empty label cell that puts the card in the field column.
+ *
+ * Its vertical padding goes, because there is nothing in it to space out, but
+ * its horizontal padding is core's and must stay: a table column is as wide
+ * as its widest cell, so zeroing it here made this one 200px against every
+ * other row's 210px and pulled the cards 10px out of line with the fields
+ * above them. Measured on 2026-08-30.
+ */
+.hp-page .hp-form--table tr.amehp-page-group > th.amehp-page-group__label {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+/*
+ * Only the vertical padding is set. Core's own horizontal padding on a
+ * form-table cell is what lines this card up with every other control on the
+ * tab, so a shorthand here would overwrite the very measurement being matched
+ * - it did, and put the cards 10px to the left of the fields above them.
+ */
+.hp-page .hp-form--table tr.amehp-page-group > td {
+	padding-top: 4px;
+	padding-bottom: 0;
+}
+
+/*
+ * The card itself. The white panel, border and radius come from
+ * .amehp-card-surface, shared with the repeater cards, so nothing about the
+ * surface is restated here.
+ */
+/*
+ * The width limit is HivePress core's, not ours.
+ *
+ * A repeater card is 500px wide because core sets
+ * `table.hp-table { max-width: 500px }` on the table that holds it. These
+ * cards had no limit and filled their cell instead - 827px against 500px in
+ * the same window, measured 2026-08-30 - so the two families of card on this
+ * screen disagreed, and only these ones grew with the window.
+ *
+ * backend.js reads that rule's own value into --amehp-card-max-width, so the
+ * two follow each other with nothing to keep in step by hand. THE 500px HERE
+ * IS A FALLBACK AND A MIRROR OF CORE'S VALUE, for the case where no repeater
+ * is on the page: if core ever changes its number this one is stale, so
+ * change them together, and do not "tidy" it away as a magic number.
+ *
+ * A max-width and not a width, so a phone still gets a full-width card
+ * exactly as the repeater cards do there.
+ */
+.amehp-page-group__card {
+	/*
+	 * border-box, so the limit above counts this card's own 1px borders the
+	 * way core's 500px counts the repeater table's edges. Left as content-box
+	 * the card measured 502px against the table's 500px - the two borders,
+	 * sitting outside the limit.
+	 */
+	box-sizing: border-box;
+	max-width: var(--amehp-card-max-width, 500px);
+	overflow: hidden;
+}
+
+/*
+ * The header bar. Transparent and borderless, because the card behind it is
+ * what is drawn; the chevron sits at the same 14px from the card's left edge
+ * as it does on a repeater card.
+ */
+.amehp-page-group__toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	margin-bottom: 0;
+	padding: 12px 14px;
+	border: 0;
+	background: transparent;
+	text-align: start;
+	cursor: pointer;
+}
+
+/*
+ * The fields, now inside the card.
+ *
+ * They are the same four settings core rendered as table rows; the script
+ * lifts them in here and they are laid out as stacked blocks, which is what
+ * the repeater cards do with their own fields. The top border separates them
+ * from the header bar and is only drawn while the card is open, since a
+ * folded card is a bar on its own.
+ */
+.amehp-page-group__body {
+	padding: 14px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.amehp-page-group__body[hidden] {
+	display: none;
+}
+
+.amehp-page-group__field + .amehp-page-group__field {
+	margin-top: 14px;
+}
+
+/*
+ * The label block moved in from the row's <th>. It carries core's own
+ * <label> and the tooltip beside it, so only the block layout is set: the
+ * label reads as a caption above its control rather than as a table heading
+ * beside one.
+ */
+.amehp-page-group__field .amehp-field-label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-bottom: 4px;
+}
+
+.amehp-page-group__field .amehp-field-label .hp-field__label span {
+	font-size: 12px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+/* The controls fill the card, as they do in a repeater card. */
+.amehp-page-group__field input[type="text"],
+.amehp-page-group__field input[type="number"],
+.amehp-page-group__field textarea,
+.amehp-page-group__field .select2-container {
+	width: 100% !important;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.amehp-page-group__field textarea {
+	min-height: 80px;
+}
+
+.amehp-page-group__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.amehp-page-group__toggle:hover .amehp-page-group__title,
+.amehp-page-group__toggle:focus .amehp-page-group__title {
+	color: #2271b1;
+}
+
+.amehp-page-group__toggle .dashicons {
+	color: #50575e;
+	transition: transform 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.amehp-page-group__toggle .dashicons {
+		transition: none;
+	}
+}
+
+/* --------------------------------------------------------------------------
+ * Live preview panel
+ *
+ * The shell is rendered by render_preview_section() and filled in by
+ * admin-preview.js. Same mechanics as the Notifications extension's panel:
+ * a sticky column of its own above 1200px via the :has() test below, and in
+ * the flow on narrower screens - at the BOTTOM of the form there, see the
+ * ordering rule further down.
+ * ----------------------------------------------------------------------- */
+
+.amehp-preview {
+	box-sizing: border-box;
+	margin: 20px 0;
+	padding: 12px 16px 16px;
+	background-color: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.amehp-preview__title {
+	margin: 0 0 10px;
+	padding: 0;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+ * Preview panels, and folding one away
+ *
+ * One panel per menu the site renders. The header reuses the repeater cards'
+ * own .amehp-card-toggle rather than restating it, so folding a preview and
+ * folding a settings card are visibly one idea rather than two styles of the
+ * same gesture on one screen.
+ * ----------------------------------------------------------------------- */
+
+.amehp-preview__panel + .amehp-preview__panel {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.amehp-preview__panel[hidden] {
+	display: none;
+}
+
+/* A real button, so it is keyboard operable and announced for free. */
+.amehp-preview__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	margin: 0 0 8px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	text-align: start;
+	cursor: pointer;
+}
+
+.amehp-preview__panel--collapsed .amehp-preview__header {
+	margin-bottom: 0;
+}
+
+.amehp-preview__panel-title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.amehp-preview__header:hover .amehp-preview__panel-title,
+.amehp-preview__header:focus .amehp-preview__panel-title {
+	color: #2271b1;
+}
+
+.amehp-preview__body[hidden] {
+	display: none;
+}
+
+/*
+ * Two panels share the column, so each stage takes half the room the single
+ * one had. Folding the other away gives it back, which is what makes two
+ * previews workable in a 320px column at all.
+ */
+.amehp-preview__panel + .amehp-preview__panel .amehp-preview__stage,
+.amehp-preview:has(.amehp-preview__panel + .amehp-preview__panel:not([hidden])) .amehp-preview__stage {
+	max-height: calc(50vh - 150px);
+}
+
+.amehp-preview:has(.amehp-preview__panel--collapsed) .amehp-preview__panel:not(.amehp-preview__panel--collapsed) .amehp-preview__stage {
+	max-height: calc(100vh - 300px);
+}
+
+/*
+ * The stage lists the site's whole account menu, which on a site with several
+ * extensions runs to about thirty items and is taller than the viewport. It
+ * scrolls inside the panel so the sticky column stays usable rather than
+ * running off the bottom of the screen. The two rules above cut the height
+ * again when both panels are open, because they share one column.
+ */
+.amehp-preview__stage {
+	max-height: calc(100vh - 260px);
+	min-height: 120px;
+	overflow-y: auto;
+	margin-bottom: 10px;
+	padding: 8px 0;
+	background-color: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+}
+
+.amehp-preview__menu {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.amehp-preview__item a {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 9px 16px;
+	color: #1d2327;
+	font-size: 14px;
+	line-height: 1.3;
+	text-decoration: none;
+	cursor: default;
+}
+
+.amehp-preview__item + .amehp-preview__item a {
+	border-top: 1px solid #f0f0f1;
+}
+
+.amehp-preview__chevron::before {
+	content: "\203A";
+	display: inline-block;
+	margin-inline-end: 8px;
+	color: #8c8f94;
+}
+
+.amehp-preview__chevron[hidden] {
+	display: none;
+}
+
+.amehp-preview__icon {
+	display: inline-block;
+	width: 1.25em;
+	margin-inline-end: 0.5em;
+	text-align: center;
+	line-height: 1;
+}
+
+.amehp-preview__icon[hidden] {
+	display: none;
+}
+
+.amehp-preview__description {
+	margin: 0 0 10px;
+}
+
+/* --------------------------------------------------------------------------
+ * Reordering, in the preview itself
+ *
+ * The panel is the drag-to-reorder control: the handle drives jQuery UI
+ * sortable and the arrow buttons do the same job from the keyboard. The
+ * resulting key order is written into the hidden Menu Order field, whose own
+ * table row is taken off the screen by the script - the panel is where the
+ * arranging happens, and a box of comma-separated keys is not a control
+ * anybody should be editing by hand.
+ * ----------------------------------------------------------------------- */
+
+.amehp-order-row {
+	display: none;
+}
+
+.amehp-preview__item {
+	display: flex;
+	align-items: center;
+}
+
+/* The link fills the row so the handle and the arrows sit at its two ends. */
+.amehp-preview__item a {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.amehp-preview__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.amehp-preview__handle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	color: #a7aaad;
+	cursor: grab;
+}
+
+.amehp-preview__handle:active {
+	cursor: grabbing;
+}
+
+.amehp-preview__moves {
+	display: flex;
+	flex: 0 0 auto;
+	padding-inline-end: 6px;
+}
+
+.amehp-preview__move {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: 3px;
+	background: transparent;
+	color: #a7aaad;
+	cursor: pointer;
+}
+
+.amehp-preview__move:hover,
+.amehp-preview__move:focus {
+	color: #2271b1;
+}
+
+/*
+ * The controls stay faint until the row is used, so the panel still reads as
+ * a picture of the menu rather than as a toolbar. They are shown outright on
+ * keyboard focus, which is the only way a keyboard user knows where they are.
+ */
+.amehp-preview__handle,
+.amehp-preview__move {
+	opacity: 0.45;
+	transition: opacity 0.1s;
+}
+
+.amehp-preview__item:hover .amehp-preview__handle,
+.amehp-preview__item:hover .amehp-preview__move,
+.amehp-preview__move:focus {
+	opacity: 1;
+}
+
+.amehp-preview__move .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* The gap jQuery UI leaves where the dragged row will land. */
+.amehp-preview__placeholder {
+	height: 38px;
+	background: #f0f6fc;
+	border: 1px dashed #c3c4c7;
+}
+
+/*
+ * Above 1200px the panel becomes a sticky column to the right of the settings,
+ * matching how Social Proof's own preview sits beside its form (a 320px side
+ * column against a ~640px main column). The threshold was 1400px until
+ * 2026-08-30, which is wider than a typical laptop, so the panel stayed stacked
+ * on top for most people and the owner reported it as misplaced. 1200px leaves
+ * roughly 650px of form beside the panel once the admin menu is subtracted,
+ * which is the width Social Proof targets.
+ *
+ * Both rules hang off the same :has() test so they can only apply together, and
+ * the test also scopes them to this tab: the stylesheet only loads here, but
+ * .hp-form--table is every tab's form. On a browser with no :has() support
+ * neither applies and the in-flow layout stands, which is a complete design
+ * rather than a fallback. 46px clears the fixed admin bar.
+ */
+@media screen and (min-width: 1200px) {
+
+	/*
+	 * The right padding is the panel (320px) plus its gutter (32px) plus a
+	 * 44px lane on the outside that belongs to the floating Save tab.
+	 *
+	 * That last 44px is why the panel is inset from the form's right edge
+	 * rather than flush with it. The Save tab is position:fixed against the
+	 * viewport and the panel is positioned against the form, so the two are
+	 * measured from different boxes and cannot be reasoned about from either
+	 * rule alone: with the panel flush right, the tab sat on top of it and
+	 * covered the stage's scrollbar. Reserving the lane is what keeps them
+	 * apart at every width, which is checked at 1200, 1280, 1440 and 1920.
+	 */
+	form.hp-form--table:has(> .amehp-preview) {
+		position: relative;
+		padding-right: 396px;
+	}
+
+	form.hp-form--table:has(> .amehp-preview) > .amehp-preview {
+		position: absolute;
+		top: 0;
+		right: 44px;
+		bottom: 0;
+		width: 320px;
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+
+	form.hp-form--table:has(> .amehp-preview) > .amehp-preview > .amehp-preview__inner {
+		position: sticky;
+		top: calc(var(--amehp-admin-bar) + 14px);
+	}
+
+	/*
+	 * The nav's link to the panel is for the narrow layout only. Up here the
+	 * panel is a column beside the form and never out of sight, so a link
+	 * that jumps to something already on screen is just a dead control.
+	 *
+	 * The `a` in the selector is load-bearing. `.amehp-settings-nav a` above
+	 * scores 0,1,1 and a bare `.amehp-settings-nav__preview` only 0,1,0, so the
+	 * class on its own loses the cascade and the link stayed visible at every
+	 * width - measured at 1440px on 2026-08-30, computed display `block`, while
+	 * this rule was already present and looked correct on the page. Keep the
+	 * element in the selector when copying this block to another plugin.
+	 */
+	.amehp-settings-nav a.amehp-settings-nav__preview {
+		display: none;
+	}
+}
+
+/*
+ * Below the sticky-column breakpoint the panel goes to the BOTTOM of the form.
+ *
+ * It is rendered first, because a settings section can only be moved by
+ * reordering the section list server-side and the panel has to be the first
+ * section to become the right-hand column above. In the narrow layout that
+ * same position pushed every actual setting a screenful down the page, which
+ * on a phone means scrolling past a preview to reach the controls that change
+ * it - reported by the owner on 2026-08-30.
+ *
+ * Moved with flex ordering rather than by relocating the node: the panel stays
+ * one element in one place in the DOM, so the live updates, the sortable and
+ * every event binding carry on working untouched, and the layout is correct at
+ * the first paint whether or not any script runs. The nav gains a link down to
+ * it (backend.js), which is what makes a panel at the bottom reachable.
+ *
+ * `order` only has meaning in a flex container, so the form becomes one. A
+ * column flex container lays its children out top to bottom at full width,
+ * which is what block flow was already doing here.
+ */
+@media screen and (max-width: 1199px) {
+	form.hp-form--table:has(> .amehp-preview) {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	form.hp-form--table:has(> .amehp-preview) > .amehp-preview {
+		order: 1;
+	}
+}
+
+/*
+ * Roomier cards and a bigger remove button on small screens, where the admin
+ * controls are larger and touch friendly. The card header bar moves with the
+ * card's own padding so the chevron stays at its left edge.
  */
 @media screen and (max-width: 782px) {
 	div[data-component="repeater"] table.hp-table > tbody > tr {
 		padding: 52px 26px 26px;
 	}
 
-	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child {
+	div[data-component="repeater"] table.hp-table > tbody > tr > td.amehp-card-head {
 		inset-inline-start: 18px;
+		inset-inline-end: 66px;
 	}
 
 	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child {
 		inset-inline-end: 18px;
 	}
 
-	div[data-component="repeater"] table.hp-table > tbody > tr > td:first-child .hp-link,
 	div[data-component="repeater"] table.hp-table > tbody > tr > td:last-child .hp-link {
 		width: 40px;
 		height: 40px;
