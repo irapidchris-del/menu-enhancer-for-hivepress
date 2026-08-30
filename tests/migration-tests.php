@@ -376,4 +376,138 @@ $before = options_snapshot();
 amehp_maybe_migrate();
 ok( $before === options_snapshot(), 'F6 a second admin request changes nothing' );
 
+/* ===================== G. an arrangement saved by an older version ===================== */
+echo "\n[G] an arrangement saved before 3.3.10 still renders as it was arranged\n";
+
+/*
+ * WHY THIS SECTION EXISTS. 3.3.10 changed apply_menu_order(): an item the owner
+ * has never placed used to be appended after everything else and is now slotted
+ * in at its own native position. That was the only way to stop "Placed Orders" -
+ * which HivePress core adds the moment a member has an order, and which no owner
+ * could ever have arranged because the settings screen did not show it - from
+ * rendering below Sign Out.
+ *
+ * Nothing migrates, and nothing needs to: the stored arrangement is read exactly
+ * as it was written. What has to be proved, and is proved here rather than
+ * argued, is that THE ARRANGEMENT ITSELF still renders in the order the owner
+ * dragged it into, whatever else appears beside it. Every one of these
+ * arrangements is a string an earlier version wrote.
+ */
+require_once AMEHP_TEST_PLUGIN_DIR . '/includes/components/class-amehp-menu-enhancer.php';
+
+/**
+ * Renders one menu through the real ordering code and returns the item names.
+ *
+ * @param array  $natives Item name mapped to its native "_order".
+ * @param string $arrangement The stored menu order.
+ * @return array Item names, top to bottom.
+ */
+function rendered_with( $natives, $arrangement ) {
+	amehp_test_reset();
+
+	$GLOBALS['_options']['hp_amehp_menu_order'] = $arrangement;
+
+	$items = [];
+
+	foreach ( $natives as $name => $order ) {
+		$items[ $name ] = [
+			'label'  => strtoupper( $name ),
+			'url'    => 'http://example.test/' . $name,
+			'_order' => $order,
+		];
+	}
+
+	$menu = new HivePress\Components\Amehp_Menu_Enhancer();
+
+	return array_keys( HivePress\Helpers\sort_array( call_priv( $menu, 'apply_menu_order', [ $items ] ) ) );
+}
+
+/**
+ * The arrangement's own keys, in the order they came out, so the assertion is
+ * about the owner's arrangement and not about what appeared beside it.
+ *
+ * @param array $rendered Rendered item names.
+ * @param array $arranged Item names the owner arranged.
+ * @return array
+ */
+function arranged_only( $rendered, $arranged ) {
+	return array_values( array_intersect( $rendered, $arranged ) );
+}
+
+// A menu where the owner arranged everything there was. Nothing is unplaced, so
+// the rendered menu is the arrangement, character for character.
+$natives     = [
+	'user_account'       => 10,
+	'listings_edit'      => 20,
+	'messages_thread'    => 30,
+	'user_edit_settings' => 50,
+	'user_logout'        => 1000,
+];
+$arranged    = [ 'user_account', 'messages_thread', 'listings_edit', 'user_edit_settings', 'user_logout' ];
+$arrangement = 'hp:user_account,hp:messages_thread,hp:listings_edit,hp:user_edit_settings,hp:user_logout';
+ok(
+	$arranged === rendered_with( $natives, $arrangement ),
+	'G1 an arrangement covering the whole menu renders exactly as it was saved'
+);
+
+// The same arrangement, on the day the member places their first order and core
+// adds a sixth item nobody could have arranged.
+$natives['orders_view'] = 40;
+$rendered               = rendered_with( $natives, $arrangement );
+ok(
+	$arranged === arranged_only( $rendered, $arranged ),
+	'G2 and it still renders in that order once core adds an item the owner never placed'
+);
+ok(
+	'orders_view' !== $rendered[ count( $rendered ) - 1 ] && array_search( 'orders_view', $rendered, true ) < array_search( 'user_logout', $rendered, true ),
+	'G3 the new item is not appended after Sign Out, which is the bug this release fixes'
+);
+ok(
+	[ 'user_account', 'messages_thread', 'listings_edit', 'orders_view', 'user_edit_settings', 'user_logout' ] === $rendered,
+	'G4 it follows the last arranged item whose own native order is below its own'
+);
+
+// A Sign Out dragged to the top is the case that breaks a naive interleave: the
+// first item in the arrangement has the HIGHEST native order, so anchoring on
+// the first match would drop every unplaced item straight underneath it.
+$natives = [
+	'user_logout'   => 1000,
+	'user_account'  => 10,
+	'listings_edit' => 20,
+	'orders_view'   => 40,
+];
+$rendered = rendered_with( $natives, 'hp:user_logout,hp:user_account,hp:listings_edit' );
+ok(
+	[ 'user_logout', 'user_account', 'listings_edit' ] === arranged_only( $rendered, [ 'user_logout', 'user_account', 'listings_edit' ] ),
+	'G5 an arrangement that ignores the native order entirely is still honoured'
+);
+ok(
+	'orders_view' === $rendered[3],
+	'G6 and the unplaced item follows the last arranged item below it, not the stray one at the top'
+);
+
+// Two unplaced items keep their own order relative to each other.
+$natives  = [
+	'user_account'       => 10,
+	'user_edit_settings' => 50,
+	'orders_view'        => 40,
+	'subscriptions_view' => 42,
+];
+$rendered = rendered_with( $natives, 'hp:user_account,hp:user_edit_settings' );
+ok(
+	[ 'user_account', 'orders_view', 'subscriptions_view', 'user_edit_settings' ] === $rendered,
+	'G7 two unplaced items keep their own order and both land inside the arrangement'
+);
+
+// Nothing about this is a migration, and it must not become one.
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:b,hp:a';
+$before                                     = options_snapshot();
+rendered_with( [ 'a' => 10, 'b' => 20 ], 'hp:b,hp:a' );
+amehp_maybe_migrate();
+ok(
+	'hp:b,hp:a' === get_option( 'hp_amehp_menu_order' ),
+	'G8 the stored arrangement is never rewritten: the new ordering is applied at render time only'
+);
+
 amehp_test_finish();

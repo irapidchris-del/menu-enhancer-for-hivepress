@@ -377,8 +377,12 @@
 			 * only, and a HivePress item in the HivePress menu only. Combining
 			 * is exactly what puts each of them in both, so the combined panel
 			 * takes everything. Anything hidden is out of every panel.
+			 *
+			 * hpMenuWcKeys is the exception the prefix cannot express: the
+			 * lists HivePress core adds to its own menu carry a WooCommerce
+			 * name and are in both menus regardless of the setting.
 			 */
-			logic.catalogueItems( menuCatalogue(), hidden, which, combined ).forEach( function ( entry ) {
+			logic.catalogueItems( menuCatalogue(), hidden, which, combined, data.hpMenuWcKeys ).forEach( function ( entry ) {
 				var item = overrides[ entry.value ] || {
 					label: entry.label,
 					icon: '',

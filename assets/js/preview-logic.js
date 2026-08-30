@@ -280,14 +280,27 @@
 		 * so the combined panel takes everything, and when the menus are apart
 		 * each panel takes only its own side.
 		 *
+		 * EXCEPT for the items HivePress core adds to its own account menu under
+		 * a WooCommerce name. "Placed Orders" appears there as soon as the member
+		 * has an order, with or without this plugin's integration, and it is
+		 * listed under `wc:orders` because it leads to the same page as the
+		 * WooCommerce row. Reading the prefix alone therefore dropped it from the
+		 * HivePress panel, the owner could not drag what the panel would not
+		 * show, and the item rendered below Sign Out on the real menu. The server
+		 * works out which keys those are and hands them over; see
+		 * get_hp_menu_wc_keys(). They are in both menus, so they show in both
+		 * panels, which is what the site does.
+		 *
 		 * @param {string} value Item key.
 		 * @param {string} which Which menu: "hivepress", "woocommerce" or
 		 *                       "combined".
 		 * @param {boolean} combined Whether the menus are combined.
 		 * @param {Object} hidden Lookup of hidden item keys.
+		 * @param {Array} hpWcKeys Keys the HivePress menu carries in their own
+		 *                         right despite their WooCommerce name.
 		 * @return {boolean}
 		 */
-		includesCatalogueEntry: function ( value, which, combined, hidden ) {
+		includesCatalogueEntry: function ( value, which, combined, hidden, hpWcKeys ) {
 			if ( hidden && hidden[ value ] ) {
 				return false;
 			}
@@ -303,7 +316,7 @@
 			}
 
 			if ( 'hivepress' === which && isWc ) {
-				return false;
+				return -1 !== ( hpWcKeys || [] ).indexOf( value );
 			}
 
 			return true;
@@ -316,11 +329,13 @@
 		 * @param {Object} hidden Lookup of hidden item keys.
 		 * @param {string} which Which menu.
 		 * @param {boolean} combined Whether the menus are combined.
+		 * @param {Array} hpWcKeys Keys the HivePress menu carries in their own
+		 *                         right despite their WooCommerce name.
 		 * @return {Array}
 		 */
-		catalogueItems: function ( catalogue, hidden, which, combined ) {
+		catalogueItems: function ( catalogue, hidden, which, combined, hpWcKeys ) {
 			return ( catalogue || [] ).filter( function ( entry ) {
-				return api.includesCatalogueEntry( entry.value, which, combined, hidden );
+				return api.includesCatalogueEntry( entry.value, which, combined, hidden, hpWcKeys );
 			} );
 		},
 
@@ -364,12 +379,20 @@
 		 * With no arrangement stored, that is the numeric order - the real menu
 		 * order, not the dropdown's alphabetical one, which is what the panel
 		 * showed until 3.2.0. Once the owner has dragged the menu into an order
-		 * of their own, their arrangement comes first and anything they have
-		 * never placed follows it in its own numeric order, which is exactly
-		 * what apply_menu_order() does on the front end.
+		 * of their own, their arrangement is kept exactly and anything they have
+		 * never placed is slotted in beside the placed item its own numeric
+		 * order puts it next to.
 		 *
-		 * Array.prototype.sort is stable in every browser that supports ES2019,
-		 * so equal orders keep the order they were collected in.
+		 * THIS IS apply_menu_order() IN JAVASCRIPT, and the two have to give the
+		 * same answer or the panel tells the owner something untrue about their
+		 * own menu. Both changed together in 3.3.10, when unplaced items stopped
+		 * being appended after everything else - keep them in step, and change
+		 * neither alone. The PHP side carries the reasoning.
+		 *
+		 * A comparator cannot express this: the position an unplaced item takes
+		 * depends on where the placed items ended up, not on a pairwise
+		 * comparison, so the sequence is built rather than sorted. The array is
+		 * still sorted in place and returned, so callers need not change.
 		 *
 		 * @param {Array} items Objects of `key` and `order`.
 		 * @param {Array} arranged The owner's stored arrangement.
@@ -378,24 +401,59 @@
 		sortItems: function ( items, arranged ) {
 			arranged = arranged || [];
 
-			return items.sort( function ( a, b ) {
-				var placedA = arranged.indexOf( a.key ),
-					placedB = arranged.indexOf( b.key );
+			var placed = [],
+				unplaced = [],
+				sequence = [];
 
-				if ( -1 !== placedA || -1 !== placedB ) {
-					if ( -1 === placedA ) {
-						return 1;
-					}
+			( items || [] ).forEach( function ( item ) {
+				var at = arranged.indexOf( item.key );
 
-					if ( -1 === placedB ) {
-						return -1;
-					}
-
-					return placedA - placedB;
+				if ( -1 !== at ) {
+					placed.push( { item: item, at: at } );
+				} else {
+					unplaced.push( item );
 				}
+			} );
 
+			if ( ! placed.length ) {
+				return items.sort( function ( a, b ) {
+					return a.order - b.order;
+				} );
+			}
+
+			placed.sort( function ( a, b ) {
+				return a.at - b.at;
+			} );
+
+			placed.forEach( function ( entry ) {
+				sequence.push( entry.item );
+			} );
+
+			unplaced.sort( function ( a, b ) {
 				return a.order - b.order;
 			} );
+
+			unplaced.forEach( function ( item ) {
+				var index = 0;
+
+				// The LAST match wins, so one row the owner dragged out of its
+				// natural place cannot capture everything behind it.
+				sequence.forEach( function ( placedItem, offset ) {
+					if ( placedItem.order <= item.order ) {
+						index = offset + 1;
+					}
+				} );
+
+				sequence.splice( index, 0, item );
+			} );
+
+			items.length = 0;
+
+			sequence.forEach( function ( item ) {
+				items.push( item );
+			} );
+
+			return items;
 		},
 	};
 

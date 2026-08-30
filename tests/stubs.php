@@ -1811,4 +1811,47 @@ namespace {
 
 		return $method->invokeArgs( $instance, $args );
 	}
+
+	/*
+	 * mb_substr(), because WordPress guarantees it and PHP does not.
+	 *
+	 * The plugin truncates stored menu labels with mb_substr(). That is safe on a
+	 * real site whether or not the host has the mbstring extension, because
+	 * WordPress polyfills the function itself in wp-includes/compat.php:272,
+	 * delegating to its own _mb_substr(). The harness stubs WordPress rather than
+	 * loading it, so it does not inherit that guarantee.
+	 *
+	 * **None of the three PHP binaries Local ships here has mbstring** (8.2.23,
+	 * 8.2.29 and 8.2.30, all measured 2026-08-30), so without this the whole
+	 * logic suite died on an uncaught "Call to undefined function
+	 * HivePress\Components\mb_substr()" the moment a seen-item label was cleaned
+	 * - and reported only as a FAIL for six matrix runs, with the real cause
+	 * three lines further down the output. An agent reported the suite green on
+	 * the same day, which it cannot have been on any PHP available here.
+	 *
+	 * Guarded, so a machine that does have mbstring uses the real thing and the
+	 * suite behaves identically either way.
+	 */
+	if ( ! function_exists( 'mb_substr' ) ) {
+
+		/**
+		 * Substring, matching WordPress's own fallback closely enough for the labels here.
+		 *
+		 * @param string   $string Input string.
+		 * @param int      $start Start offset.
+		 * @param int|null $length Length.
+		 * @param string   $encoding Encoding, ignored.
+		 * @return string
+		 */
+		function mb_substr( $string, $start, $length = null, $encoding = null ) {
+			// Split on codepoints, so a multibyte label is cut where WordPress would cut it.
+			$chars = preg_split( '//u', (string) $string, -1, PREG_SPLIT_NO_EMPTY );
+
+			if ( ! is_array( $chars ) ) {
+				return '';
+			}
+
+			return implode( '', array_slice( $chars, (int) $start, null === $length ? null : (int) $length ) );
+		}
+	}
 }

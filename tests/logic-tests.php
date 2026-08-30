@@ -178,8 +178,13 @@ $items = base_menu(
 );
 $GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:c,hp:a';
 ok(
-	[ 'c', 'a', 'd', 'b' ] === rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ),
-	'B2 an item the owner never placed keeps its native order and follows the placed block'
+	[ 'd', 'c', 'a', 'b' ] === rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ),
+	'B2 an item the owner never placed is slotted in at its own native order, not appended'
+);
+ok(
+	array_search( 'c', rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ), true )
+		< array_search( 'a', rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ), true ),
+	'B2a and the arrangement itself is untouched: c is still before a'
 );
 
 amehp_test_reset();
@@ -193,7 +198,7 @@ $items = base_menu(
 );
 $GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:gone_extension,hp:c,hp:a,wc:nothing';
 ok(
-	[ 'c', 'a', 'd', 'b' ] === rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ),
+	[ 'd', 'c', 'a', 'b' ] === rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) ),
 	'B3 a stale key for an item that no longer exists is ignored, not fatal, and does not shift the rest'
 );
 
@@ -236,6 +241,39 @@ $items['not_an_array']                      = 'a string, as a third-party filter
 $GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:b,hp:a';
 $result                                     = call_priv( $MENU, 'apply_menu_order', [ $items ] );
 ok( 'a string, as a third-party filter can leave behind' === $result['not_an_array'], 'B7 a non-array item is left alone rather than crashed on' );
+
+/*
+ * The reported bug, in the shape a real site has it.
+ *
+ * HivePress core adds "Placed Orders" to its own account menu the moment the
+ * member has an order, with a native "_order" of 40 - and it does that whether
+ * or not this plugin's WooCommerce integration is on
+ * (hivepress/includes/components/class-woocommerce.php:447-464, core 1.7.31).
+ * An owner who had arranged their menu before that day had no stored position
+ * for it, so until 3.3.10 it rendered below Sign Out. Reproduced on
+ * hivepress-dev on 2026-08-30 with a real completed order.
+ */
+amehp_test_reset();
+$items                                      = base_menu(
+	[
+		'user_account'       => 10,
+		'listings_edit'      => 20,
+		'orders_view'        => 40,
+		'subscriptions_view' => 42,
+		'user_edit_settings' => 50,
+		'user_logout'        => 1000,
+	]
+);
+$GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:user_account,hp:listings_edit,hp:user_edit_settings,hp:user_logout';
+$order                                      = rendered_order( call_priv( $MENU, 'apply_menu_order', [ $items ] ) );
+ok(
+	[ 'user_account', 'listings_edit', 'orders_view', 'subscriptions_view', 'user_edit_settings', 'user_logout' ] === $order,
+	'B8 the list core adds once a member has an order falls at its own position, not below Sign Out'
+);
+ok(
+	[ 'user_account', 'listings_edit', 'user_edit_settings', 'user_logout' ] === array_values( array_intersect( $order, [ 'user_account', 'listings_edit', 'user_edit_settings', 'user_logout' ] ) ),
+	'B9 and the four items the owner did arrange are still in exactly the order they arranged them'
+);
 
 /* ===================== C. hiding ===================== */
 echo "\n[C] hidden items\n";
@@ -1313,6 +1351,98 @@ $seen                                       = call_priv( $MENU, 'get_seen_items'
 ok( 'Bold label' === $seen['tagged']['label'], 'P10 markup is stripped out of a stored label on read' );
 ok( 100 === strlen( $seen['long']['label'] ), 'P11 an over-long label is cut to 100 characters' );
 ok( ! isset( $seen['blank'] ), 'P12 and a record with no label at all is dropped' );
+
+/* ===================== Q. the items HivePress core adds for WooCommerce ===================== */
+echo "\n[Q] core's own WooCommerce menu items\n";
+
+// One settings key, both names. The settings screen lists "Placed Orders" under
+// its WooCommerce name so the owner sees ONE option for one destination, and
+// every consumer of that key has to reach both names or the option would hide
+// one row and style the other.
+amehp_test_reset();
+ok(
+	[ 'orders', 'orders_view' ] === call_priv( $MENU, 'get_key_menu_names', [ 'wc:orders' ] ),
+	'Q1 "Orders (WooCommerce)" reaches the endpoint and the name core gives its own list'
+);
+ok(
+	[ 'subscriptions', 'subscriptions_view' ] === call_priv( $MENU, 'get_key_menu_names', [ 'wc:subscriptions' ] ),
+	'Q2 and the same for Subscriptions'
+);
+ok(
+	[ 'downloads' ] === call_priv( $MENU, 'get_key_menu_names', [ 'wc:downloads' ] ),
+	'Q3 an ordinary endpoint has one name and gains nothing'
+);
+ok(
+	[ 'listings_edit' ] === call_priv( $MENU, 'get_key_menu_names', [ 'hp:listings_edit' ] ),
+	'Q4 a HivePress key is just its item name'
+);
+ok(
+	[ 'amehp_item_ab12cd34' ] === call_priv( $MENU, 'get_key_menu_names', [ 'amehp_item_ab12cd34' ] ),
+	'Q5 and a custom item key is passed through untouched'
+);
+
+// get_settings_key() is the inverse, and the pair has to round-trip or the
+// preview would label an item under a key nothing else recognises.
+amehp_test_reset();
+ok(
+	'wc:orders' === call_priv( $MENU, 'get_settings_key', [ 'orders_view', [] ] ),
+	'Q6 core\'s own item name maps back to the WooCommerce key, with no endpoint list needed'
+);
+ok(
+	'hp:listings_edit' === call_priv( $MENU, 'get_settings_key', [ 'listings_edit', [] ] ),
+	'Q7 and an ordinary HivePress item keeps its HivePress key'
+);
+
+/*
+ * The discriminator the preview panel needs.
+ *
+ * A `wc:` key normally means "WooCommerce menu only" when the menus are not
+ * combined, and the preview splits its two panels on exactly that. These two
+ * are the exception: core puts them in the HIVEPRESS menu whatever the
+ * integration setting says, so the HivePress panel has to show them or the
+ * owner cannot drag what the site is rendering.
+ */
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_seen_items'] = [
+	'orders_view'   => [
+		'label' => 'Placed Orders',
+		'route' => '',
+		'order' => 40,
+	],
+	'downloads'     => [
+		'label' => 'Downloads',
+		'route' => '',
+		'order' => 63,
+	],
+	'listings_edit' => [
+		'label' => 'Listings',
+		'route' => 'listings_edit_page',
+		'order' => 20,
+	],
+];
+$keys                                       = call_priv( $MENU, 'get_hp_menu_wc_keys' );
+ok( in_array( 'wc:orders', $keys, true ), 'Q8 the list core adds is named as one the HivePress menu carries itself' );
+ok(
+	! in_array( 'wc:downloads', $keys, true ),
+	'Q9 an endpoint this plugin merges in is NOT, so switching the integration off still takes it out of the HivePress panel'
+);
+ok(
+	! in_array( 'hp:listings_edit', $keys, true ),
+	'Q10 and an ordinary HivePress item is not in this list at all, having never needed to be'
+);
+
+// Hiding it has to remove the row under whichever name the menu used.
+amehp_test_reset();
+$GLOBALS['_hp_menu_items']                    = base_menu(
+	[
+		'a'           => 10,
+		'orders_view' => 40,
+	]
+);
+$GLOBALS['_options']['hp_amehp_hidden_items'] = [ 'wc:orders' ];
+$menu                                         = $MENU->alter_hp_menu( [ 'items' => $GLOBALS['_hp_menu_items'] ] );
+ok( ! isset( $menu['items']['orders_view'] ), 'Q11 hiding "Orders (WooCommerce)" removes the list core added under its own name' );
+ok( isset( $menu['items']['a'] ), 'Q12 and leaves everything else alone' );
 
 /* ===================== O. version drift ===================== */
 echo "\n[O] version drift\n";

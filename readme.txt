@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.9
+Stable tag: 3.3.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,17 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.3.10 =
+* Fixed: the Placed Orders item, which HivePress adds to the account menu once a member has an
+  order, appeared at the very bottom of the menu on sites where the menu order had been arranged.
+  It now sits in its proper place, and the same applies to the Subscriptions item.
+* Fixed: Placed Orders and Subscriptions are now shown in the Live preview panel, where they can be
+  dragged into any position you like. They were missing from the preview whenever the WooCommerce
+  integration was switched off, so the preview disagreed with the menu your members actually saw.
+* Changed: a menu item that appears after you have arranged your menu is now placed in the position
+  its own extension gives it, rather than being added below every item you arranged. Your own
+  arrangement is unchanged.
 
 = 3.3.9 =
 * Changed: the instructions on the Menu Item Styling setting no longer say the cards can be dragged

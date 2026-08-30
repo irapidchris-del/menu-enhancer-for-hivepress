@@ -274,14 +274,79 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
-	 * Gets the chosen position of each menu item, keyed by MENU item name.
+	 * Gets the menu item names one settings key stands for.
 	 *
-	 * The stored keys are the settings screen's own (`hp:listings_edit`,
-	 * `wc:downloads`), while the menus are keyed by the bare item name or
-	 * endpoint, so the prefixes are mapped off here. The two names HivePress
-	 * core gives the WooCommerce order lists are mapped as well, exactly as
-	 * get_item_selectors() maps them, so dragging "Orders (WooCommerce)"
-	 * moves the row whichever of the two names the menu happens to use.
+	 * The inverse of get_settings_key(), and the single place the mapping is
+	 * written. The stored keys are the settings screen's own
+	 * (`hp:listings_edit`, `wc:downloads`) while the menus are keyed by the bare
+	 * item name or endpoint, so the prefix is mapped off; and the names
+	 * HivePress core gives the WooCommerce order lists are added alongside the
+	 * endpoint, so one key reaches the row whichever of the two names the menu
+	 * happens to use.
+	 *
+	 * IT LIVED IN TWO PLACES UNTIL 3.3.10 - get_menu_order_positions() and
+	 * get_item_selectors() each carried their own copy of the same six lines,
+	 * with a comment in each pointing at the other and asking that they be kept
+	 * in step. Two copies of a mapping that has to agree is how they stop
+	 * agreeing, and the cost of a disagreement here is an item that can be
+	 * styled but not dragged, or the reverse.
+	 *
+	 * @param string $key Settings item key.
+	 * @return array Menu item names.
+	 */
+	protected function get_key_menu_names( $key ) {
+		if ( 0 === strpos( $key, 'hp:' ) ) {
+			return [ substr( $key, strlen( 'hp:' ) ) ];
+		}
+
+		if ( 0 === strpos( $key, 'wc:' ) ) {
+			$endpoint = substr( $key, strlen( 'wc:' ) );
+			$names    = [ $endpoint ];
+
+			// Cover the item names HivePress core uses for these two lists.
+			foreach ( $this->get_core_wc_items() as $name => $core_endpoint ) {
+				if ( $core_endpoint === $endpoint ) {
+					$names[] = $name;
+				}
+			}
+
+			return $names;
+		}
+
+		return [ $key ];
+	}
+
+	/**
+	 * Gets the account menu items HivePress core adds for WooCommerce.
+	 *
+	 * These are the reason this plugin has to think about the two menus
+	 * separately at all. HivePress core puts them in ITS OWN account menu,
+	 * conditionally and with no route of their own - "Orders" as soon as the
+	 * member has placed one, "Subscriptions" once they hold one - and it does so
+	 * whether or not this plugin's WooCommerce integration is switched on
+	 * (hivepress/includes/components/class-woocommerce.php:447-464, core 1.7.31,
+	 * verified 2026-08-30). So they are NOT endpoints this plugin merges in:
+	 * they belong to the HivePress menu on their own account, and the settings
+	 * screen lists them under their WooCommerce names so an owner sees one
+	 * option per real destination rather than two that behave differently.
+	 *
+	 * Named rather than derived because the naming is core's own choice and
+	 * nothing in the menu records it: the item is `orders_view` in one menu and
+	 * the `orders` endpoint in the other, and there is no property on either
+	 * that says so. Every other place that needs the pairing asks this method,
+	 * so a third name core adds later is one line here.
+	 *
+	 * @return array Menu item name mapped to its WooCommerce endpoint.
+	 */
+	protected function get_core_wc_items() {
+		return [
+			'orders_view'        => 'orders',
+			'subscriptions_view' => 'subscriptions',
+		];
+	}
+
+	/**
+	 * Gets the chosen position of each menu item, keyed by MENU item name.
 	 *
 	 * @return array Menu item name mapped to its position.
 	 */
@@ -290,25 +355,7 @@ final class Amehp_Menu_Enhancer extends Component {
 		$position  = 0;
 
 		foreach ( $this->get_menu_order() as $key ) {
-			$names = [];
-
-			if ( 0 === strpos( $key, 'hp:' ) ) {
-				$names[] = substr( $key, strlen( 'hp:' ) );
-			} elseif ( 0 === strpos( $key, 'wc:' ) ) {
-				$endpoint = substr( $key, strlen( 'wc:' ) );
-
-				$names[] = $endpoint;
-
-				if ( 'orders' === $endpoint ) {
-					$names[] = 'orders_view';
-				} elseif ( 'subscriptions' === $endpoint ) {
-					$names[] = 'subscriptions_view';
-				}
-			} else {
-				$names[] = $key;
-			}
-
-			foreach ( $names as $name ) {
+			foreach ( $this->get_key_menu_names( $key ) as $name ) {
 				if ( ! isset( $positions[ $name ] ) ) {
 					$positions[ $name ] = $position;
 				}
@@ -325,14 +372,30 @@ final class Amehp_Menu_Enhancer extends Component {
 	 *
 	 * Every item present is given a fresh `_order`, so the whole menu follows
 	 * the stored list rather than half of it: an item the owner has placed
-	 * takes its stored position, and an item they have never seen - a page
-	 * added by an extension installed since they last dragged, or one this
-	 * particular visitor gets and they do not - keeps its native `_order`
-	 * relative to the other unplaced items and follows the placed block.
-	 * Appending rather than guessing is deliberate: the alternative is
-	 * inventing a position for a page nobody has ever put anywhere, and a new
-	 * item at the end of the menu is at least somewhere the owner can find
-	 * and drag it.
+	 * takes its stored position, and an item they have never placed is slotted
+	 * in beside the placed item its own native `_order` puts it next to.
+	 *
+	 * UNPLACED ITEMS WERE APPENDED AFTER EVERYTHING ELSE UNTIL 3.3.10, and that
+	 * is the whole of the bug this method was changed for. HivePress core adds
+	 * "Placed Orders" to the account menu the moment a member has an order, with
+	 * a native `_order` of 40 that puts it in the middle of the menu - but an
+	 * owner who had ever dragged the menu had no stored position for an item
+	 * they had never been shown, so it fell into the appended block and rendered
+	 * BELOW Sign Out. Reported from a live site on 2026-08-30. The old comment
+	 * here argued that appending was the honest answer because the alternative
+	 * was "inventing a position for a page nobody has ever put anywhere". It is
+	 * not invented: the extension that registered the item chose that number, it
+	 * is the position the same menu uses on a site that has never been dragged,
+	 * and the settings screen's preview shows the item either way, so nothing is
+	 * lost by putting it where it belongs.
+	 *
+	 * The owner's own arrangement is not touched. Each unplaced item is inserted
+	 * after the LAST item already in the sequence whose native `_order` is no
+	 * higher than its own, so the placed items keep their stored order and their
+	 * relative positions exactly, whatever the arrangement looks like - pinned
+	 * in the migration tests, which compare the placed items alone before and
+	 * after. Unplaced items are taken in ascending native order, so they keep
+	 * their own relative order too.
 	 *
 	 * Items merely absent from this menu are untouched, which is what keeps a
 	 * hidden item, or a WooCommerce row on a site not combining the menus,
@@ -350,21 +413,44 @@ final class Amehp_Menu_Enhancer extends Component {
 
 		$placed   = [];
 		$unplaced = [];
+		$native   = [];
 
 		foreach ( $items as $name => $item ) {
+			$native[ $name ] = is_array( $item ) && isset( $item['_order'] ) ? (int) $item['_order'] : 100;
+
 			if ( isset( $positions[ $name ] ) ) {
 				$placed[ $name ] = $positions[ $name ];
 			} else {
-				$unplaced[ $name ] = is_array( $item ) && isset( $item['_order'] ) ? (int) $item['_order'] : 100;
+				$unplaced[ $name ] = $native[ $name ];
 			}
 		}
 
 		asort( $placed );
 		asort( $unplaced );
 
+		$sequence = array_keys( $placed );
+
+		foreach ( $unplaced as $name => $item_order ) {
+			$index = 0;
+
+			/*
+			 * The LAST match wins, not the first. An owner is free to drag a
+			 * late item to the top, and anchoring on the first item with a lower
+			 * native order would let that one stray row capture every unplaced
+			 * item behind it.
+			 */
+			foreach ( $sequence as $offset => $placed_name ) {
+				if ( $native[ $placed_name ] <= $item_order ) {
+					$index = $offset + 1;
+				}
+			}
+
+			array_splice( $sequence, $index, 0, [ $name ] );
+		}
+
 		$order = 10;
 
-		foreach ( array_merge( array_keys( $placed ), array_keys( $unplaced ) ) as $name ) {
+		foreach ( $sequence as $name ) {
 			if ( is_array( $items[ $name ] ) ) {
 				$items[ $name ]['_order'] = $order;
 			}
@@ -755,21 +841,21 @@ final class Amehp_Menu_Enhancer extends Component {
 
 		$hidden = $this->get_hidden_keys();
 
-		// Remove the hidden items.
+		/*
+		 * Remove the hidden items.
+		 *
+		 * Every name the key stands for, so hiding "Orders (WooCommerce)" also
+		 * removes the list HivePress core adds to this menu under its own name.
+		 * A custom item's key is left alone here: those are not in this menu
+		 * until this method puts them there, and it skips a hidden one below.
+		 */
 		foreach ( $hidden as $key ) {
-			if ( 0 === strpos( $key, 'hp:' ) ) {
-				unset( $menu['items'][ substr( $key, strlen( 'hp:' ) ) ] );
-			} elseif ( 0 === strpos( $key, 'wc:' ) ) {
-				$endpoint = substr( $key, strlen( 'wc:' ) );
+			if ( 0 !== strpos( $key, 'hp:' ) && 0 !== strpos( $key, 'wc:' ) ) {
+				continue;
+			}
 
-				unset( $menu['items'][ $endpoint ] );
-
-				// Remove the items added by HivePress core.
-				if ( 'orders' === $endpoint ) {
-					unset( $menu['items']['orders_view'] );
-				} elseif ( 'subscriptions' === $endpoint ) {
-					unset( $menu['items']['subscriptions_view'] );
-				}
+			foreach ( $this->get_key_menu_names( $key ) as $name ) {
+				unset( $menu['items'][ $name ] );
 			}
 		}
 
@@ -789,11 +875,16 @@ final class Amehp_Menu_Enhancer extends Component {
 
 			$order = 60;
 
+			// The endpoints HivePress core puts in this menu itself, so the
+			// merge below leaves them to core rather than adding a second row
+			// pointing at the same page.
+			$core = $this->get_core_wc_items();
+
 			foreach ( $this->get_base_wc_items() as $endpoint => $label ) {
 
 				// Skip the endpoints managed by HivePress core, the sign-out
 				// duplicate and the hidden items.
-				if ( in_array( $endpoint, [ 'orders', 'subscriptions', 'customer-logout' ], true ) || in_array( 'wc:' . $endpoint, $hidden, true ) ) {
+				if ( in_array( $endpoint, $core, true ) || 'customer-logout' === $endpoint || in_array( 'wc:' . $endpoint, $hidden, true ) ) {
 					continue;
 				}
 
@@ -898,7 +989,9 @@ final class Amehp_Menu_Enhancer extends Component {
 				// alone cannot catch these, since the native URL can differ
 				// (for example WooCommerce Subscriptions links a single
 				// subscription straight to its details page).
-				if ( ( 'orders_view' === $name && ( isset( $rows['orders'] ) || in_array( 'wc:orders', $hidden, true ) ) ) || ( 'subscriptions_view' === $name && ( isset( $rows['subscriptions'] ) || in_array( 'wc:subscriptions', $hidden, true ) ) ) ) {
+				$core_endpoint = hp\get_array_value( $this->get_core_wc_items(), $name );
+
+				if ( $core_endpoint && ( isset( $rows[ $core_endpoint ] ) || in_array( 'wc:' . $core_endpoint, $hidden, true ) ) ) {
 					continue;
 				}
 
@@ -1683,6 +1776,12 @@ final class Amehp_Menu_Enhancer extends Component {
 				'itemOrders'       => $this->get_preview_orders(),
 				'menuOrder'        => $this->get_menu_order(),
 
+				// The WooCommerce-named items that are in the HivePress menu
+				// whether or not the integration is on, so the HivePress panel
+				// shows them and the owner can drag them. See
+				// get_hp_menu_wc_keys().
+				'hpMenuWcKeys'     => $this->get_hp_menu_wc_keys(),
+
 				// The placeholder pages, so the script can fold that section's
 				// fields into one group per page under the page's own name.
 				'placeholderPages' => hivepress()->amehp_persistent_menu ? hivepress()->amehp_persistent_menu->get_placeholder_pages() : [],
@@ -1801,6 +1900,50 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
+	 * Gets the WooCommerce-named items that belong to the HivePress account menu
+	 * in their own right, as settings keys.
+	 *
+	 * THE PREVIEW NEEDS THIS TO AGREE WITH THE FRONT END. Its two panels split
+	 * the catalogue by key prefix when the menus are not combined: a `wc:` key
+	 * is a WooCommerce row and a `hp:` key a HivePress one. That is right for
+	 * every endpoint this plugin merges in itself, and wrong for the lists
+	 * HivePress core adds - "Placed Orders" is in the HivePress menu whether or
+	 * not the integration is on, and is listed under a `wc:` key because that is
+	 * the same destination as the WooCommerce row. So the panel dropped it, the
+	 * owner could not drag it, and the item it could not place rendered at the
+	 * bottom of the real menu. Reported from a live site on 2026-08-30.
+	 *
+	 * Worked out structurally rather than named: an item is the HivePress menu's
+	 * own if that menu carries it while this plugin is NOT merging anything into
+	 * it. get_core_wc_items() is the list of names core uses, and the endpoints
+	 * beside them are exactly the ones alter_hp_menu() refuses to merge, so the
+	 * two answers cannot drift apart.
+	 *
+	 * The menu is asked twice because neither source is complete on its own: the
+	 * menu built here in wp-admin describes the administrator (who may have
+	 * placed no orders and would therefore not see the item at all), while the
+	 * records kept by record_seen_items() describe every member who has loaded
+	 * an account page.
+	 *
+	 * @return array Settings keys.
+	 */
+	protected function get_hp_menu_wc_keys() {
+		$core  = $this->get_core_wc_items();
+		$names = array_merge( array_keys( $this->get_base_hp_items() ), array_keys( $this->get_seen_items() ) );
+		$keys  = [];
+
+		foreach ( $names as $name ) {
+			if ( ! isset( $core[ $name ] ) ) {
+				continue;
+			}
+
+			$keys[ 'wc:' . $core[ $name ] ] = true;
+		}
+
+		return array_keys( $keys );
+	}
+
+	/**
 	 * Maps a menu item's own name to the key the settings screen knows it by.
 	 *
 	 * The inverse of get_item_selectors(), and it has to agree with
@@ -1817,12 +1960,10 @@ final class Amehp_Menu_Enhancer extends Component {
 			return $name;
 		}
 
-		if ( 'orders_view' === $name ) {
-			return 'wc:orders';
-		}
+		$core = $this->get_core_wc_items();
 
-		if ( 'subscriptions_view' === $name ) {
-			return 'wc:subscriptions';
+		if ( isset( $core[ $name ] ) ) {
+			return 'wc:' . $core[ $name ];
 		}
 
 		return isset( $endpoints[ $name ] ) ? 'wc:' . $name : 'hp:' . $name;
@@ -2203,25 +2344,7 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * @return array
 	 */
 	protected function get_item_selectors( $key ) {
-		$names = [];
-
-		if ( 0 === strpos( $key, 'hp:' ) ) {
-			$names[] = substr( $key, strlen( 'hp:' ) );
-		} elseif ( 0 === strpos( $key, 'wc:' ) ) {
-			$endpoint = substr( $key, strlen( 'wc:' ) );
-
-			$names[] = $endpoint;
-
-			// Cover the item keys used by HivePress core.
-			if ( 'orders' === $endpoint ) {
-				$names[] = 'orders_view';
-			} elseif ( 'subscriptions' === $endpoint ) {
-				$names[] = 'subscriptions_view';
-			}
-		} else {
-			$names[] = $key;
-		}
-
+		$names     = $this->get_key_menu_names( $key );
 		$selectors = [];
 
 		foreach ( $names as $name ) {
@@ -3041,19 +3164,30 @@ final class Amehp_Menu_Enhancer extends Component {
 	public function get_menu_item_options() {
 		$options = [];
 
+		/*
+		 * The WooCommerce endpoint names, so an item this screen already lists
+		 * under a WooCommerce name is recognised and left to the block below.
+		 *
+		 * ONE OPTION PER REAL DESTINATION is the rule these two loops keep, and
+		 * get_settings_key() is the single place that decides which name an item
+		 * is listed under. Asking it, rather than naming the exceptions again
+		 * here, is what stops this list growing a second "Orders" entry that
+		 * hides and styles a different row from the first.
+		 */
+		$endpoints = array_merge( $this->get_base_wc_items(), $this->get_registered_wc_endpoints() );
+
 		// Add the live HivePress menu items.
 		foreach ( $this->get_base_hp_items() as $name => $item ) {
+			$key = $this->get_settings_key( (string) $name, $endpoints );
 
-			// Skip the items added by HivePress core for WooCommerce, these
-			// are listed under their WooCommerce names below.
-			if ( in_array( $name, [ 'orders_view', 'subscriptions_view' ], true ) ) {
+			if ( 0 !== strpos( $key, 'hp:' ) ) {
 				continue;
 			}
 
 			$label = isset( $item['label'] ) ? wp_strip_all_tags( (string) $item['label'] ) : '';
 
 			if ( $label ) {
-				$options[ 'hp:' . $name ] = $label;
+				$options[ $key ] = $label;
 			}
 		}
 
@@ -3064,13 +3198,22 @@ final class Amehp_Menu_Enhancer extends Component {
 		 * that HivePress merges into it, and those have no route of their own; they are already
 		 * offered below under their WooCommerce names, so admitting them here would list Downloads,
 		 * Addresses and Account details twice on the settings screen.
+		 *
+		 * The same is true of the lists HivePress core adds - "Placed Orders",
+		 * "Subscriptions" - which are equally route-less and equally already
+		 * offered below. They are excluded by the key test rather than by the
+		 * route test, because a site that has deactivated WooCommerce still
+		 * holds their records and must not start offering them under a
+		 * HivePress name.
 		 */
 		foreach ( $this->get_seen_items() as $name => $item ) {
-			if ( ! $item['route'] || isset( $options[ 'hp:' . $name ] ) ) {
+			$key = $this->get_settings_key( (string) $name, $endpoints );
+
+			if ( ! $item['route'] || 0 !== strpos( $key, 'hp:' ) || isset( $options[ $key ] ) ) {
 				continue;
 			}
 
-			$options[ 'hp:' . $name ] = $item['label'];
+			$options[ $key ] = $item['label'];
 		}
 
 		// Add the pinned HivePress menu items.

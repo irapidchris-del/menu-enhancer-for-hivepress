@@ -116,6 +116,24 @@ const DEPS = COMPONENT_SOURCE.match( /\[ 'jquery', 'jquery-ui-sortable'[^\]]*\]/
 ok( null !== DEPS, 'O3 the preview script still declares its dependencies' );
 ok( null !== DEPS && -1 !== DEPS[ 0 ].indexOf( "'amehp-preview-logic'" ), 'O4 and the logic script is one of them, so it is always on the page first' );
 
+/*
+ * Every name the browser reads out of the localised blob has to be a name the
+ * component actually puts in it. A misspelling on either side is undefined at
+ * runtime with no error: the panel simply draws the wrong menu, which is the
+ * failure this whole harness exists for. hpMenuWcKeys is the one added in
+ * 3.3.10, and reading it wrong would silently restore the bug it fixed.
+ */
+const BROWSER_CODE = PREVIEW_CODE + code( read( 'assets/js/backend.js' ) );
+
+// "menuOrder" is deliberately NOT in this list. It is localised but never read:
+// the preview takes the arrangement from the hidden form field instead, because
+// that one changes as the owner drags while the localised copy is whatever the
+// page was built with. Adding it here would pin a payload nothing consumes.
+[ 'itemOrders', 'customOrders', 'hpMenuWcKeys', 'placeholderPages' ].forEach( function ( name ) {
+	ok( -1 !== BROWSER_CODE.indexOf( name ), 'O5 a browser script reads "' + name + '"' );
+	ok( -1 !== COMPONENT_SOURCE.indexOf( "'" + name + "'" ), 'O6 and the component sends "' + name + '"' );
+} );
+
 /* ===================== P. the harness never ships ===================== */
 section( '[P] where the harness lives' );
 

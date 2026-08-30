@@ -48,10 +48,11 @@ const CATALOGUE = [
  * @param {Object} hidden Lookup of hidden item keys.
  * @param {string} which Which menu.
  * @param {boolean} combined Whether the menus are combined.
+ * @param {Array} hpWcKeys Keys the HivePress menu carries in their own right.
  * @return {Array}
  */
-function panel( hidden, which, combined ) {
-	return logic.catalogueItems( CATALOGUE, hidden, which, combined ).map( function ( entry ) {
+function panel( hidden, which, combined, hpWcKeys ) {
+	return logic.catalogueItems( CATALOGUE, hidden, which, combined, hpWcKeys ).map( function ( entry ) {
 		return entry.value;
 	} );
 }
@@ -122,6 +123,52 @@ if ( HAS_WC ) {
 	ok( ! logic.includesCatalogueEntry( 'wc:orders', 'hivepress', false, {} ), 'I8 and the routing rule still refuses a wc: key in the HivePress panel' );
 }
 
+/* ===================== I2. the items core adds under a WooCommerce name ===================== */
+section( '[I2] the HivePress menu\'s own WooCommerce-named items' );
+
+/*
+ * HivePress core adds "Placed Orders" to its OWN account menu as soon as the
+ * member has an order, whether or not the integration is on, and this screen
+ * lists it under wc:orders because that is the same destination as the
+ * WooCommerce row. Reading the prefix alone dropped it from the HivePress
+ * panel, so the owner could not drag it and it rendered below Sign Out on the
+ * real menu. Reported from a live site on 2026-08-30. The server says which
+ * keys these are; see get_hp_menu_wc_keys().
+ */
+if ( HAS_WC ) {
+	is(
+		panel( {}, 'hivepress', false, [ 'wc:orders' ] ),
+		[ 'hp:listings_edit', 'hp:messages', 'hp:settings', 'wc:orders' ],
+		'I2a a WooCommerce-named item the HivePress menu carries itself is shown in the HivePress panel'
+	);
+	is(
+		panel( {}, 'woocommerce', false, [ 'wc:orders' ] ),
+		[ 'wc:orders', 'wc:downloads' ],
+		'I2b and still in the WooCommerce panel, because it really is in both menus'
+	);
+	is(
+		panel( {}, 'hivepress', false, [ 'wc:orders' ] ).indexOf( 'wc:downloads' ),
+		-1,
+		'I2c while an endpoint the plugin merges in itself stays out, which is what the integration switch means'
+	);
+	is(
+		panel( { 'wc:orders': true }, 'hivepress', false, [ 'wc:orders' ] ).indexOf( 'wc:orders' ),
+		-1,
+		'I2d hiding it still hides it, in this panel as in every other'
+	);
+	is(
+		panel( {}, 'hivepress', false, [] ),
+		[ 'hp:listings_edit', 'hp:messages', 'hp:settings' ],
+		'I2e and an empty list leaves the old prefix rule exactly as it was'
+	);
+} else {
+	is( panel( {}, 'hivepress', false, [ 'wc:orders' ] ).length, 3, 'I2a with no WooCommerce there is no such item to admit' );
+	is( panel( {}, 'woocommerce', false, [ 'wc:orders' ] ), [], 'I2b and nothing for its panel to draw' );
+	ok( ! logic.includesCatalogueEntry( 'wc:orders', 'hivepress', false, {}, [] ), 'I2c an empty list still refuses a wc: key' );
+	ok( logic.includesCatalogueEntry( 'wc:orders', 'hivepress', false, {}, [ 'wc:orders' ] ), 'I2d and a named one is admitted whatever the site has installed' );
+	ok( ! logic.includesCatalogueEntry( 'wc:orders', 'hivepress', false, { 'wc:orders': true }, [ 'wc:orders' ] ), 'I2e hidden still beats every other rule' );
+}
+
 /* ===================== J. custom items pick their own menu ===================== */
 section( '[J] includesCustomItem - the row\'s own Menus field' );
 
@@ -134,7 +181,14 @@ ok( logic.includesCustomItem( 'woocommerce', 'combined', true ), 'J6 with the me
 ok( logic.includesCustomItem( 'hivepress', 'combined', true ), 'J7 whichever menu the row names' );
 
 /* ===================== K. the order the panel draws ===================== */
-section( '[K] sortItems - the arrangement first, then the real menu order' );
+section( '[K] sortItems - the arrangement kept, the rest slotted in by menu order' );
+
+/*
+ * THIS IS apply_menu_order() IN JAVASCRIPT and every case below has a twin in
+ * tests/logic-tests.php section B and tests/migration-tests.php section G. If
+ * the two ever disagree the preview is lying to the owner about their own menu,
+ * which is the one thing this panel exists to prevent.
+ */
 
 is(
 	logic.sortItems(
@@ -158,8 +212,8 @@ is(
 		],
 		[ 'hp:c' ]
 	).map( ( i ) => i.key ),
-	[ 'hp:c', 'hp:a', 'hp:b' ],
-	'K2 an item the owner has placed comes first, ahead of everything they have not'
+	[ 'hp:a', 'hp:b', 'hp:c' ],
+	'K2 an item the owner never placed keeps its own menu order rather than being pushed below the one they did'
 );
 
 is(
@@ -195,14 +249,70 @@ is(
 		],
 		[ 'amehp_item_ab12cd34' ]
 	).map( ( i ) => i.key ),
-	[ 'amehp_item_ab12cd34', 'hp:a' ],
-	'K5 a custom item placed at the top of the arrangement is drawn at the top'
+	[ 'hp:a', 'amehp_item_ab12cd34' ],
+	'K5 an item at menu position 10 is drawn above an arranged item sitting at 100, because that is where the site puts it'
 );
 
 is(
 	logic.sortItems( [ { key: 'hp:a', order: 10 } ], [ 'hp:gone' ] ).map( ( i ) => i.key ),
 	[ 'hp:a' ],
 	'K6 an arrangement naming an item the site no longer has does not disturb the rest'
+);
+
+/*
+ * The reported bug, drawn in the panel. The same menu and the same arrangement
+ * as migration-tests.php G1-G4, so a change to one side that is not made to the
+ * other fails here.
+ */
+const ARRANGED = [ 'hp:user_account', 'hp:messages_thread', 'hp:listings_edit', 'hp:user_edit_settings', 'hp:user_logout' ];
+
+is(
+	logic.sortItems(
+		[
+			{ key: 'hp:user_account', order: 10 },
+			{ key: 'hp:listings_edit', order: 20 },
+			{ key: 'hp:messages_thread', order: 30 },
+			{ key: 'wc:orders', order: 40 },
+			{ key: 'hp:user_edit_settings', order: 50 },
+			{ key: 'hp:user_logout', order: 1000 },
+		],
+		ARRANGED
+	).map( ( i ) => i.key ),
+	[ 'hp:user_account', 'hp:messages_thread', 'hp:listings_edit', 'wc:orders', 'hp:user_edit_settings', 'hp:user_logout' ],
+	'K7 "Placed Orders" is drawn where the site renders it, not below Sign Out'
+);
+
+is(
+	logic
+		.sortItems(
+			[
+				{ key: 'hp:user_account', order: 10 },
+				{ key: 'hp:listings_edit', order: 20 },
+				{ key: 'hp:messages_thread', order: 30 },
+				{ key: 'wc:orders', order: 40 },
+				{ key: 'hp:user_edit_settings', order: 50 },
+				{ key: 'hp:user_logout', order: 1000 },
+			],
+			ARRANGED
+		)
+		.map( ( i ) => i.key )
+		.filter( ( key ) => -1 !== ARRANGED.indexOf( key ) ),
+	ARRANGED,
+	'K8 and the arrangement itself is drawn exactly as it was saved'
+);
+
+is(
+	logic.sortItems(
+		[
+			{ key: 'hp:user_account', order: 10 },
+			{ key: 'wc:subscriptions', order: 42 },
+			{ key: 'wc:orders', order: 40 },
+			{ key: 'hp:user_edit_settings', order: 50 },
+		],
+		[ 'hp:user_account', 'hp:user_edit_settings' ]
+	).map( ( i ) => i.key ),
+	[ 'hp:user_account', 'wc:orders', 'wc:subscriptions', 'hp:user_edit_settings' ],
+	'K9 two unplaced items keep their own order and both land inside the arrangement'
 );
 
 finish();
