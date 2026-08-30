@@ -64,6 +64,7 @@ $amehp_options = [
 	'hp_amehp_sidebar_heading_font',
 	'hp_amehp_custom_items',
 	'hp_amehp_hidden_items',
+	'hp_amehp_hidden_wc_items',
 	'hp_amehp_menu_order',
 	'hp_amehp_wc_integration',
 	'hp_amehp_unify_account',

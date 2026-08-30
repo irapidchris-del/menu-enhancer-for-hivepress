@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.11
+Stable tag: 3.3.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +20,7 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 * **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a dropdown with previews: the Font Awesome icons bundled with HivePress, the names added in Font Awesome 6 and 7, and a set of brand icons such as Stripe, PayPal and WhatsApp. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
 * **Live preview and drag ordering.** The settings tab shows your real account menu as your site will render it, and you drag the items into the order you want, or move them with arrow buttons. The order applies to the HivePress account dropdown, the HivePress account sidebar and the WooCommerce account sidebar alike.
 * **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, menu targeting and per-role visibility, placed wherever you drag them.
-* **Hidden items.** Hide any HivePress or WooCommerce menu item.
+* **Hidden items.** Hide any HivePress or WooCommerce menu item from both account menus, or from the WooCommerce account menu alone.
 * **Persistent menu items.** Keep chosen account menu items visible even when their pages are empty, instead of letting them disappear.
 * **Placeholder pages.** Give each empty account page its own icon, message, button label and button URL, so it explains itself and points somewhere useful.
 * **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when WooCommerce Integration is switched on.
@@ -45,6 +45,18 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.3.12 =
+* Added: an "Also Hidden from the WooCommerce Menu" setting, which takes a menu item out of the
+  WooCommerce account menu while leaving it in the HivePress account menu. The existing Hidden Items
+  setting is unchanged and still hides an item from both menus, so nothing you have already saved
+  behaves differently. The Live preview panel shows both menus separately whenever the two now
+  differ.
+* Fixed: the Live preview panel named a menu item the way the settings dropdowns name it rather than
+  the way your site renders it, showing "Orders (WooCommerce)" where members see "Placed Orders".
+  The panel now draws the wording each menu actually rendered, which can differ between the two
+  menus for the same page. The dropdowns keep their wording, where it tells two similar destinations
+  apart.
 
 = 3.3.11 =
 * Changed: internal tidying only, with no change to how anything looks or behaves. The settings

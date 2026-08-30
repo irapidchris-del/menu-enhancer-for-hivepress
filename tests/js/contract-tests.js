@@ -68,6 +68,8 @@ ok( source.endsWith( 'preview-logic.js' ), 'L1 the tests load the shipped file, 
 	'isWooItem',
 	'includesCatalogueEntry',
 	'catalogueItems',
+	'menusDiverge',
+	'itemLabel',
 	'includesCustomItem',
 	'customItemOrder',
 	'sortItems',
@@ -75,7 +77,7 @@ ok( source.endsWith( 'preview-logic.js' ), 'L1 the tests load the shipped file, 
 	ok( 'function' === typeof logic[ name ], 'L2 ' + name + '() is published' );
 } );
 
-is( Object.keys( logic ).length, 17, 'L3 and nothing else is - an untested export is an export nobody is watching' );
+is( Object.keys( logic ).length, 19, 'L3 and nothing else is - an untested export is an export nobody is watching' );
 
 /* ===================== M. the module has stayed pure ===================== */
 section( '[M] preview-logic.js touches nothing but its arguments' );
@@ -125,7 +127,7 @@ ok( null !== DEPS && -1 !== DEPS[ 0 ].indexOf( "'amehp-preview-logic'" ), 'O4 an
  */
 const BROWSER_CODE = PREVIEW_CODE + code( read( 'assets/js/backend.js' ) );
 
-[ 'itemOrders', 'customOrders', 'hpMenuWcKeys', 'placeholderPages' ].forEach( function ( name ) {
+[ 'itemOrders', 'customOrders', 'hpMenuWcKeys', 'placeholderPages', 'itemLabels', 'wcItemLabels' ].forEach( function ( name ) {
 	ok( -1 !== BROWSER_CODE.indexOf( name ), 'O5 a browser script reads "' + name + '"' );
 	ok( -1 !== COMPONENT_SOURCE.indexOf( "'" + name + "'" ), 'O6 and the component sends "' + name + '"' );
 } );
@@ -154,6 +156,45 @@ ok(
 	! /'menuOrder'\s*=>/.test( COMPONENT_SOURCE ),
 	'O7 the component does not send "menuOrder" - the live form field is the only source for the arrangement'
 );
+
+/* ===================== Q. the WooCommerce-only hidden list ===================== */
+section( '[Q] the setting that hides from one menu' );
+
+/*
+ * "Also Hidden from the WooCommerce Menu", added in 3.3.12. Its whole value is
+ * that the HivePress menu is untouched, so the seam worth pinning is which
+ * methods are allowed to read it: a second reader on the HivePress side would
+ * turn it into a duplicate of "Hidden Items" with no test failing to say so.
+ */
+const SETTINGS_SOURCE = read( 'includes/configs/settings.php' );
+
+ok( -1 !== SETTINGS_SOURCE.indexOf( "'amehp_hidden_wc_items'" ), 'Q1 the setting is registered' );
+ok( -1 !== SETTINGS_SOURCE.indexOf( "'amehp_wc_menu_items'" ), 'Q2 offering the shorter list, of items that can be in that menu at all' );
+ok( -1 !== BROWSER_CODE.indexOf( 'hp_amehp_hidden_wc_items' ), 'Q3 and the preview reads it off the page, so the panels follow it before anything is saved' );
+
+const READER = 'get_wc_hidden_keys';
+
+ok( -1 !== COMPONENT_SOURCE.indexOf( READER ), 'Q4 the component has a reader for it' );
+
+/**
+ * One method's source, from its signature to the next one named.
+ *
+ * @param {string} from Opening signature.
+ * @param {string} to The signature that follows it.
+ * @return {string}
+ */
+function method( from, to ) {
+	return COMPONENT_SOURCE.slice( COMPONENT_SOURCE.indexOf( from ), COMPONENT_SOURCE.indexOf( to ) );
+}
+
+const HP_MENU = method( 'public function alter_hp_menu(', 'public function alter_wc_menu(' );
+const HP_ITEMS = method( 'public function alter_hp_menu_items(', 'protected function record_seen_items(' );
+const WC_MENU = method( 'public function alter_wc_menu(', 'public function alter_wc_endpoint_url(' );
+
+ok( HP_MENU.length > 100 && HP_ITEMS.length > 100 && WC_MENU.length > 100, 'Q5 the three menu methods are all still where this test looks for them' );
+ok( -1 !== WC_MENU.indexOf( READER ), 'Q6 alter_wc_menu() reads the list' );
+ok( -1 === HP_MENU.indexOf( READER ), 'Q7 alter_hp_menu() does not, or an item hidden from one menu would vanish from both' );
+ok( -1 === HP_ITEMS.indexOf( READER ), 'Q8 nor does alter_hp_menu_items(), which is the other stage that hides things in that menu' );
 
 /* ===================== P. the harness never ships ===================== */
 section( '[P] where the harness lives' );

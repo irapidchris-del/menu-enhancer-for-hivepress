@@ -169,6 +169,100 @@ if ( HAS_WC ) {
 	ok( ! logic.includesCatalogueEntry( 'wc:orders', 'hivepress', false, { 'wc:orders': true }, [ 'wc:orders' ] ), 'I2e hidden still beats every other rule' );
 }
 
+/* ===================== I3. hidden from the WooCommerce panel alone ===================== */
+section( '[I3] "Also Hidden from the WooCommerce Menu"' );
+
+/*
+ * Added in 3.3.12. The setting is worth having only because the HivePress menu
+ * keeps the item, so every case below asks both panels rather than one.
+ */
+if ( HAS_WC ) {
+	is(
+		logic.catalogueItems( CATALOGUE, {}, 'woocommerce', false, [], { 'wc:orders': true } ).map( ( e ) => e.value ),
+		[ 'wc:downloads' ],
+		'I3a an item on the WooCommerce-only list is dropped from the WooCommerce panel'
+	);
+	is(
+		logic.catalogueItems( CATALOGUE, {}, 'hivepress', false, [ 'wc:orders' ], { 'wc:orders': true } ).map( ( e ) => e.value ),
+		[ 'hp:listings_edit', 'hp:messages', 'hp:settings', 'wc:orders' ],
+		'I3b and kept in the HivePress panel, which is the whole point of the setting'
+	);
+	is(
+		logic.catalogueItems( CATALOGUE, {}, 'woocommerce', true, [], { 'hp:messages': true } ).map( ( e ) => e.value ),
+		[ 'hp:listings_edit', 'hp:settings', 'wc:orders', 'wc:downloads' ],
+		'I3c a HivePress item on the list leaves the WooCommerce panel even while the menus are merged'
+	);
+	is(
+		logic.catalogueItems( CATALOGUE, {}, 'hivepress', true, [], { 'hp:messages': true } ).length,
+		5,
+		'I3d while the merged HivePress panel still shows everything'
+	);
+}
+
+ok(
+	logic.includesCatalogueEntry( 'hp:messages', 'hivepress', false, {}, [], { 'hp:messages': true } ),
+	'I3e the list is read in the WooCommerce panel and nowhere else, or it would be a duplicate of Hidden Items'
+);
+ok(
+	! logic.includesCatalogueEntry( 'hp:messages', 'woocommerce', true, { 'hp:messages': true }, [], {} ),
+	'I3f and Hidden Items still beats it, in every panel'
+);
+ok(
+	logic.includesCatalogueEntry( 'wc:orders', 'woocommerce', false, {}, [], undefined ),
+	'I3g a missing list is not an error'
+);
+
+/* --- whether the two menus can still be drawn as one panel --- */
+
+ok( ! logic.menusDiverge( {}, {} ), 'I3h with nothing on the list the merged menus are still one menu, so one panel' );
+ok( logic.menusDiverge( { 'wc:orders': true }, {} ), 'I3i one item hidden from WooCommerce alone splits the panels apart' );
+ok(
+	! logic.menusDiverge( { 'wc:orders': true }, { 'wc:orders': true } ),
+	'I3j but an item hidden from everywhere is absent from both menus, so they still match'
+);
+ok( ! logic.menusDiverge( undefined, undefined ), 'I3k and a missing list is not an error either' );
+
+/* ===================== I4. the wording the panel draws ===================== */
+section( '[I4] itemLabel - the label the site really renders' );
+
+/*
+ * The 3.3.12 bug. The catalogue comes from the Menu Item Styling dropdown,
+ * whose WooCommerce entries carry a "(WooCommerce)" suffix so two similar
+ * destinations can be told apart - correct in a dropdown, untrue in a preview.
+ * The server sends the labels the two menus really rendered; see
+ * get_preview_labels().
+ */
+const LABELS = { 'wc:orders': 'Placed Orders', 'hp:messages': 'Messages' };
+const WC_LABELS = { 'wc:orders': 'Orders' };
+
+is(
+	logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', LABELS, WC_LABELS, 'hivepress' ),
+	'Placed Orders',
+	'I4a the HivePress panel draws the label the HivePress menu rendered, not the dropdown\'s suffixed one'
+);
+is(
+	logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', LABELS, WC_LABELS, 'woocommerce' ),
+	'Orders',
+	'I4b and the WooCommerce panel draws WooCommerce\'s own wording for the same destination'
+);
+is(
+	logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', LABELS, WC_LABELS, 'combined' ),
+	'Placed Orders',
+	'I4c the combined panel is the HivePress menu, so it takes that label'
+);
+is(
+	logic.itemLabel( 'hp:messages', 'Messages', LABELS, WC_LABELS, 'woocommerce' ),
+	'Messages',
+	'I4d an item only one map names is named the same way in both panels'
+);
+is(
+	logic.itemLabel( 'hp:unknown', 'Whatever The Dropdown Said', LABELS, WC_LABELS, 'hivepress' ),
+	'Whatever The Dropdown Said',
+	'I4e an item neither map names falls back to the catalogue, which is the last resort and not the first'
+);
+is( logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', undefined, undefined, 'hivepress' ), 'Orders (WooCommerce)', 'I4f missing maps are not an error' );
+is( logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', { 'wc:orders': '' }, {}, 'hivepress' ), 'Orders (WooCommerce)', 'I4g and an empty label is not a label' );
+
 /* ===================== J. custom items pick their own menu ===================== */
 section( '[J] includesCustomItem - the row\'s own Menus field' );
 

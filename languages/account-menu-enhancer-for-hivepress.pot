@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Account Menu Enhancer for HivePress 3.3.9\n"
+"Project-Id-Version: Account Menu Enhancer for HivePress 3.3.12\n"
 "Report-Msgid-Bugs-To: https://github.com/irapidchris-del/menu-enhancer-for-hivepress/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-30T19:37:29+00:00\n"
+"POT-Creation-Date: 2026-08-30T22:01:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: account-menu-enhancer-for-hivepress\n"
@@ -24,7 +24,7 @@ msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be i
 msgstr ""
 
 #: account-menu-enhancer-for-hivepress.php:111
-#: includes/components/class-amehp-menu-enhancer.php:2671
+#: includes/components/class-amehp-menu-enhancer.php:2957
 msgid "Settings"
 msgstr ""
 
@@ -70,154 +70,154 @@ msgstr ""
 msgid "Donate"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1716
+#: includes/components/class-amehp-menu-enhancer.php:1889
 msgid "New item"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1717
+#: includes/components/class-amehp-menu-enhancer.php:1890
 msgid "Collapse"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1718
+#: includes/components/class-amehp-menu-enhancer.php:1891
 msgid "Expand"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1719
+#: includes/components/class-amehp-menu-enhancer.php:1892
 msgid "Drag to reorder"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1720
-#: includes/components/class-amehp-menu-enhancer.php:2696
+#: includes/components/class-amehp-menu-enhancer.php:1893
+#: includes/components/class-amehp-menu-enhancer.php:2982
 msgid "Dashboard"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1721
-#: includes/components/class-amehp-menu-enhancer.php:2741
+#: includes/components/class-amehp-menu-enhancer.php:1894
+#: includes/components/class-amehp-menu-enhancer.php:3027
 msgid "Sign Out"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1722
+#: includes/components/class-amehp-menu-enhancer.php:1895
 msgid "Move up"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1723
+#: includes/components/class-amehp-menu-enhancer.php:1896
 msgid "Move down"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1726
+#: includes/components/class-amehp-menu-enhancer.php:1899
 msgid "Jump to a section:"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1727
-#: includes/components/class-amehp-menu-enhancer.php:2141
+#: includes/components/class-amehp-menu-enhancer.php:1900
+#: includes/components/class-amehp-menu-enhancer.php:2445
 msgid "Account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1728
+#: includes/components/class-amehp-menu-enhancer.php:1901
 msgid "HivePress account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1729
-#: includes/components/class-amehp-menu-enhancer.php:2144
+#: includes/components/class-amehp-menu-enhancer.php:1902
+#: includes/components/class-amehp-menu-enhancer.php:2448
 msgid "WooCommerce account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1730
+#: includes/components/class-amehp-menu-enhancer.php:1903
 msgid "Save Changes"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1731
+#: includes/components/class-amehp-menu-enhancer.php:1904
 msgid "Back to top"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1733
+#: includes/components/class-amehp-menu-enhancer.php:1906
 msgid "Put every menu item back in its default order? Your arrangement will be discarded. Nothing is saved until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2127
+#: includes/components/class-amehp-menu-enhancer.php:2431
 msgid "Live preview"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2147
+#: includes/components/class-amehp-menu-enhancer.php:2451
 msgid "Your account menu in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons. Nothing is stored until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2151
+#: includes/components/class-amehp-menu-enhancer.php:2455
 msgid "Reset to default order"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2676
+#: includes/components/class-amehp-menu-enhancer.php:2962
 #: includes/components/class-amehp-persistent-menu.php:221
 msgid "Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2681
+#: includes/components/class-amehp-menu-enhancer.php:2967
 #: includes/components/class-amehp-persistent-menu.php:266
 msgid "Favorites"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2686
+#: includes/components/class-amehp-menu-enhancer.php:2972
 msgid "Import Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2691
+#: includes/components/class-amehp-menu-enhancer.php:2977
 #: includes/components/class-amehp-persistent-menu.php:327
 msgid "Messages"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2701
+#: includes/components/class-amehp-menu-enhancer.php:2987
 msgid "Received Orders"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2706
+#: includes/components/class-amehp-menu-enhancer.php:2992
 msgid "Payouts"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2711
+#: includes/components/class-amehp-menu-enhancer.php:2997
 #: includes/components/class-amehp-persistent-menu.php:312
 msgid "Bookings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2716
+#: includes/components/class-amehp-menu-enhancer.php:3002
 msgid "Calendar"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2721
+#: includes/components/class-amehp-menu-enhancer.php:3007
 msgid "Searches"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2726
+#: includes/components/class-amehp-menu-enhancer.php:3012
 msgid "Memberships"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2731
+#: includes/components/class-amehp-menu-enhancer.php:3017
 #: includes/components/class-amehp-persistent-menu.php:236
 msgid "Requests"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2736
+#: includes/components/class-amehp-menu-enhancer.php:3022
 #: includes/components/class-amehp-persistent-menu.php:251
 msgid "Offers"
 msgstr ""
 
 #. translators: %s: menu item label.
-#: includes/components/class-amehp-menu-enhancer.php:3095
-#: includes/components/class-amehp-menu-enhancer.php:3115
-#: includes/components/class-amehp-menu-enhancer.php:3187
+#: includes/components/class-amehp-menu-enhancer.php:3401
+#: includes/components/class-amehp-menu-enhancer.php:3421
+#: includes/components/class-amehp-menu-enhancer.php:3546
 #, php-format
 msgid "%s (WooCommerce)"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3171
+#: includes/components/class-amehp-menu-enhancer.php:3530
 msgid "My Profile"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3172
+#: includes/components/class-amehp-menu-enhancer.php:3531
 msgid "My Vendor Profile"
 msgstr ""
 
 #. translators: %s: page title.
-#: includes/components/class-amehp-menu-enhancer.php:3201
+#: includes/components/class-amehp-menu-enhancer.php:3560
 #, php-format
 msgid "%s (Page)"
 msgstr ""
@@ -624,7 +624,7 @@ msgid "Hidden Items"
 msgstr ""
 
 #: includes/configs/settings.php:415
-msgid "The menu items hidden from the account menus."
+msgid "The menu items hidden from both account menus."
 msgstr ""
 
 #: includes/configs/settings.php:438
@@ -685,4 +685,12 @@ msgstr ""
 
 #: includes/configs/settings.php:509
 msgid "Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages."
+msgstr ""
+
+#: includes/configs/settings.php:534
+msgid "Also Hidden from the WooCommerce Menu"
+msgstr ""
+
+#: includes/configs/settings.php:535
+msgid "The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account menu, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from both menus."
 msgstr ""

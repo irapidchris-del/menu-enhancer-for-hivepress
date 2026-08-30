@@ -1444,6 +1444,233 @@ $menu                                         = $MENU->alter_hp_menu( [ 'items' 
 ok( ! isset( $menu['items']['orders_view'] ), 'Q11 hiding "Orders (WooCommerce)" removes the list core added under its own name' );
 ok( isset( $menu['items']['a'] ), 'Q12 and leaves everything else alone' );
 
+/* ===================== R. hiding from the WooCommerce menu alone ===================== */
+
+/*
+ * "Also Hidden from the WooCommerce Menu", added in 3.3.12.
+ *
+ * The whole value of the setting is that the HivePress menu is UNTOUCHED, so
+ * every assertion here checks both menus: a fix that removed the row from both
+ * would pass a test that only looked at the WooCommerce one, and would be
+ * indistinguishable from the "Hidden Items" list the owner already had.
+ */
+if ( AMEHP_TEST_WC ) {
+	echo "\n[R] hidden from the WooCommerce account menu only\n";
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                       = base_menu( [ 'listings_edit' => 10 ] );
+	$GLOBALS['_wc_menu_items']                       = [
+		'downloads'    => 'Downloads',
+		'edit-address' => 'Addresses',
+	];
+	$GLOBALS['_options']['hp_amehp_wc_integration']  = '1';
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'wc:downloads' ];
+	$rows                                            = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	ok( ! isset( $rows['downloads'] ), 'R1 an endpoint on the WooCommerce-only list is gone from the WooCommerce menu' );
+	ok( isset( $rows['edit-address'] ), 'R2 and nothing else goes with it' );
+
+	// The same state, asked of the other menu: this is the assertion the
+	// setting exists for.
+	$menu = $MENU->alter_hp_menu( [ 'items' => base_menu( [ 'listings_edit' => 10 ] ) ] );
+	ok( isset( $menu['items']['downloads'] ), 'R3 while the HivePress menu still merges that endpoint in, which is the point of the setting' );
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                       = base_menu(
+		[
+			'listings_edit' => 10,
+			'orders_view'   => 40,
+		]
+	);
+	$GLOBALS['_options']['hp_amehp_wc_integration']  = '1';
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'wc:orders' ];
+	$rows                                            = $MENU->alter_wc_menu(
+		[
+			'orders'    => 'Orders',
+			'downloads' => 'Downloads',
+		]
+	);
+	ok( ! isset( $rows['orders'] ), 'R4 hiding Orders from the WooCommerce menu removes the WooCommerce row' );
+	ok(
+		! isset( $rows['orders_view'] ),
+		'R5 and does not let the HivePress "Placed Orders" item be merged in behind it, which would swap one row for another to the same page'
+	);
+
+	$menu = $MENU->alter_hp_menu( [ 'items' => $GLOBALS['_hp_menu_items'] ] );
+	ok( isset( $menu['items']['orders_view'] ), 'R6 the HivePress menu keeps "Placed Orders" throughout' );
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                       = base_menu(
+		[
+			'listings_edit' => 10,
+			'messages'      => 20,
+		]
+	);
+	$GLOBALS['_options']['hp_amehp_wc_integration']  = '1';
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'hp:messages' ];
+	$rows                                            = $MENU->alter_wc_menu( [ 'downloads' => 'Downloads' ] );
+	ok( ! isset( $rows['messages'] ), 'R7 a HivePress item on the list is not merged into the WooCommerce menu' );
+	ok( isset( $rows['listings_edit'] ), 'R8 while its neighbours still are' );
+
+	$items = $MENU->alter_hp_menu_items( $GLOBALS['_hp_menu_items'] );
+	ok( isset( $items['messages'] ), 'R9 and it is still in the HivePress menu at the stage that hides things there' );
+
+	// The old list has not changed meaning.
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                       = base_menu( [ 'messages' => 20 ] );
+	$GLOBALS['_options']['hp_amehp_wc_integration']  = '1';
+	$GLOBALS['_options']['hp_amehp_hidden_items']    = [ 'hp:messages' ];
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [];
+	$rows                                            = $MENU->alter_wc_menu( [ 'downloads' => 'Downloads' ] );
+	$items                                           = $MENU->alter_hp_menu_items( $GLOBALS['_hp_menu_items'] );
+	ok( ! isset( $rows['messages'] ) && ! isset( $items['messages'] ), 'R10 "Hidden Items" still hides from both menus, with no migration and no change of meaning' );
+
+	// The stored value is cleaned the same way the older list is.
+	amehp_test_reset();
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'wc:downloads', [ 'nested' ], 42, null ];
+	ok( [ 'wc:downloads' ] === call_priv( $MENU, 'get_wc_hidden_keys' ), 'R11 anything that is not a string is dropped before it reaches strpos()' );
+
+	amehp_test_reset();
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = 'not an array at all';
+	ok( [] === call_priv( $MENU, 'get_wc_hidden_keys' ), 'R12 and a value that is not a list at all reads as an empty one' );
+
+	/* --- what the setting is allowed to offer --- */
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                      = base_menu( [ 'messages' => 20 ] );
+	$GLOBALS['_wc_menu_items']                      = [ 'downloads' => 'Downloads' ];
+	$GLOBALS['_options']['hp_amehp_wc_integration'] = '1';
+	$options                                        = $MENU->get_wc_menu_item_options();
+	ok( isset( $options['wc:downloads'] ), 'R13 a WooCommerce endpoint is offered, being in that menu on its own account' );
+	ok( isset( $options['hp:messages'] ), 'R14 and a HivePress item is too while the integration is merging the menus' );
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                      = base_menu( [ 'messages' => 20 ] );
+	$GLOBALS['_wc_menu_items']                      = [ 'downloads' => 'Downloads' ];
+	$GLOBALS['_options']['hp_amehp_wc_integration'] = '';
+	$options                                        = $MENU->get_wc_menu_item_options();
+	ok( isset( $options['wc:downloads'] ), 'R15 with the integration off the endpoints are still offered' );
+	ok(
+		! isset( $options['hp:messages'] ),
+		'R16 but a HivePress item is not, because nothing can put it in that menu and an option that does nothing is a support question'
+	);
+
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                       = base_menu( [ 'messages' => 20 ] );
+	$GLOBALS['_wc_menu_items']                       = [ 'downloads' => 'Downloads' ];
+	$GLOBALS['_options']['hp_amehp_wc_integration']  = '';
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'hp:messages' ];
+	$options                                         = $MENU->get_wc_menu_item_options();
+	ok(
+		isset( $options['hp:messages'] ),
+		'R17 unless the owner has already chosen it, in which case it stays selectable so that switching the integration off does not discard their setting'
+	);
+	ok( 'MESSAGES' === $options['hp:messages'], 'R18 keeping the wording the catalogue already has for it' );
+} else {
+	echo "\n[R] hidden from the WooCommerce account menu only\n";
+
+	amehp_test_reset();
+	ok( [] === $MENU->get_wc_menu_item_options(), 'R1 with no WooCommerce on the site there is no second menu, so nothing is offered' );
+}
+
+/* ===================== S. the labels the preview draws ===================== */
+
+/*
+ * The 3.3.12 bug: the preview named a row "Orders (WooCommerce)" where the site
+ * renders "Placed Orders". The suffix belongs to the settings dropdown, where it
+ * tells two similar destinations apart, and nowhere near a panel whose whole
+ * purpose is to show what the site renders.
+ */
+echo "\n[S] get_preview_labels\n";
+
+amehp_test_reset();
+$GLOBALS['_hp_menu_items']                  = base_menu( [ 'listings_edit' => 10 ] );
+$GLOBALS['_options']['hp_amehp_seen_items'] = [
+	'listings_edit' => [
+		'label' => 'My Listings',
+		'route' => 'listings_edit_page',
+		'order' => 20,
+	],
+];
+$labels                                     = call_priv( $MENU, 'get_preview_labels' );
+ok( 'My Listings' === $labels['hp']['hp:listings_edit'], 'S1 an item is named the way the front end recorded it, not the way wp-admin builds it' );
+
+if ( AMEHP_TEST_WC ) {
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items']                  = [
+		'orders'    => 'Orders',
+		'downloads' => 'Downloads',
+	];
+	$GLOBALS['_wc_query_vars']                  = [
+		'orders'    => 1,
+		'downloads' => 1,
+		'wishlist'  => 1,
+	];
+	$GLOBALS['_options']['hp_amehp_seen_items'] = [
+		'orders_view' => [
+			'label' => 'Placed Orders',
+			'route' => '',
+			'order' => 40,
+		],
+	];
+	$labels                                     = call_priv( $MENU, 'get_preview_labels' );
+
+	ok(
+		'Placed Orders' === $labels['hp']['wc:orders'],
+		'S2 the HivePress menu names its Orders row exactly as it rendered it, which is the Marketplace relabel and not a string rebuilt here'
+	);
+	ok( 'Orders' === $labels['wc']['wc:orders'], 'S3 while the WooCommerce menu names the same destination the way WooCommerce does' );
+	ok( 'Downloads' === $labels['hp']['wc:downloads'] && 'Downloads' === $labels['wc']['wc:downloads'], 'S4 an endpoint both menus agree about is named once' );
+	ok( 'Wishlist' === $labels['wc']['wc:wishlist'], 'S5 a registered endpoint the menu does not carry still gets a plain name rather than a suffixed one' );
+
+	/*
+	 * The assertion that fails if the suffix ever comes back. It is built for
+	 * the dropdown on purpose, so the same run checks that the dropdown still
+	 * has it: stripping it there would fix this test by breaking the screen it
+	 * was written for.
+	 */
+	$amehp_all_labels = array_merge( array_values( $labels['hp'] ), array_values( $labels['wc'] ) );
+
+	ok(
+		'' === implode( '', array_filter( $amehp_all_labels, function ( $label ) {
+			return false !== strpos( $label, '(WooCommerce)' );
+		} ) ),
+		'S6 no label the preview draws carries the "(WooCommerce)" suffix'
+	);
+
+	$amehp_options = $MENU->get_menu_item_options();
+	ok(
+		isset( $amehp_options['wc:orders'] ) && false !== strpos( $amehp_options['wc:orders'], '(WooCommerce)' ),
+		'S7 and the settings dropdown keeps it, because there it tells two similar destinations apart'
+	);
+
+	// The admin-built menu is the fallback, not the answer, wherever the front
+	// end has recorded one.
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items']                  = [ 'orders' => 'Orders' ];
+	$GLOBALS['_hp_menu_items']                  = base_menu( [ 'orders_view' => 40 ] );
+	$GLOBALS['_options']['hp_amehp_seen_items'] = [
+		'orders_view' => [
+			'label' => 'Placed Orders',
+			'route' => '',
+			'order' => 40,
+		],
+	];
+	$labels                                     = call_priv( $MENU, 'get_preview_labels' );
+	ok(
+		'Placed Orders' === $labels['hp']['wc:orders'],
+		'S8 an administrator with no vendor orders does not overwrite the label the members saw'
+	);
+
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items'] = [ 'orders' => 'Orders' ];
+	$GLOBALS['_hp_menu_items'] = base_menu( [ 'orders_view' => 40 ] );
+	$labels                    = call_priv( $MENU, 'get_preview_labels' );
+	ok(
+		'ORDERS_VIEW' === $labels['hp']['wc:orders'],
+		'S9 and on a site whose members have not loaded an account page yet, the admin-built menu is what answers'
+	);
+}
+
 /* ===================== O. version drift ===================== */
 echo "\n[O] version drift\n";
 

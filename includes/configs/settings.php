@@ -412,7 +412,7 @@ $amehp_settings = [
 
 					'amehp_hidden_items' => [
 						'label'       => esc_html__( 'Hidden Items', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'The menu items hidden from the account menus.', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'The menu items hidden from both account menus.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'select',
 						'options'     => 'amehp_menu_items',
 						'multiple'    => true,
@@ -484,7 +484,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			// "WooCommerce Integration" and "Menu Merging" checkboxes that
 			// confused owners. amehp_maybe_migrate() carries the old pair
 			// forward, and the component falls back to them until it runs.
-			'amehp_wc_integration' => [
+			'amehp_wc_integration'  => [
 				'label'       => esc_html__( 'WooCommerce Integration', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Combine the HivePress and WooCommerce account menus', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Shows every HivePress and WooCommerce account link in each menu (the account dropdown and both sidebar menus), and renders the WooCommerce account pages inside the HivePress account layout so they all share one sidebar.', 'account-menu-enhancer-for-hivepress' ),
@@ -493,7 +493,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 				'_order'      => 10,
 			],
 
-			'amehp_wc_badges'      => [
+			'amehp_wc_badges'       => [
 				'label'       => esc_html__( 'Counters', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Show the HivePress counters in the WooCommerce menu', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce account menu.', 'account-menu-enhancer-for-hivepress' ),
@@ -503,12 +503,40 @@ if ( class_exists( 'WooCommerce' ) ) {
 				'_order'      => 20,
 			],
 
-			'amehp_hide_wc_header' => [
+			'amehp_hide_wc_header'  => [
 				'label'       => esc_html__( 'WooCommerce Page Header', 'account-menu-enhancer-for-hivepress' ),
 				'caption'     => esc_html__( 'Hide the page header on WooCommerce account pages', 'account-menu-enhancer-for-hivepress' ),
 				'description' => esc_html__( 'Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages.', 'account-menu-enhancer-for-hivepress' ),
 				'type'        => 'checkbox',
 				'_order'      => 30,
+			],
+
+			/*
+			 * An ADDITION to "Hidden Items", never a replacement.
+			 *
+			 * That list hides from both account menus, and it keeps that
+			 * meaning and every value already stored in it. This one takes an
+			 * item out of the WooCommerce account menu alone, so members keep
+			 * it in the HivePress account menu.
+			 *
+			 * The label has to say so on its own. The tooltip is a hover, which
+			 * a mobile administrator never sees, and a hiding list that looks as
+			 * though it might hide from everywhere is worse than no setting at
+			 * all: an owner would have to test it on a live menu to find out
+			 * what it does. Hence "Also", and hence naming the menu in the label
+			 * rather than only in the description.
+			 *
+			 * It lives in this block, so it appears only where there is a second
+			 * menu to hide anything from; the order number puts it directly
+			 * beneath "Hidden Items" wherever it does appear.
+			 */
+			'amehp_hidden_wc_items' => [
+				'label'       => esc_html__( 'Also Hidden from the WooCommerce Menu', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account menu, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from both menus.', 'account-menu-enhancer-for-hivepress' ),
+				'type'        => 'select',
+				'options'     => 'amehp_wc_menu_items',
+				'multiple'    => true,
+				'_order'      => 105,
 			],
 		],
 		$amehp_settings['account_menu']['sections']['behaviour']['fields']

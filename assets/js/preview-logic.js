@@ -291,6 +291,13 @@
 		 * get_hp_menu_wc_keys(). They are in both menus, so they show in both
 		 * panels, which is what the site does.
 		 *
+		 * The second hidden list is the WooCommerce panel's alone. "Also Hidden
+		 * from the WooCommerce Menu" takes an item out of that menu while
+		 * leaving it in the HivePress one, so it is tested before the combined
+		 * shortcut below and never anywhere but that panel - a copy of this test
+		 * on the HivePress side would make the setting a duplicate of the list
+		 * above it.
+		 *
 		 * @param {string} value Item key.
 		 * @param {string} which Which menu: "hivepress", "woocommerce" or
 		 *                       "combined".
@@ -298,10 +305,16 @@
 		 * @param {Object} hidden Lookup of hidden item keys.
 		 * @param {Array} hpWcKeys Keys the HivePress menu carries in their own
 		 *                         right despite their WooCommerce name.
+		 * @param {Object} wcHidden Lookup of keys hidden from the WooCommerce
+		 *                          menu alone.
 		 * @return {boolean}
 		 */
-		includesCatalogueEntry: function ( value, which, combined, hidden, hpWcKeys ) {
+		includesCatalogueEntry: function ( value, which, combined, hidden, hpWcKeys, wcHidden ) {
 			if ( hidden && hidden[ value ] ) {
+				return false;
+			}
+
+			if ( 'woocommerce' === which && wcHidden && wcHidden[ value ] ) {
 				return false;
 			}
 
@@ -331,12 +344,77 @@
 		 * @param {boolean} combined Whether the menus are combined.
 		 * @param {Array} hpWcKeys Keys the HivePress menu carries in their own
 		 *                         right despite their WooCommerce name.
+		 * @param {Object} wcHidden Lookup of keys hidden from the WooCommerce
+		 *                          menu alone.
 		 * @return {Array}
 		 */
-		catalogueItems: function ( catalogue, hidden, which, combined, hpWcKeys ) {
+		catalogueItems: function ( catalogue, hidden, which, combined, hpWcKeys, wcHidden ) {
 			return ( catalogue || [] ).filter( function ( entry ) {
-				return api.includesCatalogueEntry( entry.value, which, combined, hidden, hpWcKeys );
+				return api.includesCatalogueEntry( entry.value, which, combined, hidden, hpWcKeys, wcHidden );
 			} );
+		},
+
+		/**
+		 * Whether the two account menus can still be drawn as one panel.
+		 *
+		 * Combining the menus is what normally makes one panel the truth: the
+		 * site renders the same list of items in both. An item hidden from the
+		 * WooCommerce menu alone breaks that, so the panels split and the owner
+		 * sees the two menus their site now has. Without this the setting would
+		 * simply have no visible effect on a combined site, which is the same
+		 * silent disagreement between preview and front end that the panel
+		 * exists to prevent.
+		 *
+		 * An item that is hidden from everywhere does not count: it is absent
+		 * from both menus, so they still match.
+		 *
+		 * @param {Object} wcHidden Lookup of keys hidden from the WooCommerce
+		 *                          menu alone.
+		 * @param {Object} hidden Lookup of keys hidden from both menus.
+		 * @return {boolean}
+		 */
+		menusDiverge: function ( wcHidden, hidden ) {
+			return Object.keys( wcHidden || {} ).some( function ( key ) {
+				return ! ( hidden && hidden[ key ] );
+			} );
+		},
+
+		/**
+		 * The label one item is really rendered with in one menu.
+		 *
+		 * THE CATALOGUE'S OWN LABEL IS THE LAST RESORT, NOT THE FIRST. The
+		 * panel reads its items from the Menu Item Styling dropdown, and that
+		 * dropdown suffixes its WooCommerce entries with "(WooCommerce)" so an
+		 * owner can tell two similarly named destinations apart. In a dropdown
+		 * that is a help; in the preview it is untrue, and the panel was drawing
+		 * "Orders (WooCommerce)" for a row the site renders as "Placed Orders".
+		 * Reported from a live site on 2026-08-30.
+		 *
+		 * The server sends the labels the menus really rendered, one map per
+		 * menu, because the two menus genuinely disagree: HivePress core names
+		 * that row from the WooCommerce menu ("Orders") and HivePress
+		 * Marketplace relabels it to "Placed Orders" in the HivePress menu for a
+		 * member who is also a vendor. So the WooCommerce panel asks its own map
+		 * first, and every panel falls back to the HivePress one. See
+		 * get_preview_labels().
+		 *
+		 * @param {string} key Item key.
+		 * @param {string} fallback The catalogue's own label.
+		 * @param {Object} labels Labels the HivePress menu renders.
+		 * @param {Object} wcLabels Labels the WooCommerce menu renders.
+		 * @param {string} which Which menu is being drawn.
+		 * @return {string}
+		 */
+		itemLabel: function ( key, fallback, labels, wcLabels, which ) {
+			if ( 'woocommerce' === which && wcLabels && wcLabels[ key ] ) {
+				return wcLabels[ key ];
+			}
+
+			if ( labels && labels[ key ] ) {
+				return labels[ key ];
+			}
+
+			return fallback;
 		},
 
 		/**

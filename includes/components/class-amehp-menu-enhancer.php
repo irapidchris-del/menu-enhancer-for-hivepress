@@ -221,10 +221,43 @@ final class Amehp_Menu_Enhancer extends Component {
 	/**
 	 * Gets the hidden item keys.
 	 *
+	 * Hidden from BOTH account menus, which is what this list has always meant
+	 * and what every site that has ever saved it holds. The WooCommerce-only
+	 * list below is an addition to it, never a replacement, so no stored value
+	 * changes meaning and nothing has to be migrated.
+	 *
 	 * @return array
 	 */
 	protected function get_hidden_keys() {
-		$keys = get_option( 'hp_amehp_hidden_items' );
+		return $this->read_item_keys( 'hp_amehp_hidden_items' );
+	}
+
+	/**
+	 * Gets the item keys hidden from the WooCommerce account menu alone.
+	 *
+	 * Read by alter_wc_menu() and by nothing else. alter_hp_menu() must never
+	 * consult it: the whole point of the setting is an item that stays in the
+	 * HivePress menu while leaving the WooCommerce one, so a second reader on
+	 * the HivePress side would turn it into a duplicate of the list above.
+	 *
+	 * @return array
+	 */
+	protected function get_wc_hidden_keys() {
+		return $this->read_item_keys( 'hp_amehp_hidden_wc_items' );
+	}
+
+	/**
+	 * Reads a stored list of menu item keys.
+	 *
+	 * One reader for both hidden lists, because they are read in the same
+	 * places and have to be cleaned the same way. Two copies of the guard
+	 * below is how one of them stops being applied.
+	 *
+	 * @param string $option Option name.
+	 * @return array
+	 */
+	protected function read_item_keys( $option ) {
+		$keys = get_option( $option );
 
 		/*
 		 * Strings only, because every caller hands these to strpos() and a
@@ -944,7 +977,24 @@ final class Amehp_Menu_Enhancer extends Component {
 			return $items;
 		}
 
-		$hidden = $this->get_hidden_keys();
+		/*
+		 * BOTH hidden lists, and this is the only method that reads the second
+		 * one.
+		 *
+		 * "Hidden Items" hides from both menus; "Also Hidden from the
+		 * WooCommerce Menu" hides from this one alone, so an owner can drop a
+		 * row from the WooCommerce account area while their members keep it in
+		 * the HivePress account menu. Merging the two here rather than testing
+		 * them separately is what makes every check below - the endpoint rows,
+		 * the merged HivePress items, and the core mirror test - honour the new
+		 * list without a second copy of each test.
+		 *
+		 * The mirror test matters most. Hiding "Orders (WooCommerce)" from this
+		 * menu alone has to stop the HivePress "Placed Orders" item being
+		 * merged in behind it, or hiding the row would simply swap it for
+		 * another row leading to the same page.
+		 */
+		$hidden = array_merge( $this->get_hidden_keys(), $this->get_wc_hidden_keys() );
 		$rows   = [];
 
 		// Add the WooCommerce items.
@@ -1730,7 +1780,8 @@ final class Amehp_Menu_Enhancer extends Component {
 		 * show a system font and tell the owner something untrue about their
 		 * own menu.
 		 */
-		$family = $this->get_heading_font_family();
+		$family         = $this->get_heading_font_family();
+		$preview_labels = $this->get_preview_labels();
 
 		if ( $family && get_option( 'hp_amehp_sidebar_heading_font' ) ) {
 			wp_enqueue_style(
@@ -1783,6 +1834,21 @@ final class Amehp_Menu_Enhancer extends Component {
 				// 3.3.11. Do not add it back without a reader that needs the
 				// saved value specifically rather than the live one.
 				'itemOrders'       => $this->get_preview_orders(),
+
+				/*
+				 * The label each item is really rendered with, so the panel can
+				 * name items the way the site names them.
+				 *
+				 * The catalogue the panel reads its items from is the Menu Item
+				 * Styling dropdown, and that dropdown suffixes its WooCommerce
+				 * entries with "(WooCommerce)" to keep two similar names apart -
+				 * correct in a dropdown, and a lie in a preview, which said
+				 * "Orders (WooCommerce)" where the site says "Placed Orders".
+				 * Two maps because the two menus genuinely disagree about that
+				 * row; see get_preview_labels() for where each label comes from.
+				 */
+				'itemLabels'       => $preview_labels['hp'],
+				'wcItemLabels'     => $preview_labels['wc'],
 
 				// The WooCommerce-named items that are in the HivePress menu
 				// whether or not the integration is on, so the HivePress panel
@@ -1905,6 +1971,95 @@ final class Amehp_Menu_Enhancer extends Component {
 		}
 
 		return $orders;
+	}
+
+	/**
+	 * Gets the label each account menu item is really rendered with, keyed by
+	 * the settings screen's own item keys.
+	 *
+	 * WHY THE PREVIEW CANNOT USE THE CATALOGUE'S LABELS. The panel reads its
+	 * items from the Menu Item Styling dropdown, whose labels come from
+	 * get_menu_item_options() - and that list decorates every WooCommerce entry
+	 * with a "(WooCommerce)" suffix so an owner scanning a dropdown of similar
+	 * names can tell two destinations apart. That is right for a dropdown and
+	 * wrong for the preview, whose entire purpose is to show what the site
+	 * renders: the panel was drawing "Orders (WooCommerce)" for a row the site
+	 * renders as "Placed Orders". Reported from a live site on 2026-08-30.
+	 *
+	 * STRIPPING THE SUFFIX WOULD NOT HAVE FIXED IT. The real label is not the
+	 * catalogue's label minus a suffix. HivePress core takes it from
+	 * wc_get_account_menu_items()['orders'], which is "Orders", and HivePress
+	 * Marketplace then relabels the same item to "Placed Orders" for a member
+	 * who has both their own orders and vendor orders
+	 * (hivepress-marketplace/includes/components/class-marketplace.php:2637).
+	 * A label rebuilt on the settings screen can only ever be a guess at that.
+	 *
+	 * SO THE SOURCE IS THE MENU AS IT WAS ACTUALLY RENDERED. get_seen_items()
+	 * records the label of every item the account menu really drew, on the
+	 * front end, where every extension has had its say and the member is a
+	 * member rather than an administrator - which is exactly the honest answer,
+	 * and the only one that carries the Marketplace relabel, since the menu
+	 * built here in wp-admin describes an administrator who may have placed no
+	 * orders at all. It therefore wins over the admin-built menu, which is kept
+	 * as the fallback for a site whose members have not yet loaded an account
+	 * page.
+	 *
+	 * TWO MAPS, BECAUSE THE TWO MENUS REALLY DO DISAGREE. The same destination
+	 * is "Placed Orders" in the HivePress menu and "Orders" in the WooCommerce
+	 * one, and the preview draws a panel for each. Handing one label to both
+	 * panels would fix the reported row and break its neighbour.
+	 *
+	 * @return array Two maps of settings key to label: "hp" for the HivePress
+	 *               account menu, "wc" for the WooCommerce one.
+	 */
+	protected function get_preview_labels() {
+		$endpoints = $this->get_registered_wc_endpoints();
+		$wc_items  = $this->get_base_wc_items();
+		$catalogue = array_merge( $wc_items, $endpoints );
+
+		$labels    = [];
+		$wc_labels = [];
+
+		/*
+		 * The WooCommerce endpoints first, weakest to strongest: an endpoint
+		 * that is registered but not in the menu has no rendered label at all,
+		 * so its name is turned into one, and the menu's own label replaces it
+		 * wherever there is one. These are also the labels alter_hp_menu()
+		 * merges into the HivePress menu, so they seed both maps.
+		 */
+		foreach ( [ $endpoints, $wc_items ] as $source ) {
+			foreach ( $source as $endpoint => $label ) {
+				$label = wp_strip_all_tags( (string) $label );
+
+				if ( ! $label ) {
+					continue;
+				}
+
+				$labels[ 'wc:' . $endpoint ]    = $label;
+				$wc_labels[ 'wc:' . $endpoint ] = $label;
+			}
+		}
+
+		// Then the HivePress menu as it can be built here, which is a fraction
+		// of the real one but is all a fresh site has.
+		foreach ( $this->get_base_hp_items() as $name => $item ) {
+			$label = is_array( $item ) && isset( $item['label'] ) ? wp_strip_all_tags( (string) $item['label'] ) : '';
+
+			if ( $label ) {
+				$labels[ $this->get_settings_key( (string) $name, $catalogue ) ] = $label;
+			}
+		}
+
+		// Then the menu as the front end really drew it, which is the answer
+		// wherever there is one.
+		foreach ( $this->get_seen_items() as $name => $item ) {
+			$labels[ $this->get_settings_key( (string) $name, $catalogue ) ] = $item['label'];
+		}
+
+		return [
+			'hp' => $labels,
+			'wc' => $wc_labels,
+		];
 	}
 
 	/**
@@ -3289,6 +3444,59 @@ final class Amehp_Menu_Enhancer extends Component {
 			if ( is_string( $key ) && '' !== $key && ! isset( $options[ $key ] ) ) {
 				$options[ $key ] = ucwords( str_replace( [ 'hp:', 'wc:', '_', '-' ], [ '', '', ' ', ' ' ], $key ) );
 			}
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Gets the menu item options that can appear in the WooCommerce account menu.
+	 *
+	 * OFFERING ONLY WHAT THE SETTING CAN ACT ON. "Also Hidden from the
+	 * WooCommerce Menu" removes a row from that menu alone, so an item that
+	 * cannot be in it is an option that would do nothing at all - and a setting
+	 * that silently does nothing is a support question, not a feature. Two
+	 * groups can be there, and they qualify for different reasons:
+	 *
+	 * - A WooCommerce endpoint (`wc:`) is in that menu on its own account,
+	 *   whatever this plugin is set to.
+	 * - A HivePress item (`hp:`) reaches it only while the WooCommerce
+	 *   integration is merging the two menus, which is exactly the condition
+	 *   alter_wc_menu() applies before it merges anything.
+	 *
+	 * @return array
+	 */
+	public function get_wc_menu_item_options() {
+		if ( ! hp\is_plugin_active( 'woocommerce' ) ) {
+			return [];
+		}
+
+		$catalogue = $this->get_menu_item_options();
+		$merged    = $this->is_wc_integration_enabled();
+		$options   = [];
+
+		foreach ( $catalogue as $key => $label ) {
+			if ( 0 === strpos( $key, 'wc:' ) || $merged ) {
+				$options[ $key ] = $label;
+			}
+		}
+
+		/*
+		 * Keep whatever is already stored selectable, for the same reason
+		 * get_menu_item_options() does: a saved value that is not among the
+		 * options is sanitised away on the next save of this tab, so switching
+		 * the integration off would quietly discard the owner's HivePress
+		 * choices here rather than suspending them. Re-offering a key the owner
+		 * has already chosen is not the same as offering it fresh.
+		 */
+		foreach ( $this->get_wc_hidden_keys() as $key ) {
+			if ( isset( $options[ $key ] ) ) {
+				continue;
+			}
+
+			$options[ $key ] = isset( $catalogue[ $key ] )
+				? $catalogue[ $key ]
+				: ucwords( str_replace( [ 'hp:', 'wc:', '_', '-' ], [ '', '', ' ', ' ' ], $key ) );
 		}
 
 		return $options;

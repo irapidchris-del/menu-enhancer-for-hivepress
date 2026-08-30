@@ -253,16 +253,40 @@
 		 * @return {Object}
 		 */
 		function hiddenItems() {
-			var select = document.querySelector( 'select[name="hp_amehp_hidden_items[]"]' ),
-				hidden = {};
+			return selectedKeys( 'select[name="hp_amehp_hidden_items[]"]' );
+		}
+
+		/**
+		 * The item keys the owner has hidden from the WooCommerce menu alone,
+		 * as a lookup.
+		 *
+		 * Read off the select rather than sent from the server, exactly as the
+		 * list above is, so the panels follow the owner's choice as they make
+		 * it instead of waiting for a save.
+		 *
+		 * @return {Object}
+		 */
+		function wcHiddenItems() {
+			return selectedKeys( 'select[name="hp_amehp_hidden_wc_items[]"]' );
+		}
+
+		/**
+		 * The chosen values of one multiple-select, as a lookup.
+		 *
+		 * @param {string} selector Field selector.
+		 * @return {Object}
+		 */
+		function selectedKeys( selector ) {
+			var select = document.querySelector( selector ),
+				keys = {};
 
 			if ( select ) {
 				Array.prototype.forEach.call( select.selectedOptions, function ( option ) {
-					hidden[ option.value ] = true;
+					keys[ option.value ] = true;
 				} );
 			}
 
-			return hidden;
+			return keys;
 		}
 
 		/**
@@ -350,7 +374,18 @@
 			var items = [],
 				overrides = {},
 				hidden = hiddenItems(),
-				combined = 'combined' === which,
+				wcHidden = wcHiddenItems(),
+
+				/*
+				 * Whether the site is MERGING the two menus, which is not the
+				 * same question as whether one panel is being drawn. The two
+				 * used to be the same and are not since 3.3.12: an item hidden
+				 * from the WooCommerce menu alone splits the panels apart while
+				 * the merge is still on, and reading the merge off the panel
+				 * name would then have dropped every WooCommerce endpoint out of
+				 * the HivePress panel that the merge puts in it.
+				 */
+				combined = 'combined' === which || !! value( OPTIONS.wcIntegration ),
 				orders = data.itemOrders || {},
 				arranged = storedOrder();
 
@@ -382,7 +417,7 @@
 			 * lists HivePress core adds to its own menu carry a WooCommerce
 			 * name and are in both menus regardless of the setting.
 			 */
-			logic.catalogueItems( menuCatalogue(), hidden, which, combined, data.hpMenuWcKeys ).forEach( function ( entry ) {
+			logic.catalogueItems( menuCatalogue(), hidden, which, combined, data.hpMenuWcKeys, wcHidden ).forEach( function ( entry ) {
 				var item = overrides[ entry.value ] || {
 					label: entry.label,
 					icon: '',
@@ -395,6 +430,19 @@
 				// by the component from the same merge the front end runs.
 				item.key = entry.value;
 				item.order = 'undefined' !== typeof orders[ entry.value ] ? orders[ entry.value ] : 100;
+
+				/*
+				 * And the wording the site really renders it with, which is not
+				 * the wording in the dropdown these entries came from: that list
+				 * suffixes its WooCommerce entries with "(WooCommerce)" to keep
+				 * two similar names apart, so the panel was calling a row
+				 * "Orders (WooCommerce)" where the site calls it "Placed
+				 * Orders". Applied here rather than in menuCatalogue() because
+				 * the answer depends on which menu is being drawn, and because
+				 * a styling row's own copy of the label comes through
+				 * overrides[] and needs it just as much.
+				 */
+				item.label = logic.itemLabel( entry.value, item.label, data.itemLabels, data.wcItemLabels, which );
 
 				items.push( item );
 			} );
@@ -479,7 +527,20 @@
 		 */
 		function paint() {
 			var combined = !! value( OPTIONS.wcIntegration ),
-				single = combined || panels.length < 2;
+
+				/*
+				 * One panel or two.
+				 *
+				 * Merging the menus normally makes one panel the truth, because
+				 * the site then renders the same list of items in both. "Also
+				 * Hidden from the WooCommerce Menu" is the case where it does
+				 * not: the two menus differ by whatever is in that list, so the
+				 * panels split and the owner sees both menus as their site now
+				 * has them. Otherwise the setting would appear to do nothing on
+				 * a merged site, which is the same silent disagreement between
+				 * preview and front end that this panel exists to prevent.
+				 */
+				single = ( combined && ! logic.menusDiverge( wcHiddenItems(), hiddenItems() ) ) || panels.length < 2;
 
 			panels.forEach( function ( item ) {
 
