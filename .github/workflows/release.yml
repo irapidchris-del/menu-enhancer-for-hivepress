@@ -25,7 +25,12 @@ jobs:
       - name: Build plugin zip
         run: |
           mkdir -p build/account-menu-enhancer-for-hivepress
-          cp account-menu-enhancer-for-hivepress.php uninstall.php readme.txt license.txt build/account-menu-enhancer-for-hivepress/
+          # changelog.txt carries every release before 3.3.8, moved out of
+          # readme.txt in 3.3.14 to get the changelog under WordPress's
+          # 5,000-character cap on the update screen. It is named here because
+          # a file that is not named is silently absent from the zip while
+          # every local test still passes - and the readme points at it.
+          cp account-menu-enhancer-for-hivepress.php uninstall.php readme.txt changelog.txt license.txt build/account-menu-enhancer-for-hivepress/
           cp -r includes assets languages build/account-menu-enhancer-for-hivepress/
           cd build
           zip -r account-menu-enhancer-for-hivepress.zip account-menu-enhancer-for-hivepress
