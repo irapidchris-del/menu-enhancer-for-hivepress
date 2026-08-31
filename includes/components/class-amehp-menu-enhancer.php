@@ -2725,17 +2725,33 @@ final class Amehp_Menu_Enhancer extends Component {
 		/*
 		 * Keep every account menu item left-aligned, icon or no icon.
 		 *
-		 * These used to be emitted only for the items this plugin gave an
+		 * This used to be emitted only for the items this plugin gave an
 		 * icon to, which broke alignment wherever an icon came from anywhere
 		 * else: a theme or customiser drawing its own CSS icon leaves the
 		 * link a flex row, and without flex-start the wording is flung to the
-		 * far side of the menu. So the rules cover EVERY item in the account
-		 * menus, always. Both are inert where the link is not a flex
-		 * container, and the second keeps the counter pushed to the edge in
-		 * the themes that lay the link out as a flex row for that purpose.
+		 * far side of the menu. So the rule covers EVERY item in the account
+		 * menus, always, and is inert where the link is not a flex container.
 		 */
 		$css .= '.hp-menu--user-account .hp-menu__item > a,.woocommerce-MyAccount-navigation ul li > a{justify-content:flex-start;}';
-		$css .= '.hp-menu--user-account .hp-menu__item > a > small,.woocommerce-MyAccount-navigation ul li > a > small{margin-inline-start:auto;}';
+
+		/*
+		 * A small, constant gap between the wording and its counter.
+		 *
+		 * This was `margin-inline-start:auto` until 3.3.13, meant to push the
+		 * counter to the menu's edge in themes that lay the link out as a flex
+		 * row. One value cannot do both jobs, and `auto` gave the WORST of each:
+		 * in a flex row it flung the counter to the far right, away from the
+		 * wording it belongs to, and in a link the theme lays out as a block it
+		 * collapses to nothing, so the number sat flush against the last letter
+		 * with no gap at all. Chris reported both on the same page, in the
+		 * sidebar and the header dropdown respectively (2026-08-31).
+		 *
+		 * 0.5rem is core's own value for this element
+		 * (`.hp-menu__item small` in hivepress/assets/css/frontend.min.css), so
+		 * the counter now sits where HivePress puts it, in every menu, however
+		 * the theme lays the link out.
+		 */
+		$css .= '.hp-menu--user-account .hp-menu__item > a > small,.woocommerce-MyAccount-navigation ul li > a > small{margin-inline-start:0.5rem;}';
 
 		/*
 		 * The icon gap, applied to every item in the account menu.

@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.12
+Stable tag: 3.3.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,12 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.3.13 =
+* Fixed: the unread counters in the account menus now sit a small, even distance from the wording
+  they belong to. In menus your theme lays out as a row the counter was pushed to the far right,
+  away from its own item, and in the account dropdown it sat flush against the last letter with no
+  gap at all. Both now match the spacing HivePress uses itself.
 
 = 3.3.12 =
 * Added: an "Also Hidden from the WooCommerce Menu" setting, which takes a menu item out of the

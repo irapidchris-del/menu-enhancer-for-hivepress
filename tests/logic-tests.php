@@ -755,6 +755,26 @@ $GLOBALS['_options']['hp_amehp_icon_weight'] = 'normal';
 $css                                         = call_priv( $MENU, 'get_appearance_css' );
 ok( false === strpos( $css, '-webkit-text-stroke' ), 'H18 the normal global weight emits no stroke rule' );
 
+/*
+ * The counter gap, pinned because it has been wrong once in each direction.
+ *
+ * Until 3.3.13 this was `margin-inline-start:auto`, intended to push the counter
+ * to the menu's edge. In a link the theme lays out as a flex row that flung the
+ * number to the far right, away from the wording it counts; in a link laid out
+ * as a block, `auto` collapses to nothing and the number sat against the last
+ * letter with no gap. Both were visible on one page, in the sidebar and the
+ * header dropdown. 0.5rem is core's own value for `.hp-menu__item small`, so
+ * the counter now sits where HivePress puts it whatever the theme does.
+ *
+ * The old comment described `auto` as deliberate, so it would read as
+ * removable. These assertions are what stop it coming back.
+ */
+amehp_test_reset();
+$css = call_priv( $MENU, 'get_appearance_css' );
+ok( false !== strpos( $css, '> small{margin-inline-start:0.5rem;}' ), 'H19 the counter sits a fixed 0.5rem from its wording' );
+ok( false === strpos( $css, 'margin-inline-start:auto' ), 'H20 and is never pushed to the menu edge, in either menu' );
+ok( false !== strpos( $css, 'woocommerce-MyAccount-navigation ul li > a > small' ), 'H21 the same gap covers the WooCommerce menu, so the two agree' );
+
 amehp_test_reset();
 $GLOBALS['_current_user_id']           = 5;
 $GLOBALS['_options']['hp_amehp_icons'] = [
