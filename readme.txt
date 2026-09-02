@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.4.0
+Stable tag: 3.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,13 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 Older entries are in changelog.txt, which ships with the plugin. WordPress truncates this
 section at 5,000 characters, so only the most recent releases are repeated here.
+
+= 3.4.1 =
+* Fixed: choosing an icon for a menu item or custom item no longer changes other rows' icons when
+  you save. In 3.4.0 an item with no icon of its own took the icon of the item above it the next
+  time the page was saved, and a newly picked icon showed as the previous one, enlarged, until the
+  page was reloaded. If 3.4.0 changed any of your icons, open the Account Menu tab, set the affected
+  rows back to what you want, and save once. 3.4.0 has been withdrawn.
 
 = 3.4.0 =
 * Added: every icon in Font Awesome Free is now available wherever this plugin asks for one - all
