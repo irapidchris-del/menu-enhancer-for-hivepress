@@ -497,6 +497,17 @@ namespace {
 	 * @param string $text Text.
 	 * @return string
 	 */
+	// The real one filters against an allow-list; these tests only care that the markup survives
+	// the call, so it is returned unchanged. What matters is that the CALL happens, because
+	// wp_kses_post() would strip <svg> outright and leave the placeholder pages with no icon.
+	function rest_url( $path = '' ) {
+		return 'https://example.org/wp-json/' . ltrim( (string) $path, '/' );
+	}
+
+	function wp_kses( $markup, $allowed = [] ) {
+		return $markup;
+	}
+
 	function esc_attr( $text ) {
 		return htmlspecialchars( (string) $text, ENT_QUOTES );
 	}

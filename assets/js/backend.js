@@ -610,10 +610,6 @@
 		return ( window.amehpBackendData && window.amehpBackendData.labels ) || {};
 	}
 
-	function brandIcons() {
-		return ( window.amehpBackendData && window.amehpBackendData.brandIcons ) || [];
-	}
-
 	function readCardStore() {
 		try {
 			return JSON.parse( window.localStorage.getItem( CARD_STORE ) ) || {};
@@ -682,7 +678,10 @@
 
 		// className written whole, never from user text: the name is gated to
 		// slug characters in cardIconName().
-		icon.className = name ? 'amehp-card-icon fa-fw ' + ( -1 !== brandIcons().indexOf( name ) ? 'fa-brands' : 'fas fa-solid' ) + ' fa-' + name : 'amehp-card-icon';
+		// The family class is not chosen here. The shared icon library's admin script replaces
+		// this element with inline SVG and reads the icon's real style - solid, regular or brands
+		// - from its own index, so a brand name needs no list of brand names to render correctly.
+		icon.className = name ? 'amehp-card-icon fa-fw fa-solid fa-' + name : 'amehp-card-icon';
 	}
 
 	function setCardCollapsed( row, collapsed, remember ) {

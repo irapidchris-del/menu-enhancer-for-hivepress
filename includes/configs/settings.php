@@ -16,6 +16,21 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+/*
+ * Icon pickers load their options over AJAX from the shared library rather than printing them. All
+ * of Font Awesome Free is reachable by typing; printing two thousand options into every picker on
+ * this form made it megabytes of HTML. The library's own field filter puts the saved icon back so
+ * each control still shows what is currently chosen, and core's select2 template still renders a
+ * preview for every result.
+ *
+ * Without the library there is no source to search, so the options have to be printed after all -
+ * and 'amehp_icons' then resolves to core's own Font Awesome 5 solid set.
+ *
+ * Note the options stay a preset NAME either way. With a source set, core reads this argument as a
+ * name and hands it to get_config(), which fatals on an array.
+ */
+$amehp_icon_source = class_exists( 'FAFH' ) ? \FAFH::picker_source() : '';
+
 $amehp_settings = [
 	'account_menu' => [
 		'title'    => esc_html__( 'Account Menu', 'account-menu-enhancer-for-hivepress' ),
@@ -111,6 +126,7 @@ $amehp_settings = [
 							'icon'        => [
 								'type'        => 'select',
 								'options'     => 'amehp_icons',
+								'source'      => $amehp_icon_source,
 
 								// Core only arms the icon-preview dropdown for
 								// its own "icons" list (components/class-form.php
@@ -294,6 +310,7 @@ $amehp_settings = [
 							'icon'        => [
 								'type'        => 'select',
 								'options'     => 'amehp_icons',
+								'source'      => $amehp_icon_source,
 
 								// Core only arms the icon-preview dropdown for
 								// its own "icons" list (components/class-form.php

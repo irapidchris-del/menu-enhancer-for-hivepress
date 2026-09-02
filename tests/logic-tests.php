@@ -17,6 +17,13 @@
 require __DIR__ . '/stubs.php';
 
 require AMEHP_TEST_PLUGIN_FILE;
+
+/*
+ * Resolve the icon library by hand. Its loader defers to `plugins_loaded`, which never fires in a
+ * harness, so without this every icon assertion below would be testing the "library missing"
+ * fallback while appearing to pass on the ones that only check for an empty string.
+ */
+FAFH_Loader::load();
 require AMEHP_TEST_PLUGIN_DIR . '/includes/components/class-amehp-menu-enhancer.php';
 require AMEHP_TEST_PLUGIN_DIR . '/includes/components/class-amehp-persistent-menu.php';
 
@@ -45,7 +52,6 @@ function amehp_test_reset() {
 			'hp_items'          => null,
 			'wc_items'          => null,
 			'wc_urls'           => [],
-			'needs_fontawesome' => false,
 			'suppressed'        => false,
 			'building_hp_items' => false,
 			'seen_items'        => null,
@@ -695,9 +701,10 @@ $GLOBALS['_options']['hp_amehp_icons'] = [
 ];
 $css                                   = call_priv( $MENU, 'get_icon_css' );
 ok( false !== strpos( $css, '.hp-menu--user-account .hp-menu__item--listings-edit > a::before' ), 'H5 the selector matches how HivePress builds its item classes' );
-ok( false !== strpos( $css, 'content:"\\f004";' ), 'H6 the codepoint comes from the shipped codes config' );
-ok( false !== strpos( $css, '"Font Awesome 5 Free"' ) && false === strpos( $css, 'Brands' ), 'H7 a solid icon emits the solid family and no brands rule' );
-ok( false === get_priv( $MENU, 'needs_fontawesome' ), 'H8 a bundled solid icon does not pull in the full library' );
+ok( false !== strpos( $css, '--amehp-icon-image:url("data:image/svg+xml,' ), 'H6 the icon is drawn from path data rather than a webfont codepoint' );
+ok( false !== strpos( $css, '-webkit-mask-image:var(--amehp-icon-image)' ), 'H7 with the prefixed property too, which is all Safari has ever supported' );
+ok( false === strpos( $css, 'Font Awesome' ), 'H8 and no font family, because nothing on the front end loads a font any more' );
+ok( false !== strpos( $css, 'background-color:var(--amehp-icon-colour,currentColor)' ), 'H9 the icon colour is the paint the mask reveals, so it still follows the menu text' );
 
 amehp_test_reset();
 $GLOBALS['_options']['hp_amehp_icons'] = [
@@ -707,10 +714,17 @@ $GLOBALS['_options']['hp_amehp_icons'] = [
 	],
 ];
 $css                                   = call_priv( $MENU, 'get_icon_css' );
-ok( false !== strpos( $css, 'content:"\\f09b";' ), 'H9 a brand icon emits its own codepoint' );
-ok( false !== strpos( $css, '"Font Awesome 7 Brands","Font Awesome 6 Brands","Font Awesome 5 Brands"' ), 'H10 and the brands family, which is a different font from the solid one' );
-ok( false !== strpos( $css, 'font-weight:400' ), 'H11 at the brands weight rather than the solid 900' );
-ok( true === get_priv( $MENU, 'needs_fontawesome' ), 'H12 a brand icon flags that the full library is needed' );
+ok( false !== strpos( $css, '--amehp-icon-image:url("data:image/svg+xml,' ), 'H10 a brand icon is drawn the same way as a solid one' );
+ok( false === strpos( $css, 'Brands' ), 'H11 with no separate brands family rule, because there is no font to pick' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item' => 'hp:listings_edit',
+		'icon' => 'calendar-alt',
+	],
+];
+ok( false !== strpos( call_priv( $MENU, 'get_icon_css' ), '--amehp-icon-image:url(' ), 'H12 a Font Awesome 5 name still resolves, through the library alias table' );
 
 amehp_test_reset();
 $GLOBALS['_options']['hp_amehp_icons'] = [
@@ -731,7 +745,8 @@ $GLOBALS['_options']['hp_amehp_icons'] = [
 	],
 ];
 $css                                   = call_priv( $MENU, 'get_icon_css' );
-ok( false !== strpos( $css, '-webkit-text-stroke:1px currentColor' ), 'H14 a per-item bold weight emits the one pixel stroke' );
+ok( false !== strpos( $css, "stroke-width='1'" ), 'H14 a per-item bold weight is baked into the image as a one pixel stroke' );
+ok( false !== strpos( $css, 'vector-effect=' ), 'H14b with the effect that makes that width mean pixels rather than 1/512 of the glyph' );
 ok( false !== strpos( $css, '--amehp-icon-colour:#ff0000' ), 'H15 the item colour is emitted as the icon custom property' );
 
 amehp_test_reset();
@@ -784,7 +799,8 @@ $GLOBALS['_options']['hp_amehp_icons'] = [
 	],
 ];
 $MENU->enqueue_frontend_assets();
-ok( in_array( 'freestylr-fontawesome', $GLOBALS['_styles_enq'], true ), 'H19 a brand icon loads the full Font Awesome library' );
+ok( ! in_array( 'fafh-fontawesome', $GLOBALS['_styles_enq'], true ), 'H22 a brand icon no longer pulls a webfont onto the front end' );
+ok( ! in_array( 'fafh-icons', $GLOBALS['_styles_enq'], true ), 'H23 nor the library stylesheet, because the menu icons are CSS masks rather than markup' );
 
 amehp_test_reset();
 $GLOBALS['_current_user_id']           = 5;
@@ -795,16 +811,8 @@ $GLOBALS['_options']['hp_amehp_icons'] = [
 	],
 ];
 $MENU->enqueue_frontend_assets();
-ok( ! in_array( 'freestylr-fontawesome', $GLOBALS['_styles_enq'], true ), 'H20 a bundled solid icon does not' );
+ok( ! in_array( 'fafh-fontawesome', $GLOBALS['_styles_enq'], true ), 'H24 and neither does a solid one' );
 
-amehp_test_reset();
-$GLOBALS['_styles_reg']['freestylr-fontawesome'] = 'a sibling plugin got there first';
-$MENU->enqueue_fontawesome();
-ok(
-	'a sibling plugin got there first' === $GLOBALS['_styles_reg']['freestylr-fontawesome']
-		&& in_array( 'freestylr-fontawesome', $GLOBALS['_styles_enq'], true ),
-	'H21 the shared handle is enqueued, not re-registered, when a sibling already claimed it'
-);
 
 /* ===================== I. placeholder pages ===================== */
 echo "\n[I] placeholder pages\n";
@@ -812,7 +820,7 @@ echo "\n[I] placeholder pages\n";
 amehp_test_reset();
 $items  = call_priv( $PERSIST, 'get_items' );
 $notice = $items['listings_edit']['notice'];
-ok( 'f03a' === $notice['icon'], 'I1 with nothing set the page keeps its built-in icon' );
+ok( 'list' === $notice['icon'], 'I1 with nothing set the page keeps its built-in icon' );
 ok( ! isset( $notice['icon_name'] ), 'I2 and no chosen icon is recorded' );
 ok( 0 === strpos( $notice['text'], "You haven't added any listings yet" ), 'I3 and its built-in wording' );
 ok( 'Add listing' === $notice['button']['label'] && 'listing_submit_page' === $notice['button']['route'], 'I4 and its built-in button' );
@@ -830,8 +838,8 @@ ok( 'Get started' === $notice['button']['label'], 'I7 a chosen button label repl
 ok( 'https://example.org/start' === $notice['button']['url'] && ! isset( $notice['button']['route'] ), 'I8 a chosen button URL replaces the default route outright' );
 
 $rendered = call_priv( $PERSIST, 'render_notice', [ $notice ] );
-ok( false !== strpos( $rendered, 'amehp-empty__icon--brand' ), 'I9 the rendered notice marks a brand icon so the right font is used' );
-ok( false !== strpos( $rendered, 'data-icon="&#xf09b;"' ), 'I10 with the brand codepoint, not the page default' );
+ok( false !== strpos( $rendered, '<svg' ), 'I9 the rendered notice draws its icon as inline SVG rather than a webfont glyph' );
+ok( false === strpos( $rendered, 'amehp-empty__icon--brand' ), 'I10 with no brand marker, because a brand icon needs no separate font to be picked' );
 ok( false !== strpos( $rendered, 'https://example.org/start' ), 'I11 and the chosen button URL' );
 
 amehp_test_reset();
@@ -853,7 +861,7 @@ amehp_test_reset();
 $GLOBALS['_options']['hp_amehp_page_icon_listings_edit'] = 'not-a-real-icon';
 $items                                                   = call_priv( $PERSIST, 'get_items' );
 $icon                                                    = call_priv( $PERSIST, 'get_notice_icon', [ $items['listings_edit']['notice'] ] );
-ok( 'f03a' === $icon['code'] && false === $icon['brand'], 'I16 a well formed name for an icon that does not exist falls back to the page default' );
+ok( 'list' === $icon, 'I16 a well formed name for an icon that does not exist falls back to the page default' );
 
 amehp_test_reset();
 $GLOBALS['_options']['hp_hppam_button_label_listings_edit'] = 'From the old plugin';

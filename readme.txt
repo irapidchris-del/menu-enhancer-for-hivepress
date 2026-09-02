@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.3.14
+Stable tag: 3.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,20 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 Older entries are in changelog.txt, which ships with the plugin. WordPress truncates this
 section at 5,000 characters, so only the most recent releases are repeated here.
+
+= 3.4.0 =
+* Added: every icon in Font Awesome Free is now available wherever this plugin asks for one - all
+  1,918 of them, brands included, in place of the shorter list it used to carry. The icon boxes now
+  search as you type instead of listing everything at once.
+* Changed: menu icons are drawn from the icon's own shape rather than from a font, so nothing on the
+  front of your site downloads a font file for them any more. Your icon colour, size, weight,
+  spacing and background settings all work exactly as before. This also removed a 320KB copy of
+  Font Awesome from the plugin; the one that remains is shared with this author's other plugins, so
+  however many of them you run, only one copy is ever loaded, and only in the admin.
+* Fixed: a link that another plugin adds to the WooCommerce account menu but that is not an account
+  page no longer appears in your HivePress account menu. User Switching's "Switch back to ..." was
+  turning up there mid-switch, and the copy in the HivePress menu led to a page that does not exist.
+  Genuine WooCommerce account pages are unaffected.
 
 = 3.3.14 =
 * Changed: the older entries in this changelog have moved to changelog.txt, which ships with the

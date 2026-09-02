@@ -222,7 +222,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'listings_edit_page',
 				'_order' => 10,
 				'notice' => [
-					'icon'   => 'f03a',
+					'icon'   => 'list',
 					'text'   => __( "You haven't added any listings yet. Once you add your first listing, you can return to this page to view, edit and manage it.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Add listing', 'account-menu-enhancer-for-hivepress' ),
@@ -237,7 +237,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'requests_edit_page',
 				'_order' => 10,
 				'notice' => [
-					'icon'   => 'f0ae',
+					'icon'   => 'tasks',
 					'text'   => __( "You haven't posted any requests yet. Once you post a request, you can return to this page to manage it and review offers.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Post a request', 'account-menu-enhancer-for-hivepress' ),
@@ -252,7 +252,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'offers_view_page',
 				'_order' => 15,
 				'notice' => [
-					'icon'   => 'f02c',
+					'icon'   => 'tags',
 					'text'   => __( "You haven't made any offers yet. When you make an offer on a request, it will appear here.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Browse requests', 'account-menu-enhancer-for-hivepress' ),
@@ -267,7 +267,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'listings_favorite_page',
 				'_order' => 20,
 				'notice' => [
-					'icon'   => 'f004',
+					'icon'   => 'heart',
 					'text'   => __( "You haven't added any listings to your favourites yet. Once you click the heart icon on a listing, you can return to this page to find the listing more easily next time.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Browse listings', 'account-menu-enhancer-for-hivepress' ),
@@ -283,7 +283,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'_order' => 25,
 				'vendor' => true,
 				'notice' => [
-					'icon'   => 'f073',
+					'icon'   => 'calendar-alt',
 					'text'   => __( 'Your calendar shows the bookings made for your listings. Add a listing to get started.', 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Add listing', 'account-menu-enhancer-for-hivepress' ),
@@ -298,7 +298,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'search_alerts_view_page',
 				'_order' => 25,
 				'notice' => [
-					'icon'   => 'f002',
+					'icon'   => 'search',
 					'text'   => __( "You haven't saved any searches yet. Save a search to be notified when new matching listings are added.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Browse listings', 'account-menu-enhancer-for-hivepress' ),
@@ -313,7 +313,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'bookings_view_page',
 				'_order' => 27,
 				'notice' => [
-					'icon'   => 'f274',
+					'icon'   => 'calendar-check',
 					'text'   => __( "You don't have any bookings yet. When you make or receive a booking, the details will appear here.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Browse listings', 'account-menu-enhancer-for-hivepress' ),
@@ -329,7 +329,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'_order'  => 30,
 				'enabled' => [ $this, 'is_message_storage_enabled' ],
 				'notice'  => [
-					'icon'   => 'f086',
+					'icon'   => 'comments',
 					'text'   => __( "You haven't exchanged any messages yet. When you send or receive a message, the conversation will appear here.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'Browse listings', 'account-menu-enhancer-for-hivepress' ),
@@ -344,7 +344,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'route'  => 'memberships_view_page',
 				'_order' => 35,
 				'notice' => [
-					'icon'   => 'f2c2',
+					'icon'   => 'id-card',
 					'text'   => __( "You don't have a membership yet. Choose a plan to get started.", 'account-menu-enhancer-for-hivepress' ),
 					'button' => [
 						'label' => __( 'View plans', 'account-menu-enhancer-for-hivepress' ),
@@ -360,7 +360,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'_order' => 35,
 				'vendor' => true,
 				'notice' => [
-					'icon'  => 'f07a',
+					'icon'  => 'shopping-cart',
 					'text'  => __( "You haven't received any orders yet. When a customer places an order with you, it will appear here.", 'account-menu-enhancer-for-hivepress' ),
 					'blank' => [ 'orders' ],
 				],
@@ -372,7 +372,7 @@ final class Amehp_Persistent_Menu extends Component {
 				'_order' => 45,
 				'vendor' => true,
 				'notice' => [
-					'icon'  => 'f0d6',
+					'icon'  => 'money-bill',
 					'text'  => __( "You don't have any payouts yet. Once you request a payout, its status will appear here.", 'account-menu-enhancer-for-hivepress' ),
 					'blank' => [ 'payouts' ],
 				],
@@ -388,7 +388,7 @@ final class Amehp_Persistent_Menu extends Component {
 		 * loads the available payment gateways to decide its own items -
 		 * on a real site a gateway-conditions plugin then touches the cart,
 		 * and WooCommerce logs a doing-it-wrong for every request (found on
-		 * the freestylr clone: ~50 KB of `get_cart` notices per page view,
+		 * the clone site: ~50 KB of `get_cart` notices per page view,
 		 * chain alter_routes > wc_get_account_menu_items >
 		 * get_available_payment_gateways > WC_Cart::get_cart). Only the
 		 * endpoint slug is recorded; the live label and URL are resolved at
@@ -755,6 +755,10 @@ final class Amehp_Persistent_Menu extends Component {
 				'description' => __( 'The large icon shown on the empty page. It takes the icon colour, weight and size from the Appearance section. Leave it empty to keep the default icon.', 'account-menu-enhancer-for-hivepress' ),
 				'type'        => 'select',
 				'options'     => 'amehp_icons',
+
+				// Loaded over AJAX from the shared library, like every other icon picker on this
+				// tab. See the note above $amehp_icon_source in configs/settings.php.
+				'source'      => class_exists( 'FAFH' ) ? \FAFH::picker_source() : '',
 				'placeholder' => __( 'Default Icon', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => $order,
 
@@ -1369,46 +1373,33 @@ final class Amehp_Persistent_Menu extends Component {
 	}
 
 	/**
-	 * Resolves a notice's icon to a codepoint and a font.
+	 * Resolves a notice's icon to an icon name.
 	 *
-	 * The owner's chosen icon wins over the page's built-in one and arrives
-	 * as a Font Awesome name rather than a codepoint, so both the codepoint
-	 * and the family are looked up from the same config the menu icons use -
-	 * a brand icon lives in a different font at a different weight, and
-	 * assuming the solid font would draw a blank box.
-	 *
-	 * Shared by render_notice() and enqueue_styles(), because the stylesheet
-	 * has to know whether the full Font Awesome library is needed BEFORE the
-	 * page renders: enqueueing during the render, where the notice is built,
-	 * is too late for wp_enqueue_scripts.
+	 * The owner's chosen icon wins over the page's built-in one. Both are plain Font Awesome names
+	 * now: the built-ins were codepoints until 2026-09-02, when the icons stopped being webfont
+	 * glyphs, and a codepoint is meaningless to a library that works from path data. The names are
+	 * the Font Awesome 5 spellings they were before, which the library resolves through its own
+	 * alias table, so `calendar-alt` and `search` still land on the right glyph.
 	 *
 	 * @param array $notice Notice arguments.
-	 * @return array Codepoint, brand flag and whether the full library is needed.
+	 * @return string Icon name, or an empty string.
 	 */
 	protected function get_notice_icon( $notice ) {
-		$icon = [
-			'code'     => (string) hp\get_array_value( $notice, 'icon', '' ),
-			'brand'    => false,
-			'extended' => false,
-		];
-
 		$chosen = hp\get_array_value( $notice, 'icon_name' );
 
-		if ( ! $chosen ) {
-			return $icon;
+		/*
+		 * A chosen name is only used if the library actually has it. The name reaching here is
+		 * whatever was saved in the setting, which may be an icon that has since been renamed away or
+		 * simply a typo the field's format check let through - it only rejects characters that are
+		 * not icon-name characters. Drawing nothing at all in that case would read as the placeholder
+		 * page being broken, so the page's own icon is used instead, which is what happened before
+		 * this looked names up rather than codepoints.
+		 */
+		if ( $chosen && ( ! class_exists( 'FAFH' ) || \FAFH::has( $chosen ) ) ) {
+			return (string) $chosen;
 		}
 
-		// Assigned and then tested: core defines no __isset(), so testing
-		// isset() on a component is always false even when it is present.
-		$enhancer = hivepress()->amehp_menu_enhancer;
-
-		if ( ! $enhancer ) {
-			return $icon;
-		}
-
-		$code = $enhancer->get_icon_code( (string) $chosen );
-
-		return $code ? $code : $icon;
+		return (string) hp\get_array_value( $notice, 'icon', '' );
 	}
 
 	/**
@@ -1421,17 +1412,19 @@ final class Amehp_Persistent_Menu extends Component {
 		$output = '<div class="amehp-empty">';
 
 		/*
-		 * Icon. The owner's choice wins over the page's built-in one, and it
-		 * arrives as a Font Awesome name rather than a codepoint, so the
-		 * codepoint and the font family are both looked up from the same
-		 * config the menu icons use. A brand icon lives in a different font
-		 * at a different weight, which is why the family is carried through
-		 * to the markup rather than assumed.
+		 * Icon, drawn as inline SVG. The owner's choice wins over the page's built-in one, and the
+		 * shared library resolves the name to its real style itself, so a brand icon needs no
+		 * special handling here - it used to need the family carried through to the markup, because
+		 * brands live in a different webfont at a different weight.
+		 *
+		 * Escaped with the library's own allow-list rather than a general one: wp_kses_post() strips
+		 * <svg> entirely, which would leave every placeholder page with no icon at all.
 		 */
 		$icon = $this->get_notice_icon( $notice );
+		$svg  = $icon && class_exists( 'FAFH' ) ? \FAFH::svg( $icon ) : '';
 
-		if ( $icon['code'] ) {
-			$output .= '<span class="amehp-empty__icon' . ( $icon['brand'] ? ' amehp-empty__icon--brand' : '' ) . '" data-icon="&#x' . esc_attr( $icon['code'] ) . ';" aria-hidden="true"></span>';
+		if ( $svg ) {
+			$output .= '<span class="amehp-empty__icon" aria-hidden="true">' . wp_kses( $svg, \FAFH::kses() ) . '</span>';
 		}
 
 		// Text.
@@ -1504,17 +1497,6 @@ final class Amehp_Persistent_Menu extends Component {
 
 		$enhancer = hivepress()->amehp_menu_enhancer;
 
-		// A version 6/7 or brand icon needs the full Font Awesome library,
-		// which HivePress does not bundle. Decided here rather than while the
-		// notice renders, which is after wp_enqueue_scripts has been and gone.
-		if ( $enhancer && isset( $current['notice'] ) ) {
-			$icon = $this->get_notice_icon( $current['notice'] );
-
-			if ( $icon['extended'] ) {
-				$enhancer->enqueue_fontawesome();
-			}
-		}
-
 		wp_register_style( 'amehp-persistent', false, [], AMEHP_VERSION );
 		wp_enqueue_style( 'amehp-persistent' );
 
@@ -1531,8 +1513,8 @@ final class Amehp_Persistent_Menu extends Component {
 		 * rather than left to a cascade that has already lost once.
 		 */
 		$css = '.amehp-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:3rem 1rem;gap:1rem}
-			.amehp-empty__icon::before{content:attr(data-icon);font-family:"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free";font-weight:900;font-size:275%;line-height:1;opacity:.25}
-			.amehp-empty__icon--brand::before{font-family:"Font Awesome 7 Brands","Font Awesome 6 Brands","Font Awesome 5 Brands";font-weight:400}
+			.amehp-empty__icon{display:inline-block;font-size:275%;line-height:1;opacity:.25}
+			.amehp-empty__icon svg{display:block;width:1em;height:1em;fill:currentColor}
 			.amehp-empty__text{max-width:26rem;margin:0}
 			.amehp-empty__button,.amehp-empty__button:hover,.amehp-empty__button:focus,.amehp-empty__button:active{color:#fff}';
 
@@ -1555,19 +1537,27 @@ final class Amehp_Persistent_Menu extends Component {
 			$colour = $enhancer->sanitize_colour( (string) get_option( 'hp_amehp_icon_colour' ) );
 
 			if ( $colour ) {
-				$css .= '.amehp-empty__icon::before{color:' . $colour . ';opacity:1}';
+				$css .= '.amehp-empty__icon{color:' . $colour . ';opacity:1}';
 			}
 
 			$size = get_option( 'hp_amehp_icon_size' );
 
 			if ( is_numeric( $size ) ) {
-				$css .= '.amehp-empty__icon::before{font-size:' . ( max( 8, min( 48, (int) $size ) ) * 3 ) . 'px}';
+				$css .= '.amehp-empty__icon{font-size:' . ( max( 8, min( 48, (int) $size ) ) * 3 ) . 'px}';
 			}
 
 			$stroke = $enhancer->get_stroke_width( (string) get_option( 'hp_amehp_icon_weight' ) );
 
 			if ( $stroke ) {
-				$css .= '.amehp-empty__icon::before{-webkit-text-stroke:' . $stroke . ' currentColor;paint-order:stroke fill}';
+				/*
+				 * A stroke on the path, not a text stroke: the glyph is no longer text. The width is
+				 * the same CSS length as before because the library emits
+				 * `vector-effect="non-scaling-stroke"` on every path it draws, which is what makes
+				 * stroke-width mean rendered pixels rather than user units - a Font Awesome viewBox
+				 * is 512 units tall, so "1px" read as user units would be about a twentieth of a
+				 * percent of the icon and invisible.
+				 */
+				$css .= '.amehp-empty__icon svg{stroke:currentColor;stroke-width:' . $stroke . ';stroke-linejoin:round;paint-order:stroke fill}';
 			}
 		}
 

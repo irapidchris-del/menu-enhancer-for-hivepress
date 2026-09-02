@@ -85,7 +85,6 @@
 
 		var data = window.amehpBackendData || {};
 		var labels = data.labels || {};
-		var brands = data.brandIcons || [];
 		var reset = panel.querySelector( '.amehp-preview__reset' );
 		var repaintTimer = null;
 
@@ -650,7 +649,8 @@
 				}
 
 				if ( item.icon ) {
-					iconEl.className = 'amehp-preview__icon fa-fw ' + ( -1 !== brands.indexOf( item.icon ) ? 'fa-brands' : 'fas fa-solid' ) + ' fa-' + item.icon;
+					// Family class omitted on purpose - see the same note in backend.js.
+					iconEl.className = 'amehp-preview__icon fa-fw fa-solid fa-' + item.icon;
 
 					var colour = item.colour || globalColour;
 

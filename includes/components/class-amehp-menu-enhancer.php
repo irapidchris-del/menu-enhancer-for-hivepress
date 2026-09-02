@@ -18,16 +18,6 @@ defined( 'ABSPATH' ) || exit;
 final class Amehp_Menu_Enhancer extends Component {
 
 	/**
-	 * Bundled Font Awesome stylesheet, relative to the plugin root.
-	 *
-	 * A path rather than a URL because plugins_url() is a function call and a class
-	 * constant cannot hold one. Joined to the plugin URL in enqueue_fontawesome(),
-	 * which also explains why a CDN address must never go here.
-	 */
-	const FONTAWESOME_PATH    = 'assets/vendor/fontawesome/css/all.min.css';
-	const FONTAWESOME_VERSION = '7.1.0';
-
-	/**
 	 * Suppresses the plugin menu filters while fetching the base menus.
 	 *
 	 * @var bool
@@ -63,23 +53,18 @@ final class Amehp_Menu_Enhancer extends Component {
 	protected $wc_items;
 
 	/**
+	 * Registered WooCommerce account endpoint names cache.
+	 *
+	 * @var array|null
+	 */
+	protected $wc_endpoints;
+
+	/**
 	 * URLs of the items injected into the WooCommerce menu.
 	 *
 	 * @var array
 	 */
 	protected $wc_urls = [];
-
-	/**
-	 * Whether a chosen icon needs the full Font Awesome stylesheet.
-	 *
-	 * HivePress core and the official themes bundle Font Awesome 5 SOLID
-	 * only, so an icon that exists only in Font Awesome 6/7, and every brand
-	 * icon, renders as an empty box without the full library. Set while the
-	 * icon CSS is built, read when the assets are enqueued.
-	 *
-	 * @var bool
-	 */
-	protected $needs_fontawesome = false;
 
 	/**
 	 * The cleaned record of items this site renders, for this request.
@@ -848,6 +833,62 @@ final class Amehp_Menu_Enhancer extends Component {
 		return $this->wc_items;
 	}
 
+	/**
+	 * Gets the account endpoints WooCommerce actually has registered.
+	 *
+	 * The keys of `wc_get_account_menu_items()` are endpoint names by convention only - the filter
+	 * behind it is also how a plugin adds a plain link to the WooCommerce account menu, and such a
+	 * link has no endpoint anywhere. `is_wc_endpoint_item()` below is what tells the two apart.
+	 *
+	 * @return array Endpoint names.
+	 */
+	protected function get_wc_endpoints() {
+		if ( ! isset( $this->wc_endpoints ) ) {
+			$this->wc_endpoints = [];
+
+			if ( function_exists( 'WC' ) && is_object( WC()->query ) && method_exists( WC()->query, 'get_query_vars' ) ) {
+
+				// Keyed by endpoint name, valued by the (translatable) slug in the URL. The names are
+				// what the menu is keyed by, so it is the keys that are wanted here.
+				$this->wc_endpoints = array_keys( (array) WC()->query->get_query_vars() );
+			}
+		}
+
+		return $this->wc_endpoints;
+	}
+
+	/**
+	 * Checks whether a WooCommerce menu key is a real account page.
+	 *
+	 * A plugin may add whatever it likes to the WooCommerce account menu, and not every addition is
+	 * an account page: User Switching adds a "Switch back to ..." action, which is a link that acts
+	 * and returns rather than a page a member can visit. Merging one of those into the HivePress
+	 * account menu puts it somewhere its author never intended - reported by Chris on 2026-09-02,
+	 * with the action showing up in the HivePress account dropdown mid-switch - and the row does not
+	 * even work, because the URL the merge builds for it is `wc_get_account_endpoint_url()` on a name
+	 * WooCommerce has no endpoint for, which resolves to a 404 under /my-account/.
+	 *
+	 * So only genuine endpoints are merged. Dashboard is the one exception worth spelling out: it is
+	 * the my-account page itself rather than an endpoint on it, so it is never a query var.
+	 *
+	 * If the endpoint list cannot be read at all, every item is treated as an endpoint. An empty list
+	 * means "WooCommerce could not be asked", not "WooCommerce has no account pages", and dropping
+	 * the whole WooCommerce section on the strength of a failed question would be a far worse outcome
+	 * than the stray row this is here to prevent.
+	 *
+	 * @param string $endpoint Menu item key.
+	 * @return bool
+	 */
+	protected function is_wc_endpoint_item( $endpoint ) {
+		$endpoints = $this->get_wc_endpoints();
+
+		if ( ! $endpoints ) {
+			return true;
+		}
+
+		return 'dashboard' === $endpoint || in_array( $endpoint, $endpoints, true );
+	}
+
 	/*
 	-------------------------------------------------------------------------
 	HivePress menu
@@ -918,6 +959,11 @@ final class Amehp_Menu_Enhancer extends Component {
 				// Skip the endpoints managed by HivePress core, the sign-out
 				// duplicate and the hidden items.
 				if ( in_array( $endpoint, $core, true ) || 'customer-logout' === $endpoint || in_array( 'wc:' . $endpoint, $hidden, true ) ) {
+					continue;
+				}
+
+				// Skip the rows that are not account pages at all. See is_wc_endpoint_item().
+				if ( ! $this->is_wc_endpoint_item( $endpoint ) ) {
 					continue;
 				}
 
@@ -1527,12 +1573,6 @@ final class Amehp_Menu_Enhancer extends Component {
 			return;
 		}
 
-		// Load the full Font Awesome library when a chosen icon needs it.
-		// The flag is set while the icon CSS above is built.
-		if ( $this->needs_fontawesome ) {
-			$this->enqueue_fontawesome();
-		}
-
 		// Enqueue the stylesheet.
 		wp_enqueue_style(
 			'amehp-frontend',
@@ -1580,67 +1620,28 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
-	 * Enqueues the full Font Awesome stylesheet.
+	 * Enqueues the Font Awesome webfont, in wp-admin only.
 	 *
-	 * HivePress core and the official themes bundle Font Awesome 5 SOLID
-	 * only, so the Font Awesome 6/7 icons and every brand icon offered in
-	 * the dropdowns would otherwise render as empty boxes. The handle is
-	 * shared across this author's plugins on purpose, so however many of
-	 * them are active only one copy of the library ever loads; whichever
-	 * registers it first wins, and the guard below stands down when a
-	 * neighbour got there earlier.
+	 * The webfont exists for one job now: the icon picker's own preview markup, which is `<i>`
+	 * elements the shared library's admin script swaps for inline SVG. The font is what those
+	 * elements fall back to for the instant before the swap, and on any screen the script has not
+	 * reached. Nothing on the front end needs it - menu icons there are drawn from path data, see
+	 * get_icon_mask() - and the library enforces the admin-only rule itself rather than trusting
+	 * callers to.
 	 *
-	 * Public because the persistent menu component calls it for a placeholder
-	 * page whose chosen icon is a version 6/7 or brand one.
+	 * The plugin's own assets/vendor/fontawesome/ copy is gone; one copy now lives in
+	 * includes/fafh/ and every one of this author's plugins shares it, so however many are active
+	 * only one library ever loads. It is still BUNDLED and must never be pointed at a CDN: that is
+	 * the exact case the offloaded-assets rule exists to catch, Plugin Check reports
+	 * EnqueuedResourceOffloading for it, and cache partitioning means a CDN copy is a cold download
+	 * for every site anyway.
+	 *
+	 * Public because the persistent menu component calls it too.
 	 */
 	public function enqueue_fontawesome() {
-		if ( ! wp_style_is( 'freestylr-fontawesome', 'registered' ) ) {
-
-			// After core's own Font Awesome where it is registered, so the
-			// newer library wins any duplicate rules.
-			$deps = wp_style_is( 'fontawesome-solid', 'registered' ) ? [ 'fontawesome-solid' ] : [];
-
-			/*
-			 * Font Awesome 7.1.0 Free is BUNDLED, in assets/vendor/fontawesome/. Never
-			 * point this at cdnjs or any other CDN. A convenience CDN copy of a library
-			 * is the exact case the offloaded-assets rule exists to catch
-			 * (resources/security-standards.md, "Offloaded assets" - a remote asset is
-			 * only acceptable when it is a service's own required SDK from that
-			 * service's own domain), Plugin Check reported EnqueuedResourceOffloading on
-			 * every plugin that did it, and Chris ruled on 2026-08-30 that the files
-			 * ship with the plugin. A comment here used to claim the CDN copy was house
-			 * convention and told future sessions not to "fix" it by bundling; that was
-			 * wrong. It is also faster: cache partitioning (Chrome 86+, Firefox, Safari)
-			 * means a CDN copy is a cold download for every site anyway, plus a DNS
-			 * lookup and TLS handshake to a third origin.
-			 *
-			 * Layout matters. assets/vendor/fontawesome/css/all.min.css sits beside
-			 * assets/vendor/fontawesome/webfonts/, so the stock "../webfonts/" paths
-			 * inside the upstream CSS resolve unchanged. Three faces ship -
-			 * fa-solid-900.woff2, fa-brands-400.woff2 and fa-regular-400.woff2 - and
-			 * only the v4-compatibility @font-face block was removed from the CSS, so
-			 * nothing can request a file that is not there. The regular face is NOT
-			 * optional, and it costs ~19 KB: with no weight-400 face declared the
-			 * browser silently substitutes the weight-900 solid one, so a far /
-			 * fa-regular name draws a FILLED glyph instead of an outline. That shipped
-			 * between 2026-08-29 and 2026-08-30 and read as somebody picking the wrong
-			 * icon rather than as a missing font, which is why it survived a whole day.
-			 *
-			 * 7.1.0 keeps the version 5 alias classes and family names, so it is a
-			 * superset of what core bundles. Every plugin sharing this handle must pin
-			 * the identical version, because only the first registration of a shared
-			 * handle counts. Full rule: resources/hivepress-ui.md, "FA6/7 and brand
-			 * icons: bundle them, never load a CDN copy (2026-08-30)".
-			 */
-			wp_register_style(
-				'freestylr-fontawesome',
-				plugins_url( self::FONTAWESOME_PATH, AMEHP_FILE ),
-				$deps,
-				self::FONTAWESOME_VERSION
-			);
+		if ( class_exists( 'FAFH' ) ) {
+			\FAFH::enqueue_admin();
 		}
-
-		wp_enqueue_style( 'freestylr-fontawesome' );
 	}
 
 	/**
@@ -1796,8 +1797,6 @@ final class Amehp_Menu_Enhancer extends Component {
 			'amehp-backend',
 			'amehpBackendData',
 			[
-				'brandIcons'       => $this->get_brand_icon_names(),
-
 				// The family NAME, always: the preview needs it to set the
 				// right font-family whether or not the face has been loaded.
 				'headingFont'      => $family,
@@ -2333,27 +2332,6 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
-	 * Gets the brand icon names from the codes config.
-	 *
-	 * Handed to the settings screen scripts so the card headers and the live
-	 * preview can pick the brands font class for an icon; every other name
-	 * renders with the solid class.
-	 *
-	 * @return array
-	 */
-	protected function get_brand_icon_names() {
-		$names = [];
-
-		foreach ( (array) hivepress()->get_config( 'amehp_icon_codes' ) as $name => $entry ) {
-			if ( is_array( $entry ) && 'brands' === hp\get_array_value( $entry, 'family' ) ) {
-				$names[] = (string) $name;
-			}
-		}
-
-		return $names;
-	}
-
-	/**
 	 * Adds the live preview panel to the settings tab.
 	 *
 	 * Runs at admin_init priority 20, after HivePress has registered the
@@ -2529,42 +2507,151 @@ final class Amehp_Menu_Enhancer extends Component {
 	}
 
 	/**
-	 * Gets an icon's codepoint and font family details.
+	 * Builds an icon weight rule for a set of selectors.
 	 *
-	 * The codes config stores a plain codepoint string for the Font Awesome 5
-	 * solid icons bundled with HivePress, and an array for the icons added in
-	 * version 3.0.0: the Font Awesome 6/7 names and the brand icons, which
-	 * need the full Font Awesome stylesheet loaded (see enqueue_fontawesome).
+	 * This is the weight for icons this plugin does NOT draw. The account menus carry icons from the
+	 * theme and from other extensions, and the global weight setting has always thickened those too;
+	 * sizing and spacing do the same, for the same reason - a setting that visibly skipped half the
+	 * menu would read as broken. Those icons are still webfont glyphs, so a text stroke is still the
+	 * technique for them.
 	 *
-	 * Public because the persistent menu component resolves the icon for a
-	 * placeholder page through it. Deliberately shared rather than copied:
-	 * two descriptions of which font an icon lives in would disagree the
-	 * first time the codes config grew a family.
+	 * The icons this plugin draws are masks now and carry their weight inside the image instead, see
+	 * get_icon_mask(). The stroke below reaches them as well and does nothing, harmlessly: their
+	 * `content` is an empty string, and a stroke on no text paints nothing.
+	 *
+	 * @param array  $selectors Item selectors.
+	 * @param string $weight Weight choice.
+	 * @return string
+	 */
+	protected function get_weight_rule( $selectors, $weight ) {
+		$width = $this->get_stroke_width( $weight );
+
+		if ( ! $width || ! $selectors ) {
+			return '';
+		}
+
+		return implode( '::before,', $selectors ) . '::before{-webkit-text-stroke:' . $width . ' currentColor;paint-order:stroke fill;}';
+	}
+
+	/**
+	 * Builds the CSS mask image that draws an icon.
+	 *
+	 * WHY A MASK. This plugin cannot put markup where its icons go: they are drawn on HivePress's
+	 * and WooCommerce's own menu anchors, which belong to those plugins, so the only thing this one
+	 * gets to add is a `::before` on somebody else's element. Until now that meant a webfont - a
+	 * codepoint in `content`, a `font-family`, and a 320KB copy of Font Awesome bundled with the
+	 * plugin to supply the glyph. A mask does the same job from the icon's path data: the
+	 * pseudo-element is painted with the icon colour and the SVG is used as its stencil, so colour,
+	 * size and spacing all keep working exactly as they did, no font loads on the front end at all,
+	 * and every icon in the library is reachable instead of the 1,465 the codes config listed.
+	 *
+	 * Both the prefixed and unprefixed properties are emitted. Safari has only ever supported
+	 * `-webkit-mask-image`; Chrome and Firefox take the standard one.
+	 *
+	 * WEIGHT IS BAKED IN rather than applied in CSS. A mask is an alpha channel, so
+	 * `-webkit-text-stroke` has nothing to act on and the setting would silently stop working. The
+	 * stroke goes on the path instead, where the union of stroke and fill thickens the glyph the
+	 * same way `paint-order: stroke fill` did. `vector-effect="non-scaling-stroke"` is what keeps
+	 * the width honest: without it, "1px" would be one unit of a 512-unit viewBox and invisible.
+	 *
+	 * Public for the same reason its predecessor was: the persistent menu component draws the
+	 * placeholder-page icon with it, and the two must not drift apart.
+	 *
+	 * @param string $icon Icon name, in any Font Awesome version's spelling.
+	 * @param string $weight Weight choice, or an empty string for the normal weight.
+	 * @return string A CSS url() value, or an empty string if the icon is unknown.
+	 */
+	public function get_icon_mask( $icon, $weight = '' ) {
+		$svg = $this->get_icon_svg( $icon, $weight, '' );
+
+		return $svg ? 'url("' . self::encode_svg( $svg ) . '")' : '';
+	}
+
+	/**
+	 * Builds the CSS background image that draws an icon in a fixed colour.
+	 *
+	 * The second of the two drawing modes, used only when the owner has set an icon background - the
+	 * round colour chip behind each icon. A mask cannot coexist with a chip: masking applies to
+	 * everything the element paints, so the chip would be cut into the shape of the icon and
+	 * disappear. Painting the icon as an ordinary background image leaves the chip free to be the
+	 * element's background colour, exactly as it was under the webfont.
+	 *
+	 * The cost is that the colour has to be baked into the image, because an SVG loaded as an image
+	 * cannot see the page's `currentColor`. It only applies to sites that have set a chip, and a
+	 * site with a chip has almost certainly set an icon colour as well - a glyph left on the menu's
+	 * own text colour over a coloured chip is a combination an owner has to correct by hand under
+	 * the webfont too. Where there is genuinely no colour to use, white is the fallback, being the
+	 * legible choice over the mid-tone chips a colour picker tends to produce.
 	 *
 	 * @param string $icon Icon name.
-	 * @return array|null Codepoint, brand flag and extended flag, or null.
+	 * @param string $weight Weight choice.
+	 * @param string $colour Icon colour, already sanitised.
+	 * @return string A CSS url() value, or an empty string if the icon is unknown.
 	 */
-	public function get_icon_code( $icon ) {
-		$codes = hivepress()->get_config( 'amehp_icon_codes' );
-		$entry = hp\get_array_value( $codes, (string) $icon );
+	public function get_icon_image( $icon, $weight = '', $colour = '' ) {
+		$svg = $this->get_icon_svg( $icon, $weight, $colour ? $colour : '#ffffff' );
 
-		if ( is_string( $entry ) && $entry ) {
-			return [
-				'code'     => $entry,
-				'brand'    => false,
-				'extended' => false,
-			];
+		return $svg ? 'url("' . self::encode_svg( $svg ) . '")' : '';
+	}
+
+	/**
+	 * Builds the SVG markup for an icon.
+	 *
+	 * Single quotes throughout, so the double quotes wrapping the url() cannot be closed early.
+	 *
+	 * @param string $icon Icon name, in any Font Awesome version's spelling.
+	 * @param string $weight Weight choice, or an empty string for the normal weight.
+	 * @param string $colour Colour to paint the glyph, or an empty string to leave it opaque black
+	 *                       for use as a mask, where only the alpha channel is read.
+	 * @return string SVG markup, or an empty string if the icon is unknown.
+	 */
+	protected function get_icon_svg( $icon, $weight, $colour ) {
+		if ( ! class_exists( 'FAFH' ) ) {
+			return '';
 		}
 
-		if ( is_array( $entry ) && ! empty( $entry['code'] ) ) {
-			return [
-				'code'     => (string) $entry['code'],
-				'brand'    => 'brands' === hp\get_array_value( $entry, 'family' ),
-				'extended' => true,
-			];
+		// No style is passed on purpose. Asking for a named style makes a brand icon fail, because
+		// it does not exist in the solid set; leaving it to the library lets it read the icon's real
+		// style out of its own index, which is how brands work here without a list of brand names.
+		$pair = \FAFH::pair( (string) $icon );
+
+		if ( ! $pair ) {
+			return '';
 		}
 
-		return null;
+		list( $view_box, $path ) = explode( '|', $pair, 2 );
+
+		$paint  = $colour ? $colour : '#000';
+		$stroke = '';
+		$width  = $this->get_stroke_width( (string) $weight );
+
+		if ( $width ) {
+			$stroke = " stroke='" . $paint . "' stroke-width='" . (float) $width . "' stroke-linejoin='round' vector-effect='non-scaling-stroke'";
+		}
+
+		return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" . $view_box . "'><path fill='" . $paint . "'" . $stroke . " d='" . $path . "'/></svg>";
+	}
+
+	/**
+	 * Packs an SVG into a data URI small enough to sit in a stylesheet.
+	 *
+	 * Escaping is deliberately narrow. rawurlencode() would be correct, and is what a first draft
+	 * used, but it escapes every space and comma too - and Font Awesome path data is mostly spaces
+	 * and commas, so it added roughly 60% to a string that is already 1-2KB and appears once per
+	 * menu item. Only the characters that would actually end the URL or confuse the CSS parser are
+	 * escaped instead; path data is only digits, letters, spaces, commas, dots and minus signs, so
+	 * nothing else can appear. The SVG is written with single quotes so the double quotes wrapping
+	 * the url() cannot be closed early.
+	 *
+	 * @param string $svg SVG markup.
+	 * @return string A data: URI.
+	 */
+	protected static function encode_svg( $svg ) {
+		return 'data:image/svg+xml,' . str_replace(
+			[ '%', '#', '<', '>', '"', '{', '}' ],
+			[ '%25', '%23', '%3C', '%3E', '%22', '%7B', '%7D' ],
+			$svg
+		);
 	}
 
 	/**
@@ -2574,7 +2661,7 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * technique site owners were applying by hand: Font Awesome Free ships a
 	 * single solid weight, so a real font-weight change does nothing.
 	 *
-	 * Public for the same reason as get_icon_code(): the placeholder pages
+	 * Public for the same reason as get_icon_mask(): the placeholder pages
 	 * thicken their icon with the identical technique, and the two must not
 	 * drift into using different widths for the same setting.
 	 *
@@ -2591,29 +2678,6 @@ final class Amehp_Menu_Enhancer extends Component {
 		}
 
 		return '';
-	}
-
-	/**
-	 * Builds an icon weight rule for a set of selectors.
-	 *
-	 * `currentColor` inside the ::before resolves to the icon colour, because
-	 * the base rule sets the pseudo-element's own colour to
-	 * `var(--amehp-icon-colour,currentColor)`, so the stroke always matches
-	 * whatever colour the icon ends up with. `paint-order` keeps the stroke
-	 * behind the fill so the glyph thickens instead of shrinking.
-	 *
-	 * @param array  $selectors Item selectors.
-	 * @param string $weight Weight choice.
-	 * @return string
-	 */
-	protected function get_weight_rule( $selectors, $weight ) {
-		$width = $this->get_stroke_width( $weight );
-
-		if ( ! $width || ! $selectors ) {
-			return '';
-		}
-
-		return implode( '::before,', $selectors ) . '::before{-webkit-text-stroke:' . $width . ' currentColor;paint-order:stroke fill;}';
 	}
 
 	/**
@@ -2640,14 +2704,33 @@ final class Amehp_Menu_Enhancer extends Component {
 			return '';
 		}
 
-		$css             = '';
-		$selectors       = [];
-		$brand_selectors = [];
+		/*
+		 * The global weight is the default for every item, so an item that has not chosen one of its
+		 * own is drawn with it. Under the webfont this was a separate CSS rule that cascaded; the
+		 * weight now lives inside each image, where nothing can cascade, so the fallback has to
+		 * happen here while each one is built.
+		 */
+		$default_weight = (string) get_option( 'hp_amehp_icon_weight' );
+		$default_colour = $this->sanitize_colour( (string) get_option( 'hp_amehp_icon_colour' ) );
+
+		// Which of the two drawing modes to use. See get_icon_image() for why a chip rules out a
+		// mask. It is one decision for the whole stylesheet because the chip is a global setting.
+		$chip = $this->sanitize_colour( (string) get_option( 'hp_amehp_icon_background' ) );
+
+		$css       = '';
+		$selectors = [];
 
 		foreach ( $rules as $key => $rule ) {
-			$code = $this->get_icon_code( $rule['icon'] );
+			$weight = '' !== $rule['weight'] ? (string) $rule['weight'] : $default_weight;
+			$colour = $this->sanitize_colour( $rule['colour'] );
 
-			if ( ! $code ) {
+			if ( $chip ) {
+				$image = $this->get_icon_image( $rule['icon'], $weight, $colour ? $colour : $default_colour );
+			} else {
+				$image = $this->get_icon_mask( $rule['icon'], $weight );
+			}
+
+			if ( ! $image ) {
 				continue;
 			}
 
@@ -2659,27 +2742,20 @@ final class Amehp_Menu_Enhancer extends Component {
 
 			$selectors = array_merge( $selectors, $item_selectors );
 
-			if ( $code['extended'] ) {
-				$this->needs_fontawesome = true;
-			}
-
-			if ( $code['brand'] ) {
-				$brand_selectors = array_merge( $brand_selectors, $item_selectors );
-			}
-
 			// Add the icon rule.
-			$css .= implode( '::before,', $item_selectors ) . '::before{content:"\\' . $code['code'] . '";}';
-
-			// Add the colour rule.
-			$colour = $this->sanitize_colour( $rule['colour'] );
-
-			if ( $colour ) {
-				$css .= implode( ',', $item_selectors ) . '{--amehp-icon-colour:' . $colour . ';}';
+			if ( $chip ) {
+				$css .= implode( '::before,', $item_selectors ) . '::before{background-image:' . $image . ';}';
+			} else {
+				// Held in a custom property and referenced twice, rather than written out twice. A
+				// data URI for one glyph is 1-2KB and this stylesheet is inline on every page, so
+				// emitting each one once instead of once per vendor prefix halves the whole block.
+				$css .= implode( '::before,', $item_selectors ) . '::before{--amehp-icon-image:' . $image . ';-webkit-mask-image:var(--amehp-icon-image);mask-image:var(--amehp-icon-image);}';
 			}
 
-			// Add the per-item weight rule, overriding the global choice.
-			if ( '' !== $rule['weight'] ) {
-				$css .= $this->get_weight_rule( $item_selectors, $rule['weight'] );
+			// Add the colour rule. Nothing to set in chip mode: the colour is already inside the
+			// image, and the pseudo-element's own background is the chip.
+			if ( $colour && ! $chip ) {
+				$css .= implode( ',', $item_selectors ) . '{--amehp-icon-colour:' . $colour . ';}';
 			}
 		}
 
@@ -2687,25 +2763,36 @@ final class Amehp_Menu_Enhancer extends Component {
 			return '';
 		}
 
-		// Add the base rule. The solid family list covers Font Awesome 5, 6
-		// and 7, which all keep the "Font Awesome {N} Free" name and the 900
-		// solid weight, so the icons render whichever version the site loads.
-		$base = implode( '::before,', $selectors ) . '::before{font-family:"Font Awesome 7 Free","Font Awesome 6 Free","Font Awesome 5 Free";font-weight:900;font-style:normal;font-variant:normal;display:inline-block;width:1.25em;margin-inline-end:' . $this->get_icon_spacing() . ';text-align:center;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;color:var(--amehp-icon-colour,currentColor);}';
+		/*
+		 * The base rule, shared by both modes.
+		 *
+		 * `content` is an empty string rather than a codepoint, because the glyph is no longer a
+		 * character. A ::before holding a character was sized by the font; an empty one has no
+		 * intrinsic height at all and would collapse, so 1em is set explicitly and the box is nudged
+		 * down by an eighth of an em to sit on the text baseline the way a glyph did.
+		 *
+		 * `contain` rather than `cover`, because Font Awesome viewBoxes are not square - they run
+		 * from 128 to 640 units wide against a fixed 512 tall - and `cover` would crop the wide ones.
+		 */
+		$base = implode( '::before,', array_unique( $selectors ) ) . '::before{content:"";display:inline-block;width:1.25em;height:1em;vertical-align:-0.125em;margin-inline-end:' . $this->get_icon_spacing() . ';';
 
-		// Brand icons live in a separate font with its own weight: "Font
-		// Awesome {N} Brands", weight 400. Declared per item AFTER the base
-		// rule so the brands family wins for exactly the items that need it.
-		if ( $brand_selectors ) {
-			$brand_selectors = array_unique( $brand_selectors );
+		if ( $chip ) {
+			$base .= 'background-repeat:no-repeat;background-position:center;background-size:contain;}';
+		} else {
+			/*
+			 * The icon colour is the pseudo-element's own background, and the mask decides which of
+			 * that paint survives. `currentColor` still resolves to the anchor's colour, so an owner
+			 * who has set no colour gets an icon that matches the menu text, exactly as before.
+			 *
+			 * Both the prefixed and unprefixed properties are emitted: Safari has only ever supported
+			 * `-webkit-mask-*`, while Chrome and Firefox take the standard ones.
+			 */
+			$base .= 'background-color:var(--amehp-icon-colour,currentColor);-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;}';
 
-			$base .= implode( '::before,', $brand_selectors ) . '::before{font-family:"Font Awesome 7 Brands","Font Awesome 6 Brands","Font Awesome 5 Brands";font-weight:400;}';
-		}
-
-		// Add the default colour.
-		$default_colour = $this->sanitize_colour( (string) get_option( 'hp_amehp_icon_colour' ) );
-
-		if ( $default_colour ) {
-			$base .= ':root{--amehp-icon-colour:' . $default_colour . ';}';
+			// Add the default colour.
+			if ( $default_colour ) {
+				$base .= ':root{--amehp-icon-colour:' . $default_colour . ';}';
+			}
 		}
 
 		return $base . $css;
@@ -3602,26 +3689,28 @@ final class Amehp_Menu_Enhancer extends Component {
 	/**
 	 * Gets the icon options for the settings screen.
 	 *
-	 * Starts from HivePress core's own icon list (the Font Awesome 5 solid
-	 * set it bundles), then adds every extra name from the codes config: the
-	 * Font Awesome 6/7 names and the brand icons. Labels are the raw icon
-	 * slugs, matching core's own list (configs/icons.php maps slug to slug)
-	 * and the sibling plugins that extend it, so the dropdown reads
-	 * consistently and matches the names on fontawesome.com; the dropdown
-	 * previews show what each one looks like.
+	 * Every icon in the bundled library, which is all of Font Awesome Free - brands and the version
+	 * 6 and 7 additions included - in place of the 1,465-name list this plugin used to keep by hand.
+	 *
+	 * This list is the fallback. The pickers load their options over AJAX (see the icon field in
+	 * configs/settings.php), because printing two thousand options into nine controls made the
+	 * settings form megabytes of HTML; core still resolves this preset and throws the result away,
+	 * which is wasteful but is core's own behaviour rather than something this plugin can avoid.
+	 * Without the library the list is core's own Font Awesome 5 solid set, printed inline, because
+	 * there is then no source to search.
+	 *
+	 * Labels are the raw icon slugs, matching core's list (configs/icons.php maps slug to slug) and
+	 * the sibling plugins that extend it, so the dropdown reads consistently and matches the names
+	 * on fontawesome.com; the dropdown previews show what each one looks like.
 	 *
 	 * @return array
 	 */
 	public function get_icon_options() {
-		$options = (array) hivepress()->get_config( 'icons' );
-
-		foreach ( (array) hivepress()->get_config( 'amehp_icon_codes' ) as $name => $entry ) {
-			if ( ! is_string( $name ) || isset( $options[ $name ] ) ) {
-				continue;
-			}
-
-			$options[ $name ] = $name;
+		if ( class_exists( 'FAFH' ) ) {
+			return \FAFH::choices();
 		}
+
+		$options = (array) hivepress()->get_config( 'icons' );
 
 		ksort( $options );
 

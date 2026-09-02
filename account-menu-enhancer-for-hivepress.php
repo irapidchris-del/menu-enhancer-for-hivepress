@@ -3,7 +3,7 @@
  * Plugin Name: Account Menu Enhancer for HivePress
  * Plugin URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
  * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, the option to hide any item, and persistent menu items that stay visible with a helpful notice when their pages are empty.
- * Version: 3.3.14
+ * Version: 3.4.0
  * Author: ChrisB @ HivePress Community
  * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.8
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '3.3.14' );
+	define( 'AMEHP_VERSION', '3.4.0' );
 }
 
 // Define the plugin file.
@@ -35,6 +35,19 @@ if ( ! defined( 'AMEHP_FILE' ) ) {
 if ( ! defined( 'AMEHP_DIR' ) ) {
 	define( 'AMEHP_DIR', __DIR__ );
 }
+
+/*
+ * The shared icon library.
+ *
+ * Every icon in Font Awesome Free is available (aliases and brands included) and the front end draws
+ * the chosen one from its path data, so no icon stylesheet and no webfont load there at all. The
+ * plugin's own assets/vendor/fontawesome/ copy was deleted when this landed; the webfont now lives
+ * inside the library and is enqueued in wp-admin only, for the picker previews.
+ *
+ * Never edit includes/fafh/ in place. Edit tools/fafh/ and run tools\sync-fafh.ps1, which keeps
+ * every copy byte-identical.
+ */
+require_once __DIR__ . '/includes/fafh/bootstrap.php';
 
 /**
  * The author's support page.
