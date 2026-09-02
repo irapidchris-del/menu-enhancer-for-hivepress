@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.4.1
+Stable tag: 3.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 Older entries are in changelog.txt, which ships with the plugin. WordPress truncates this
 section at 5,000 characters, so only the most recent releases are repeated here.
+
+= 3.4.2 =
+* Fixed: typing an item's label could draw a broken glyph beside the card's icon, the same fault found in Action Bar. The shared icon library is updated to the version that fixes it.
 
 = 3.4.1 =
 * Fixed: choosing an icon for a menu item or custom item no longer changes other rows' icons when
