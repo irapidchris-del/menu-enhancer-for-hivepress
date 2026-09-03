@@ -1,25 +1,36 @@
 /* Account Menu Enhancer for HivePress: front-end styles. */
 
 /*
- * Counters mirrored into the WooCommerce account menu. The declarations copy
+ * Counters mirrored into the WooCommerce account menu. The declarations follow
  * HivePress core's own counter rule (.hp-menu__item small in frontend.min.css)
- * so the mirrored number is visually identical to the one in the HivePress
- * menus, except display, which is inline-flex so the badge cannot drop onto
- * its own line inside links the theme does not lay out as flex rows.
+ * so the mirrored number sits beside the ones in the HivePress menus as one
+ * family: a 1.5rem circle that grows into a pill for two digits, 0.75rem bold
+ * text (a fixed size rather than 80% of the link, which drifted with the
+ * link's own font size), 0 0.4rem padding and a 0.5rem gap from the label.
+ * These are the values the Freestylr child theme settled on for every account
+ * counter on 3 September 2026, adopted here so the theme needs no rule of its
+ * own for this badge. Display is inline-flex so the badge cannot drop onto its
+ * own line inside links the theme does not lay out as flex rows.
  */
 .woocommerce-MyAccount-navigation ul li > a small.amehp-badge {
 	display: inline-flex;
+	flex: 0 0 auto;
 	justify-content: center;
 	align-items: center;
+	width: auto;
 	min-width: 1.5rem;
+	height: 1.5rem;
 	min-height: 1.5rem;
-	padding: 0 0.5rem;
-	margin-inline-start: 0.5rem;
+	max-height: 1.5rem;
+	padding: 0 0.4rem;
+	margin: 0 0 0 0.5rem;
 	border-radius: 9999px;
 	background-color: #ff5a5f;
 	color: #fff;
-	font-size: 80%;
+	font-size: 0.75rem;
+	font-weight: 700;
 	line-height: 1;
 	vertical-align: middle;
 	white-space: nowrap;
+	box-sizing: border-box;
 }
