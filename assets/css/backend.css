@@ -1019,9 +1019,46 @@ div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed
 	height: 16px;
 }
 
-/* The gap jQuery UI leaves where the dragged row will land. */
+/*
+ * Nested items, drawn as the site draws them: a list inside the parent's own
+ * row, indented, always open here so every row stays reachable for dragging.
+ * The row wraps so the nested list can take the full width beneath the link
+ * and its controls.
+ */
+.amehp-preview__item--parent {
+	flex-wrap: wrap;
+}
+
+.amehp-preview__caret {
+	margin-inline-start: auto;
+	color: #8c8f94;
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.amehp-preview__submenu {
+	flex: 0 0 100%;
+	margin: 0;
+	padding: 0 0 0 20px;
+	list-style: none;
+	border-top: 1px solid #f0f0f1;
+	background: #fafafa;
+}
+
+.amehp-preview__item--child a {
+	padding-top: 7px;
+	padding-bottom: 7px;
+}
+
+/*
+ * The gap jQuery UI leaves where the dragged row will land. No height on
+ * purpose: jQuery UI sizes the placeholder from the dragged row only when the
+ * stylesheet has given it none (forcePlaceholderSize, sortable.js), and since
+ * 3.5.0 a parent row carries its nested list, so a fixed 38px gap made the
+ * rows below jump while a group was dragged.
+ */
 .amehp-preview__placeholder {
-	height: 38px;
 	background: #f0f6fc;
 	border: 1px dashed #c3c4c7;
 }

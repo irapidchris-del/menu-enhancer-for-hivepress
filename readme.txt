@@ -4,23 +4,26 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.4.5
+Stable tag: 3.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item icons and colours, custom items, and hidden items.
+Unifies the HivePress and WooCommerce account areas into one menu, with icons, colours, labels, nested items, custom items and per-menu control.
 
 == Description ==
 
-HivePress renders the WooCommerce Orders page inside its own account layout, but leaves the other WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) using the WooCommerce layout with a different sidebar menu. This plugin fixes that inconsistency and adds full control over the account menu.
+HivePress renders the WooCommerce Orders page inside its own account layout, but leaves the other WooCommerce account pages (Dashboard, Addresses, Payment methods, Account details and Downloads) using the WooCommerce layout with a different sidebar menu. This plugin fixes that inconsistency and adds full control over the account menus.
 
 **Features**
 
 * **One account layout, one menu.** A single WooCommerce Integration switch renders the remaining WooCommerce account pages inside the HivePress account template, using the same mechanism HivePress core already uses for the Orders page, and lists the WooCommerce account links in the HivePress menu and the HivePress account links in the WooCommerce menu, so every account page shares one sidebar and both menus match wherever they appear.
-* **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a dropdown with previews: the Font Awesome icons bundled with HivePress, the names added in Font Awesome 6 and 7, and a set of brand icons such as Stripe, PayPal and WhatsApp. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
-* **Live preview and drag ordering.** The settings tab shows your real account menu as your site will render it, and you drag the items into the order you want, or move them with arrow buttons. The order applies to the HivePress account dropdown, the HivePress account sidebar and the WooCommerce account sidebar alike.
-* **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, menu targeting and per-role visibility, placed wherever you drag them.
-* **Hidden items.** Hide any HivePress or WooCommerce menu item from both account menus, or from the WooCommerce account menu alone.
+* **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a searchable dropdown with previews covering every icon in Font Awesome Free, brands included. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
+* **Labels.** Rename any menu item from the settings screen, without a translation plugin. Leave the box empty to keep the item's usual name.
+* **Nested items.** Nest any item under a parent item. The parent gets a button that opens and closes its group, in the header account dropdown, the HivePress account sidebar and the WooCommerce account menu alike, and a group holding the page being viewed starts open.
+* **Three menus, told apart.** Limit any item to some of the three account menus: the header account dropdown, the HivePress account sidebar and the WooCommerce account menu. An item can be in the dropdown but not the sidebar, or the other way round.
+* **Live preview and drag ordering.** The settings tab shows your real account menus as your site will render them, and you drag the items into the order you want, or move them with arrow buttons. One panel is shown while your menus agree, and a panel per menu as soon as they differ.
+* **Custom menu items.** Add your own links (a page, a HivePress account page, a WooCommerce endpoint or a custom URL) with a label, icon, colour, a choice of menus, a parent item and per-role visibility, placed wherever you drag them.
+* **Hidden items.** Hide any HivePress or WooCommerce menu item from every account menu, or from the WooCommerce account menu alone.
 * **Persistent menu items.** Keep chosen account menu items visible even when their pages are empty, instead of letting them disappear.
 * **Placeholder pages.** Give each empty account page its own icon, message, button label and button URL, so it explains itself and points somewhere useful.
 * **Counters.** Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce menu when WooCommerce Integration is switched on.
@@ -30,7 +33,8 @@ All settings live under HivePress, then Settings, then Account Menu.
 
 **Notes**
 
-* Icons are rendered with CSS using Font Awesome codepoints. The icons HivePress bundles work on their own; when you choose a Font Awesome 6 or 7 name, or a brand icon, the plugin loads the copy of Font Awesome 7 it ships with so the icon renders. If you subset Font Awesome yourself, make sure the icons you select here are included in your subset.
+* Menu icons are drawn from each icon's own shape, so nothing on the front of your site downloads a font file for them. The icon library ships with the plugin and is shared with this author's other extensions, so however many of them you run only one copy is loaded, and only in the admin.
+* A parent item must be a top-level item shown in the same menu. An item whose parent is itself nested, hidden, or not shown in a particular menu, sits at the top level of that menu instead of disappearing with it. A custom item can be chosen as a parent once it has been saved.
 * The WooCommerce settings only appear while WooCommerce is active.
 * If you use a performance plugin that removes unused CSS (for example Perfmatters or FlyingPress), exclude this plugin's stylesheet from that feature, otherwise the menu counters can render unstyled because they are added to the page after the used CSS is sampled.
 * Once an item is given an icon, the icon colour comes from this plugin's settings (or the menu text colour when no colour is set), taking precedence over icon colour rules added by themes or custom CSS.
@@ -45,6 +49,16 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.5.0 =
+* Added: the Coupons item that Marketplace 1.4 adds to the Vendor account menu is now offered on the Menu Items rows straight away, so it can be given an icon, a colour and a label like every other item. Until a vendor had opened their account page it was the one item the settings screen could not list.
+* Added: a Label box on every Menu Items row, so any account menu item can be renamed from the settings screen without a translation plugin. Leave it empty to keep the item's usual name, which is shown in the box as a hint.
+* Added: menu items can be nested under a parent item. Choose a Parent Item on a Menu Items row or on a custom item, and it folds away under that parent with a button to open the group, in the header account dropdown, the HivePress account sidebar and the WooCommerce account menu alike. A group holding the page being viewed starts open. The Live preview draws the nesting, and a nested item is dragged among the items under the same parent.
+* Added: a Menus setting on every Menu Items row, so an item can be shown in some account menus and not others. The header account dropdown, the HivePress account sidebar and the WooCommerce account menu are now told apart, so an item can be in the dropdown but not the sidebar, or the other way round. Custom items gain the same three choices in place of the old "HivePress Menu Only" and "WooCommerce Menu Only"; a saved choice is carried over and means the same as before.
+* Changed: the Live preview shows one panel while your menus agree, two when only the WooCommerce menu differs, and three when the header dropdown and the sidebar differ too.
+* Changed: the "Menu Item Styling" setting is now called "Menu Items", since a row can now rename, nest and place an item as well as style it. Nothing you have saved there changes.
+* Fixed: hiding "Orders (WooCommerce)" from the WooCommerce menu alone left the Placed Orders item in the HivePress account menus with no wording at all, an empty row with only its icon. HivePress reads that item's name from the WooCommerce menu, which the setting had just taken it out of; the name is now restored. The same applies to Subscriptions.
+* Fixed: the account page could send a member to a page its own sidebar does not list, when the first menu item is shown in the header dropdown only. The redirect now follows the sidebar.
 
 = 3.4.5 =
 * Fixed: updating two of these extensions one after the other could fail on the second with "up to date" until Check for updates was pressed again. WordPress rebuilds its update list after each update by asking wordpress.org first, and gives up on the whole list when that call is slow; the plugin now keeps its own update in the list regardless.
@@ -69,84 +83,6 @@ section at 5,000 characters, so only the most recent releases are repeated here.
   time the page was saved, and a newly picked icon showed as the previous one, enlarged, until the
   page was reloaded. If 3.4.0 changed any of your icons, open the Account Menu tab, set the affected
   rows back to what you want, and save once. 3.4.0 has been withdrawn.
-
-= 3.4.0 =
-* Added: every icon in Font Awesome Free is now available wherever this plugin asks for one - all
-  1,918 of them, brands included, in place of the shorter list it used to carry. The icon boxes now
-  search as you type instead of listing everything at once.
-* Changed: menu icons are drawn from the icon's own shape rather than from a font, so nothing on the
-  front of your site downloads a font file for them any more. Your icon colour, size, weight,
-  spacing and background settings all work exactly as before. This also removed a 320KB copy of
-  Font Awesome from the plugin; the one that remains is shared with this author's other plugins, so
-  however many of them you run, only one copy is ever loaded, and only in the admin.
-* Fixed: a link that another plugin adds to the WooCommerce account menu but that is not an account
-  page no longer appears in your HivePress account menu. User Switching's "Switch back to ..." was
-  turning up there mid-switch, and the copy in the HivePress menu led to a page that does not exist.
-  Genuine WooCommerce account pages are unaffected.
-
-= 3.3.14 =
-* Changed: the older entries in this changelog have moved to changelog.txt, which ships with the
-  plugin. WordPress only shows the first 5,000 characters of a changelog on the update screen, and
-  this one had grown well past that, so recent releases were being cut off before you could read
-  them. Nothing has been removed.
-
-= 3.3.13 =
-* Fixed: the unread counters in the account menus now sit a small, even distance from the wording
-  they belong to. In menus your theme lays out as a row the counter was pushed to the far right,
-  away from its own item, and in the account dropdown it sat flush against the last letter with no
-  gap at all. Both now match the spacing HivePress uses itself.
-
-= 3.3.12 =
-* Added: an "Also Hidden from the WooCommerce Menu" setting, which takes a menu item out of the
-  WooCommerce account menu while leaving it in the HivePress account menu. The existing Hidden Items
-  setting is unchanged and still hides an item from both menus, so nothing you have already saved
-  behaves differently. The Live preview panel shows both menus separately whenever the two now
-  differ.
-* Fixed: the Live preview panel named a menu item the way the settings dropdowns name it rather than
-  the way your site renders it, showing "Orders (WooCommerce)" where members see "Placed Orders".
-  The panel now draws the wording each menu actually rendered, which can differ between the two
-  menus for the same page. The dropdowns keep their wording, where it tells two similar destinations
-  apart.
-
-= 3.3.11 =
-* Changed: internal tidying only, with no change to how anything looks or behaves. The settings
-  screen was being sent a copy of your saved menu arrangement that nothing used, because the
-  live preview reads the arrangement from the page itself so that it follows you as you drag.
-  The unused copy has been removed.
-
-= 3.3.10 =
-* Fixed: the Placed Orders item, which HivePress adds to the account menu once a member has an
-  order, appeared at the very bottom of the menu on sites where the menu order had been arranged.
-  It now sits in its proper place, and the same applies to the Subscriptions item.
-* Fixed: Placed Orders and Subscriptions are now shown in the Live preview panel, where they can be
-  dragged into any position you like. They were missing from the preview whenever the WooCommerce
-  integration was switched off, so the preview disagreed with the menu your members actually saw.
-* Changed: a menu item that appears after you have arranged your menu is now placed in the position
-  its own extension gives it, rather than being added below every item you arranged. Your own
-  arrangement is unchanged.
-
-= 3.3.9 =
-* Changed: the instructions on the Menu Item Styling setting no longer say the cards can be dragged
-  into order. The card handles were removed in 3.3.4, and the wording now points to the Live preview
-  panel, which is where the menu order is arranged. Anyone translating the plugin should revisit
-  this wording.
-* Changed: the plugin's record of the menu items your site renders no longer keeps an entry for a
-  custom menu item you have deleted. The record exists so that every item can be offered on the
-  settings screen, and it grew a little each time a custom item was removed. Your custom items,
-  their icons and colours, and your menu order are all unaffected.
-
-= 3.3.8 =
-* Fixed: on sites where Account Menu is the first tab under HivePress > Settings, opening Settings
-  from the menu could show that tab with none of its controls working - no quick links, no live
-  preview and no colour pickers, with nothing to say why. The plugin now recognises its own tab
-  from what is actually on the page rather than from the web address, so it works however you
-  reach it.
-* Fixed: if another extension in this family also adds these controls to a settings tab, you could
-  have ended up with two sets of them at once - two rows of quick links, two floating Save tabs,
-  two back-to-top buttons. The extensions can now see each other's controls and only one set is
-  drawn, whichever extension gets there first.
-* Changed: the hover tooltips on the settings screen are wider, so a two-sentence explanation
-  reads as a few short lines rather than a tall narrow ribbon of text.
 
 == Upgrade Notice ==
 

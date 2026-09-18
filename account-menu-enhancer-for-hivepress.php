@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Account Menu Enhancer for HivePress
  * Plugin URI: https://github.com/irapidchris-del/menu-enhancer-for-hivepress
- * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, the option to hide any item, and persistent menu items that stay visible with a helpful notice when their pages are empty.
- * Version: 3.4.5
+ * Description: Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item icons, colours and labels, nested items, custom menu items, control over which items each account menu shows, and persistent menu items that stay visible with a helpful notice when their pages are empty.
+ * Version: 3.5.0
  * Author: ChrisB @ HivePress Community
  * Author URI: https://community.hivepress.io/u/chrisb/summary
  * Requires at least: 5.8
@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Define the plugin version.
 if ( ! defined( 'AMEHP_VERSION' ) ) {
-	define( 'AMEHP_VERSION', '3.4.5' );
+	define( 'AMEHP_VERSION', '3.5.0' );
 }
 
 // Define the plugin file.
@@ -170,6 +170,10 @@ function amehp_maybe_migrate() {
 
 	if ( version_compare( $installed, '3.3.0', '<' ) ) {
 		amehp_migrate_v330_settings();
+	}
+
+	if ( version_compare( $installed, '3.5.0', '<' ) ) {
+		amehp_migrate_v350_settings();
 	}
 
 	// Record the version that has now run, migrations or not.
@@ -382,6 +386,56 @@ function amehp_migrate_v330_settings() {
 	}
 
 	update_option( 'hp_amehp_menu_order', implode( ',', $amehp_keys ) );
+}
+
+/**
+ * Rewrites each custom item's Menus value into the 3.5.0 shape.
+ *
+ * Until 3.5.0 the field was a single choice - "HivePress Menu Only" stored
+ * as "hivepress", "WooCommerce Menu Only" as "woocommerce", and the "Both
+ * Menus" placeholder as "both" or nothing. From 3.5.0 it is a multiple select
+ * over the three menus the site really has (the header dropdown, the
+ * HivePress sidebar and the WooCommerce navigation), stored as a list, with
+ * an empty value meaning every menu. Each old string is rewritten to the list
+ * that means the same thing, so an item an owner limited to the HivePress
+ * menu is limited to the header AND the sidebar, exactly as before.
+ *
+ * The component reads the old strings correctly in the meantime
+ * (Amehp_Menu_Enhancer::normalise_menus()), so nothing changes on the front
+ * end whether this has run or not; the rewrite is so the settings screen's
+ * multiple select finds a value it can show as ticked. Safe to run twice: a
+ * row already holding a list or an empty value is left alone.
+ *
+ * @return void
+ */
+function amehp_migrate_v350_settings() {
+	$amehp_rows = get_option( 'hp_amehp_custom_items' );
+
+	if ( ! is_array( $amehp_rows ) || ! $amehp_rows ) {
+		return;
+	}
+
+	$amehp_map = [
+		'hivepress'   => [ 'header', 'sidebar' ],
+		'woocommerce' => [ 'woocommerce' ],
+		'both'        => '',
+	];
+
+	$amehp_changed = false;
+
+	foreach ( $amehp_rows as $amehp_index => $amehp_row ) {
+		if ( ! is_array( $amehp_row ) || ! isset( $amehp_row['menus'] ) || ! is_string( $amehp_row['menus'] ) || ! isset( $amehp_map[ $amehp_row['menus'] ] ) ) {
+			continue;
+		}
+
+		$amehp_rows[ $amehp_index ]['menus'] = $amehp_map[ $amehp_row['menus'] ];
+
+		$amehp_changed = true;
+	}
+
+	if ( $amehp_changed ) {
+		update_option( 'hp_amehp_custom_items', $amehp_rows );
+	}
 }
 
 /*

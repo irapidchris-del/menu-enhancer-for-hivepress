@@ -2,222 +2,261 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Account Menu Enhancer for HivePress 3.3.12\n"
-"Report-Msgid-Bugs-To: https://github.com/irapidchris-del/menu-enhancer-for-hivepress/issues\n"
+"Project-Id-Version: Account Menu Enhancer for HivePress 3.5.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/account-menu-enhancer-for-hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-30T22:01:28+00:00\n"
+"POT-Creation-Date: 2026-09-18T15:09:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: account-menu-enhancer-for-hivepress\n"
 
 #. Description of the plugin
 #: account-menu-enhancer-for-hivepress.php
-msgid "Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item Font Awesome icons and colours, custom menu items, the option to hide any item, and persistent menu items that stay visible with a helpful notice when their pages are empty."
-msgstr ""
-
-#: account-menu-enhancer-for-hivepress.php:98
-msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be installed and activated."
+msgid "Unifies the HivePress and WooCommerce account areas into one consistent menu, with per-item icons, colours and labels, nested items, custom menu items, control over which items each account menu shows, and persistent menu items that stay visible with a helpful notice when their pages are empty."
 msgstr ""
 
 #: account-menu-enhancer-for-hivepress.php:111
-#: includes/components/class-amehp-menu-enhancer.php:2957
+msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be installed and activated."
+msgstr ""
+
+#: account-menu-enhancer-for-hivepress.php:124
+#: includes/components/class-amehp-menu-enhancer.php:3812
 msgid "Settings"
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:427
+#: account-menu-enhancer-for-hivepress.php:494
 msgid "Account Menu Enhancer for HivePress now includes everything Persistent Account Menu for HivePress did, and your settings have been carried over to the Account Menu tab. The old plugin is doing nothing while both are active, so you can safely deactivate and delete Persistent Account Menu for HivePress."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1033
+#: account-menu-enhancer-for-hivepress.php:1114
 msgid "See the GitHub releases page for the changelog."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1048
+#: account-menu-enhancer-for-hivepress.php:1129
+#: account-menu-enhancer-for-hivepress.php:1366
 msgid "Check for updates"
 msgstr ""
 
 #. translators: %s: new version number.
-#: account-menu-enhancer-for-hivepress.php:1122
+#: account-menu-enhancer-for-hivepress.php:1203
 #, php-format
 msgid "A new version of Account Menu Enhancer for HivePress (%s) is available."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1125
+#: account-menu-enhancer-for-hivepress.php:1206
 msgid "Account Menu Enhancer for HivePress is up to date."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1128
+#: account-menu-enhancer-for-hivepress.php:1209
 msgid "No releases have been published for Account Menu Enhancer for HivePress yet, so there is nothing to update to. This is normal for a brand new copy and does not mean anything is wrong."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1131
+#: account-menu-enhancer-for-hivepress.php:1212
 msgid "GitHub limits how many update checks one server may make each hour, and this server has reached that limit. Nothing is wrong with the plugin or your site, and checking will work again within the hour."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1134
+#: account-menu-enhancer-for-hivepress.php:1215
 msgid "Could not reach GitHub to check for updates. Please try again later."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1179
+#: account-menu-enhancer-for-hivepress.php:1260
 msgid "Could not rename the update directory."
 msgstr ""
 
-#: account-menu-enhancer-for-hivepress.php:1206
+#: account-menu-enhancer-for-hivepress.php:1287
 msgid "Donate"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1889
+#. translators: 1: number of plugins checked, 2: number with an update available.
+#: account-menu-enhancer-for-hivepress.php:1443
+#, php-format
+msgid "Checked %1$s plugin for updates: %2$s can be updated."
+msgid_plural "Checked %1$s plugins for updates: %2$s can be updated."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: number of plugins checked.
+#: account-menu-enhancer-for-hivepress.php:1446
+#, php-format
+msgid "Checked %s plugin for updates: it is up to date."
+msgid_plural "Checked %s plugins for updates: all are up to date."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: menu item label.
+#: includes/components/class-amehp-menu-enhancer.php:2277
+#, php-format
+msgid "%s sub-menu"
+msgstr ""
+
+#: includes/components/class-amehp-menu-enhancer.php:2618
 msgid "New item"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1890
+#: includes/components/class-amehp-menu-enhancer.php:2619
 msgid "Collapse"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1891
+#: includes/components/class-amehp-menu-enhancer.php:2620
 msgid "Expand"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1892
+#: includes/components/class-amehp-menu-enhancer.php:2621
 msgid "Drag to reorder"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1893
-#: includes/components/class-amehp-menu-enhancer.php:2982
+#: includes/components/class-amehp-menu-enhancer.php:2622
+#: includes/components/class-amehp-menu-enhancer.php:3837
 msgid "Dashboard"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1894
-#: includes/components/class-amehp-menu-enhancer.php:3027
+#: includes/components/class-amehp-menu-enhancer.php:2623
+#: includes/components/class-amehp-menu-enhancer.php:3898
 msgid "Sign Out"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1895
+#: includes/components/class-amehp-menu-enhancer.php:2624
 msgid "Move up"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1896
+#: includes/components/class-amehp-menu-enhancer.php:2625
 msgid "Move down"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1899
+#: includes/components/class-amehp-menu-enhancer.php:2628
 msgid "Jump to a section:"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1900
-#: includes/components/class-amehp-menu-enhancer.php:2445
+#: includes/components/class-amehp-menu-enhancer.php:2629
+#: includes/components/class-amehp-menu-enhancer.php:3174
 msgid "Account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1901
-msgid "HivePress account menu"
+#: includes/components/class-amehp-menu-enhancer.php:2630
+msgid "HivePress account menu (dropdown and sidebar)"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1902
-#: includes/components/class-amehp-menu-enhancer.php:2448
+#: includes/components/class-amehp-menu-enhancer.php:2631
+#: includes/components/class-amehp-menu-enhancer.php:3173
+#: includes/components/class-amehp-menu-enhancer.php:4412
+msgid "Header account dropdown"
+msgstr ""
+
+#: includes/components/class-amehp-menu-enhancer.php:2632
+#: includes/components/class-amehp-menu-enhancer.php:4413
+msgid "HivePress account sidebar"
+msgstr ""
+
+#: includes/components/class-amehp-menu-enhancer.php:2633
+#: includes/components/class-amehp-menu-enhancer.php:3177
+#: includes/components/class-amehp-menu-enhancer.php:4417
 msgid "WooCommerce account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1903
+#: includes/components/class-amehp-menu-enhancer.php:2634
 msgid "Save Changes"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1904
+#: includes/components/class-amehp-menu-enhancer.php:2635
 msgid "Back to top"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:1906
+#: includes/components/class-amehp-menu-enhancer.php:2637
 msgid "Put every menu item back in its default order? Your arrangement will be discarded. Nothing is saved until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2431
+#: includes/components/class-amehp-menu-enhancer.php:3151
 msgid "Live preview"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2451
-msgid "Your account menu in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons. Nothing is stored until you press Save Changes."
+#: includes/components/class-amehp-menu-enhancer.php:3180
+msgid "Your account menus in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons; a nested item moves among the items under the same parent. Nested items are shown open here; on your site they start folded away unless one of them is the page being viewed. Nothing is stored until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2455
+#: includes/components/class-amehp-menu-enhancer.php:3184
 msgid "Reset to default order"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2962
+#: includes/components/class-amehp-menu-enhancer.php:3817
 #: includes/components/class-amehp-persistent-menu.php:221
 msgid "Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2967
+#: includes/components/class-amehp-menu-enhancer.php:3822
 #: includes/components/class-amehp-persistent-menu.php:266
 msgid "Favorites"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2972
+#: includes/components/class-amehp-menu-enhancer.php:3827
 msgid "Import Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2977
+#: includes/components/class-amehp-menu-enhancer.php:3832
 #: includes/components/class-amehp-persistent-menu.php:327
 msgid "Messages"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2987
+#: includes/components/class-amehp-menu-enhancer.php:3842
 msgid "Received Orders"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2992
+#: includes/components/class-amehp-menu-enhancer.php:3847
 msgid "Payouts"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2997
+#: includes/components/class-amehp-menu-enhancer.php:3863
+msgid "Coupons"
+msgstr ""
+
+#: includes/components/class-amehp-menu-enhancer.php:3868
 #: includes/components/class-amehp-persistent-menu.php:312
 msgid "Bookings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3002
+#: includes/components/class-amehp-menu-enhancer.php:3873
 msgid "Calendar"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3007
+#: includes/components/class-amehp-menu-enhancer.php:3878
 msgid "Searches"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3012
+#: includes/components/class-amehp-menu-enhancer.php:3883
 msgid "Memberships"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3017
+#: includes/components/class-amehp-menu-enhancer.php:3888
 #: includes/components/class-amehp-persistent-menu.php:236
 msgid "Requests"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3022
+#: includes/components/class-amehp-menu-enhancer.php:3893
 #: includes/components/class-amehp-persistent-menu.php:251
 msgid "Offers"
 msgstr ""
 
 #. translators: %s: menu item label.
-#: includes/components/class-amehp-menu-enhancer.php:3401
-#: includes/components/class-amehp-menu-enhancer.php:3421
-#: includes/components/class-amehp-menu-enhancer.php:3546
+#: includes/components/class-amehp-menu-enhancer.php:4295
+#: includes/components/class-amehp-menu-enhancer.php:4315
+#: includes/components/class-amehp-menu-enhancer.php:4531
 #, php-format
 msgid "%s (WooCommerce)"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3530
+#: includes/components/class-amehp-menu-enhancer.php:4515
 msgid "My Profile"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3531
+#: includes/components/class-amehp-menu-enhancer.php:4516
 msgid "My Vendor Profile"
 msgstr ""
 
 #. translators: %s: page title.
-#: includes/components/class-amehp-menu-enhancer.php:3560
+#: includes/components/class-amehp-menu-enhancer.php:4545
 #, php-format
 msgid "%s (Page)"
 msgstr ""
@@ -349,8 +388,8 @@ msgid "Tick an item to keep it visible even when its page is empty."
 msgstr ""
 
 #: includes/components/class-amehp-persistent-menu.php:754
-#: includes/configs/settings.php:122
-#: includes/configs/settings.php:305
+#: includes/configs/settings.php:173
+#: includes/configs/settings.php:388
 msgid "Icon"
 msgstr ""
 
@@ -358,339 +397,345 @@ msgstr ""
 msgid "The large icon shown on the empty page. It takes the icon colour, weight and size from the Appearance section. Leave it empty to keep the default icon."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:758
+#: includes/components/class-amehp-persistent-menu.php:762
 msgid "Default Icon"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:767
+#: includes/components/class-amehp-persistent-menu.php:771
 msgid "Page text"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:768
+#: includes/components/class-amehp-persistent-menu.php:772
 msgid "The message shown on the empty page. Leave it blank to keep the default wording."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:776
+#: includes/components/class-amehp-persistent-menu.php:780
 msgid "Button label"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:778
+#: includes/components/class-amehp-persistent-menu.php:782
 msgid "The text shown on the button. Leave it blank to keep the default."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:779
+#: includes/components/class-amehp-persistent-menu.php:783
 msgid "This page has no button by default. Set both a label and a URL to add one."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:805
+#: includes/components/class-amehp-persistent-menu.php:809
 msgid "Button URL"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:806
+#: includes/components/class-amehp-persistent-menu.php:810
 msgid "A full URL or a relative path like /listings. Leave it blank to keep the default link."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:818
+#: includes/components/class-amehp-persistent-menu.php:822
 msgid "Placeholder Pages"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:819
+#: includes/components/class-amehp-persistent-menu.php:823
 msgid "Customise what an account page shows while it is still empty. Each page below has its own icon, message and button. Leave a field blank to keep what that page shows now."
 msgstr ""
 
-#: includes/configs/settings.php:21
+#: includes/configs/settings.php:36
 msgid "Account Menu"
 msgstr ""
 
-#: includes/configs/settings.php:26
+#: includes/configs/settings.php:41
 msgid "Appearance"
 msgstr ""
 
-#: includes/configs/settings.php:27
-msgid "Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns include the Font Awesome 6 and 7 names and brand icons (for example stripe-s and paypal); the full Font Awesome library is loaded automatically when a chosen icon needs it. If you subset Font Awesome yourself, make sure your chosen icons are included."
+#: includes/configs/settings.php:42
+msgid "Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns search every icon in Font Awesome Free, brands included (for example stripe-s and paypal), and each icon is drawn from its own shape, so nothing on the front of your site loads a font for it."
 msgstr ""
 
-#: includes/configs/settings.php:35
-#: includes/configs/settings.php:148
-#: includes/configs/settings.php:331
+#: includes/configs/settings.php:50
+#: includes/configs/settings.php:199
+#: includes/configs/settings.php:414
 msgid "Icon Colour"
 msgstr ""
 
-#: includes/configs/settings.php:36
+#: includes/configs/settings.php:51
 msgid "Colours every menu icon at once. Leave it empty to inherit the menu text colour. A colour set on an individual item below overrides it there."
 msgstr ""
 
-#: includes/configs/settings.php:46
+#: includes/configs/settings.php:61
 msgid "Icon Background Colour"
 msgstr ""
 
-#: includes/configs/settings.php:47
+#: includes/configs/settings.php:62
 msgid "Draws a round colour chip behind every menu icon. Leave it empty for no background."
 msgstr ""
 
-#: includes/configs/settings.php:57
+#: includes/configs/settings.php:72
 msgid "Icon Size (px)"
 msgstr ""
 
-#: includes/configs/settings.php:58
+#: includes/configs/settings.php:73
 msgid "The size of the menu icons. Leave it empty to scale with your theme text size."
 msgstr ""
 
-#: includes/configs/settings.php:66
-#: includes/configs/settings.php:138
-#: includes/configs/settings.php:321
+#: includes/configs/settings.php:81
+#: includes/configs/settings.php:189
+#: includes/configs/settings.php:404
 msgid "Icon Weight"
 msgstr ""
 
-#: includes/configs/settings.php:67
+#: includes/configs/settings.php:82
 msgid "Thickens every menu icon. Choose Normal to keep the standard Font Awesome weight. A weight set on an individual item below overrides it there."
 msgstr ""
 
-#: includes/configs/settings.php:69
-#: includes/configs/settings.php:172
+#: includes/configs/settings.php:84
+#: includes/configs/settings.php:254
 msgid "Normal"
 msgstr ""
 
-#: includes/configs/settings.php:73
-#: includes/configs/settings.php:174
+#: includes/configs/settings.php:88
+#: includes/configs/settings.php:256
 msgid "Semi-bold"
 msgstr ""
 
-#: includes/configs/settings.php:74
-#: includes/configs/settings.php:175
+#: includes/configs/settings.php:89
+#: includes/configs/settings.php:257
 msgid "Bold"
 msgstr ""
 
-#: includes/configs/settings.php:79
-msgid "Menu Item Styling"
-msgstr ""
-
-#: includes/configs/settings.php:93
-msgid "Choose a menu item, then optionally give it an icon, an icon weight and colours. Click a card header to collapse or expand it. The order of the cards makes no difference to the menu; arrange the menu itself in the Live preview panel. Styling for custom items is set in the Custom Items section."
-msgstr ""
-
-#: includes/configs/settings.php:95
-#: includes/configs/settings.php:213
-msgid "Add Item"
-msgstr ""
-
-#: includes/configs/settings.php:102
-msgid "Select Menu Item"
-msgstr ""
-
-#: includes/configs/settings.php:107
-msgid "Menu Item"
-msgstr ""
-
-#: includes/configs/settings.php:118
-#: includes/configs/settings.php:301
-msgid "Select Icon"
-msgstr ""
-
-#: includes/configs/settings.php:129
-#: includes/configs/settings.php:312
-msgid "Normal Weight"
-msgstr ""
-
-#: includes/configs/settings.php:133
-#: includes/configs/settings.php:316
-msgid "Semi-bold Icon"
-msgstr ""
-
-#: includes/configs/settings.php:134
-#: includes/configs/settings.php:317
-msgid "Bold Icon"
-msgstr ""
-
-#: includes/configs/settings.php:158
-#: includes/configs/settings.php:341
-msgid "Text Colour"
-msgstr ""
-
-#: includes/configs/settings.php:165
-msgid "Menu Item Weight"
-msgstr ""
-
-#: includes/configs/settings.php:166
-msgid "The font weight of the menu item wording. Choose Default to keep the theme style."
-msgstr ""
-
-#: includes/configs/settings.php:168
-msgid "Default"
-msgstr ""
-
-#: includes/configs/settings.php:173
-msgid "Medium"
-msgstr ""
-
-#: includes/configs/settings.php:180
-msgid "Sidebar Menu Font"
-msgstr ""
-
-#: includes/configs/settings.php:181
-msgid "Use the theme Heading Font for the sidebar account menus"
-msgstr ""
-
-#: includes/configs/settings.php:188
-msgid "Applies the Heading Font from Appearance > Customise > Fonts to the HivePress and WooCommerce sidebar account menus, matching the account dropdown. Requires an official HivePress theme. With this switched on, this settings screen loads that font from Google so the preview can show it."
-msgstr ""
-
-#: includes/configs/settings.php:194
-msgid "Menu Chevrons"
-msgstr ""
-
-#: includes/configs/settings.php:195
-msgid "Hide the theme navigation menu arrows"
-msgstr ""
-
-#: includes/configs/settings.php:196
-msgid "Hides the arrow markers some themes add before the account menu items, so only your chosen icons show. Other menus are not affected."
-msgstr ""
-
-#: includes/configs/settings.php:204
-msgid "Custom Items"
-msgstr ""
-
-#: includes/configs/settings.php:205
-msgid "Add your own links to the account menus. Each item needs a label and either a link from the dropdown or a custom URL. To decide where an item sits in the menu, drag it in the Live preview panel above, alongside the built-in items."
-msgstr ""
-
-#: includes/configs/settings.php:210
+#: includes/configs/settings.php:94
 msgid "Menu Items"
 msgstr ""
 
-#: includes/configs/settings.php:211
-msgid "Everything except the label and link is optional. Administrators always see every item, so check a role restriction with a non-administrator account."
+#: includes/configs/settings.php:114
+msgid "Choose a menu item, then optionally rename it, give it an icon, an icon weight and colours, nest it under a parent item, or limit which menus show it. Leave the label empty to keep the item's usual name. A parent must be a top-level item shown in the same menu; an item whose parent is itself nested, hidden or not in that menu sits at the top level instead. Click a card header to collapse or expand it. The order of the cards makes no difference to the menu; arrange the menu itself in the Live preview panel. Custom items are set up in the Custom Items section."
 msgstr ""
 
-#: includes/configs/settings.php:254
+#: includes/configs/settings.php:116
+#: includes/configs/settings.php:295
+msgid "Add Item"
+msgstr ""
+
+#: includes/configs/settings.php:123
+msgid "Select Menu Item"
+msgstr ""
+
+#: includes/configs/settings.php:128
+msgid "Menu Item"
+msgstr ""
+
+#: includes/configs/settings.php:156
+#: includes/configs/settings.php:336
 msgid "Label"
 msgstr ""
 
-#: includes/configs/settings.php:261
-msgid "Select Link"
+#: includes/configs/settings.php:157
+msgid "Optional new name"
 msgstr ""
 
-#: includes/configs/settings.php:265
-msgid "Link"
+#: includes/configs/settings.php:169
+#: includes/configs/settings.php:384
+msgid "Select Icon"
 msgstr ""
 
-#: includes/configs/settings.php:290
-msgid "Custom URL"
+#: includes/configs/settings.php:180
+#: includes/configs/settings.php:395
+msgid "Normal Weight"
 msgstr ""
 
-#: includes/configs/settings.php:347
-msgid "Both Menus"
+#: includes/configs/settings.php:184
+#: includes/configs/settings.php:399
+msgid "Semi-bold Icon"
 msgstr ""
 
-#: includes/configs/settings.php:351
-msgid "HivePress Menu Only"
+#: includes/configs/settings.php:185
+#: includes/configs/settings.php:400
+msgid "Bold Icon"
 msgstr ""
 
-#: includes/configs/settings.php:352
-msgid "WooCommerce Menu Only"
+#: includes/configs/settings.php:209
+#: includes/configs/settings.php:424
+msgid "Text Colour"
 msgstr ""
 
-#: includes/configs/settings.php:356
+#: includes/configs/settings.php:221
+#: includes/configs/settings.php:454
+msgid "No parent (top level)"
+msgstr ""
+
+#: includes/configs/settings.php:225
+#: includes/configs/settings.php:458
+msgid "Parent Item"
+msgstr ""
+
+#: includes/configs/settings.php:236
+#: includes/configs/settings.php:443
+msgid "All Menus"
+msgstr ""
+
+#: includes/configs/settings.php:240
+#: includes/configs/settings.php:447
 msgid "Menus"
 msgstr ""
 
-#: includes/configs/settings.php:386
-msgid "All Roles"
+#: includes/configs/settings.php:247
+msgid "Menu Item Weight"
 msgstr ""
 
-#: includes/configs/settings.php:390
-msgid "Roles"
+#: includes/configs/settings.php:248
+msgid "The font weight of the menu item wording. Choose Default to keep the theme style."
 msgstr ""
 
-#: includes/configs/settings.php:399
-msgid "Behaviour"
+#: includes/configs/settings.php:250
+msgid "Default"
 msgstr ""
 
-#: includes/configs/settings.php:400
-msgid "Control how the account menus behave and which items appear."
+#: includes/configs/settings.php:255
+msgid "Medium"
 msgstr ""
 
-#: includes/configs/settings.php:405
-msgid "Icon Spacing (px)"
+#: includes/configs/settings.php:262
+msgid "Sidebar Menu Font"
 msgstr ""
 
-#: includes/configs/settings.php:406
-msgid "The gap between a menu icon and its wording. Leave it empty to scale with your theme text size. Icons sit in a fixed-width column, so the visible gap is slightly wider than the number you type."
+#: includes/configs/settings.php:263
+msgid "Use the theme Heading Font for the sidebar account menus"
 msgstr ""
 
-#: includes/configs/settings.php:414
-msgid "Hidden Items"
+#: includes/configs/settings.php:270
+msgid "Applies the Heading Font from Appearance > Customise > Fonts to the HivePress and WooCommerce sidebar account menus, matching the account dropdown. Requires an official HivePress theme. With this switched on, this settings screen loads that font from Google so the preview can show it."
 msgstr ""
 
-#: includes/configs/settings.php:415
-msgid "The menu items hidden from both account menus."
+#: includes/configs/settings.php:276
+msgid "Menu Chevrons"
 msgstr ""
 
-#: includes/configs/settings.php:438
-msgid "Menu Order"
+#: includes/configs/settings.php:277
+msgid "Hide the theme navigation menu arrows"
 msgstr ""
 
-#: includes/configs/settings.php:451
-msgid "Removing the Plugin"
+#: includes/configs/settings.php:278
+msgid "Hides the arrow markers some themes add before the account menu items, so only your chosen icons show. Other menus are not affected."
 msgstr ""
 
-#: includes/configs/settings.php:458
-msgid "Your settings are kept if you delete this plugin, so you can reinstall it and pick up where you left off. WordPress shows its own data-deletion warning on the delete screen, but it only applies here if you tick the box below. Switching the plugin off never removes anything."
+#: includes/configs/settings.php:286
+#: includes/configs/settings.php:292
+msgid "Custom Items"
 msgstr ""
 
-#: includes/configs/settings.php:463
-msgid "Delete All Data"
+#: includes/configs/settings.php:287
+msgid "Add your own links to the account menus. Each item needs a label and either a link from the dropdown or a custom URL. To decide where an item sits in the menu, drag it in the Live preview panel above, alongside the built-in items. An item nested under a parent always sits inside that parent; drag it to change its place among the other items there."
 msgstr ""
 
-#: includes/configs/settings.php:464
-msgid "Delete everything when this plugin is deleted"
+#: includes/configs/settings.php:293
+msgid "Everything except the label and link is optional. A parent item must be a top-level item shown in the same menu; save a new custom item once before choosing it as a parent. Administrators always see every item, so check a role restriction with a non-administrator account. An item nested under a role-restricted custom item sits at the top level for members who cannot see that parent."
 msgstr ""
 
-#: includes/configs/settings.php:469
-msgid "Leave this unticked unless you are certain. With it ticked, deleting the plugin also removes your icons and colours, custom menu items, hidden items, persistent menu choices, button wording and every other setting on this page. It cannot be undone and nothing asks you to confirm, so copy down anything you want to keep first."
+#: includes/configs/settings.php:343
+msgid "Select Link"
+msgstr ""
+
+#: includes/configs/settings.php:347
+msgid "Link"
+msgstr ""
+
+#: includes/configs/settings.php:372
+msgid "Custom URL"
 msgstr ""
 
 #: includes/configs/settings.php:488
-msgid "WooCommerce Integration"
+msgid "All Roles"
 msgstr ""
 
-#: includes/configs/settings.php:489
-msgid "Combine the HivePress and WooCommerce account menus"
+#: includes/configs/settings.php:492
+msgid "Roles"
 msgstr ""
 
-#: includes/configs/settings.php:490
-msgid "Shows every HivePress and WooCommerce account link in each menu (the account dropdown and both sidebar menus), and renders the WooCommerce account pages inside the HivePress account layout so they all share one sidebar."
+#: includes/configs/settings.php:501
+msgid "Behaviour"
 msgstr ""
 
-#: includes/configs/settings.php:497
-msgid "Counters"
-msgstr ""
-
-#: includes/configs/settings.php:498
-msgid "Show the HivePress counters in the WooCommerce menu"
-msgstr ""
-
-#: includes/configs/settings.php:499
-msgid "Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce account menu."
+#: includes/configs/settings.php:502
+msgid "Control how the account menus behave and which items appear."
 msgstr ""
 
 #: includes/configs/settings.php:507
-msgid "WooCommerce Page Header"
+msgid "Icon Spacing (px)"
 msgstr ""
 
 #: includes/configs/settings.php:508
+msgid "The gap between a menu icon and its wording. Leave it empty to scale with your theme text size. Icons sit in a fixed-width column, so the visible gap is slightly wider than the number you type."
+msgstr ""
+
+#: includes/configs/settings.php:516
+msgid "Hidden Items"
+msgstr ""
+
+#: includes/configs/settings.php:517
+msgid "The menu items hidden from every account menu: the header account dropdown, the HivePress sidebar menu and the WooCommerce account menu. To hide an item from some menus but not others, choose it under Menu Items and set its Menus."
+msgstr ""
+
+#: includes/configs/settings.php:540
+msgid "Menu Order"
+msgstr ""
+
+#: includes/configs/settings.php:553
+msgid "Removing the Plugin"
+msgstr ""
+
+#: includes/configs/settings.php:560
+msgid "Your settings are kept if you delete this plugin, so you can reinstall it and pick up where you left off. WordPress shows its own data-deletion warning on the delete screen, but it only applies here if you tick the box below. Switching the plugin off never removes anything."
+msgstr ""
+
+#: includes/configs/settings.php:565
+msgid "Delete All Data"
+msgstr ""
+
+#: includes/configs/settings.php:566
+msgid "Delete everything when this plugin is deleted"
+msgstr ""
+
+#: includes/configs/settings.php:571
+msgid "Leave this unticked unless you are certain. With it ticked, deleting the plugin also removes your icons and colours, custom menu items, hidden items, persistent menu choices, button wording and every other setting on this page. It cannot be undone and nothing asks you to confirm, so copy down anything you want to keep first."
+msgstr ""
+
+#: includes/configs/settings.php:590
+msgid "WooCommerce Integration"
+msgstr ""
+
+#: includes/configs/settings.php:591
+msgid "Combine the HivePress and WooCommerce account menus"
+msgstr ""
+
+#: includes/configs/settings.php:592
+msgid "Shows every HivePress and WooCommerce account link in each menu (the account dropdown and both sidebar menus), and renders the WooCommerce account pages inside the HivePress account layout so they all share one sidebar."
+msgstr ""
+
+#: includes/configs/settings.php:599
+msgid "Counters"
+msgstr ""
+
+#: includes/configs/settings.php:600
+msgid "Show the HivePress counters in the WooCommerce menu"
+msgstr ""
+
+#: includes/configs/settings.php:601
+msgid "Mirrors the HivePress menu counters (for example unread messages) into the WooCommerce account menu."
+msgstr ""
+
+#: includes/configs/settings.php:609
+msgid "WooCommerce Page Header"
+msgstr ""
+
+#: includes/configs/settings.php:610
 msgid "Hide the page header on WooCommerce account pages"
 msgstr ""
 
-#: includes/configs/settings.php:509
+#: includes/configs/settings.php:611
 msgid "Hides the large page title header on the WooCommerce account pages so they match the HivePress account pages."
 msgstr ""
 
-#: includes/configs/settings.php:534
+#: includes/configs/settings.php:636
 msgid "Also Hidden from the WooCommerce Menu"
 msgstr ""
 
-#: includes/configs/settings.php:535
-msgid "The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account menu, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from both menus."
+#: includes/configs/settings.php:637
+msgid "The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account dropdown and sidebar, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from every menu."
 msgstr ""

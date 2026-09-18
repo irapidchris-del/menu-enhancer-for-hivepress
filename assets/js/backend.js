@@ -636,25 +636,125 @@
 		return match ? match[ 1 ] : '';
 	}
 
-	// What the collapsed header should say: the chosen menu item for styling
-	// rows, the typed label for custom items.
+	// What the collapsed header should say: the chosen menu item for Menu
+	// Items rows (or the owner's own name for it, once typed), the typed
+	// label for custom items.
 	function cardTitle( row ) {
 		var select = row.querySelector( 'select[name$="[item]"]' ),
+			label  = row.querySelector( 'input[name$="[label]"]' ),
 			text   = '';
 
 		if ( select ) {
 			var option = select.options[ select.selectedIndex ];
 
 			text = option && option.value ? option.text : '';
-		} else {
-			var label = row.querySelector( 'input[name$="[label]"]' );
 
+			if ( text && label && label.value.trim() ) {
+				text = label.value;
+			}
+		} else {
 			text = label ? label.value : '';
 		}
 
 		text = ( text || '' ).trim();
 
 		return text || cardLabels().newItem || '';
+	}
+
+	/*
+	 * The usual name of a Menu Items row's item, shown as the Label box's
+	 * placeholder.
+	 *
+	 * A placeholder rather than a value, on purpose. A value would be saved,
+	 * and a saved copy of today's default would freeze the item against
+	 * translation and against the relabels other extensions apply
+	 * ("Placed Orders" is Marketplace's wording for the Orders row, applied
+	 * only for members who are also vendors). Empty means "keep the usual
+	 * name", and the placeholder is what tells the owner what that name is.
+	 *
+	 * The name comes from the labels the site really rendered (itemLabels,
+	 * see get_preview_labels()), falling back to the dropdown's own wording,
+	 * which for a WooCommerce entry carries a "(WooCommerce)" suffix the menu
+	 * does not.
+	 */
+	function labelPlaceholder( row ) {
+		var select = row.querySelector( 'select[name$="[item]"]' ),
+			label  = row.querySelector( 'input[name$="[label]"]' );
+
+		if ( ! select || ! label ) {
+			return;
+		}
+
+		var option = select.options[ select.selectedIndex ],
+			key    = option && option.value ? option.value : '',
+			data   = window.amehpBackendData || {},
+			usual  = '';
+
+		if ( key ) {
+			usual = ( data.itemLabels && data.itemLabels[ key ] ) || ( data.wcItemLabels && data.wcItemLabels[ key ] ) || option.text;
+		}
+
+		if ( usual ) {
+			label.setAttribute( 'placeholder', usual );
+		} else if ( label.getAttribute( 'data-amehp-placeholder' ) ) {
+			label.setAttribute( 'placeholder', label.getAttribute( 'data-amehp-placeholder' ) );
+		}
+	}
+
+	/*
+	 * Keeps a row from choosing itself as its own parent.
+	 *
+	 * The Parent Item select is one shared option list, so it offers the row's
+	 * own item too; the component drops that choice when it reads the row
+	 * (get_parent_map()) and the preview ignores it, but a select that shows
+	 * "Listings" under a row for Listings, with nothing happening, is a setting
+	 * that lies. So the row's own item is disabled in its Parent Item select,
+	 * and a saved self-choice is cleared on screen. A custom item is known by
+	 * its stored id, which is what its key is built from.
+	 */
+	function syncParentSelect( row ) {
+		var parent = row.querySelector( 'select[name$="[parent]"]' );
+
+		if ( ! parent ) {
+			return;
+		}
+
+		var item = row.querySelector( 'select[name$="[item]"]' ),
+			uid  = row.querySelector( 'input[name$="[uid]"]' ),
+			own  = item ? item.value : ( uid && uid.value ? 'amehp_item_' + uid.value : '' ),
+			cleared = false;
+
+		Array.prototype.forEach.call( parent.options, function ( option ) {
+			option.disabled = '' !== own && option.value === own;
+
+			if ( option.disabled && option.selected ) {
+				option.selected = false;
+				cleared = true;
+			}
+		} );
+
+		if ( cleared ) {
+			$( parent ).trigger( 'change' );
+		}
+	}
+
+	function syncParentSelects( container ) {
+		repeaterRows( container ).each( function () {
+			syncParentSelect( this );
+		} );
+	}
+
+	function labelPlaceholders( container ) {
+		repeaterRows( container ).each( function () {
+			var label = this.querySelector( 'input[name$="[label]"]' );
+
+			// Keep the field's own wording for a row with no item chosen yet.
+			if ( label && ! label.getAttribute( 'data-amehp-placeholder' ) ) {
+				label.setAttribute( 'data-amehp-placeholder', label.getAttribute( 'placeholder' ) || '' );
+			}
+
+			labelPlaceholder( this );
+		} );
 	}
 
 	function cardIconName( row ) {
@@ -1107,10 +1207,14 @@
 	function init( container ) {
 		// Label the fields before the colour pickers wrap their inputs.
 		labelFields( container );
+		labelPlaceholders( container );
 		initColourPickers( container );
 		addCardHeads( container );
 		removeDragHandles( container );
 		fillRowIds( container );
+
+		// After the ids, which a custom row's own key is built from.
+		syncParentSelects( container );
 	}
 
 	$( document ).ready( function () {
@@ -1119,11 +1223,17 @@
 		addSettingsChrome();
 	} );
 
-	// Keep the card headers in step with the fields that name them.
+	// Keep the card headers in step with the fields that name them, and the
+	// Label box's placeholder in step with the item chosen.
 	$( document ).on( 'change input', 'select[name$="[item]"], select[name$="[icon]"], input[name$="[label]"]', function () {
 		var row = $( this ).closest( 'tr' ).get( 0 );
 
 		if ( row ) {
+			if ( $( this ).is( 'select[name$="[item]"]' ) ) {
+				labelPlaceholder( row );
+				syncParentSelect( row );
+			}
+
 			updateCardHead( row );
 		}
 	} );

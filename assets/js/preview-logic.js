@@ -5,8 +5,9 @@
  * globals beyond the one this file publishes. admin-preview.js reads the
  * screen and paints it; this file answers the questions it asks along the way -
  * what key the server will know a custom item by, how a new arrangement merges
- * into the stored one, which items belong in which menu, and whether a
- * half-typed colour or icon name is usable yet.
+ * into the stored one, which items belong in which menu, which nest under
+ * which, how many panels the site's menus need, and whether a half-typed
+ * colour or icon name is usable yet.
  *
  * WHY IT IS A SEPARATE FILE. admin-preview.js is an IIFE, so nothing inside it
  * can be reached from outside the browser, and the worst bug of the 3.3.x round
@@ -355,28 +356,232 @@
 		},
 
 		/**
-		 * Whether the two account menus can still be drawn as one panel.
+		 * Reads a Menus value into the list of menus it names.
 		 *
-		 * Combining the menus is what normally makes one panel the truth: the
-		 * site renders the same list of items in both. An item hidden from the
-		 * WooCommerce menu alone breaks that, so the panels split and the owner
-		 * sees the two menus their site now has. Without this the setting would
-		 * simply have no visible effect on a combined site, which is the same
-		 * silent disagreement between preview and front end that the panel
-		 * exists to prevent.
+		 * THIS IS normalise_menus() IN JAVASCRIPT, and the two have to agree or
+		 * the panel shows an item in a menu the site leaves it out of. An empty
+		 * list means every menu: that is the field's "All Menus" placeholder,
+		 * and every menu ticked is the same answer and is read as the same
+		 * answer. The two single strings are what the custom item field stored
+		 * before 3.5.0, when it was a choice of one menu or the other; a row
+		 * saved then still carries them until the migration has run.
 		 *
-		 * An item that is hidden from everywhere does not count: it is absent
-		 * from both menus, so they still match.
+		 * @param {string|Array} value The stored value.
+		 * @return {Array} Menu names in canonical order, or empty for all.
+		 */
+		normaliseMenus: function ( value ) {
+			var all = [ 'header', 'sidebar', 'woocommerce' ];
+
+			if ( 'hivepress' === value ) {
+				value = [ 'header', 'sidebar' ];
+			} else if ( 'woocommerce' === value ) {
+				value = [ 'woocommerce' ];
+			}
+
+			if ( ! Array.isArray( value ) ) {
+				return [];
+			}
+
+			var menus = all.filter( function ( menu ) {
+				return -1 !== value.indexOf( menu );
+			} );
+
+			return menus.length === all.length ? [] : menus;
+		},
+
+		/**
+		 * Whether an item limited to some menus belongs in the one being drawn.
 		 *
-		 * @param {Object} wcHidden Lookup of keys hidden from the WooCommerce
-		 *                          menu alone.
-		 * @param {Object} hidden Lookup of keys hidden from both menus.
+		 * @param {Array} menus The item's menus, from normaliseMenus().
+		 * @param {string} which Which menu: "header", "sidebar" or "woocommerce".
 		 * @return {boolean}
 		 */
-		menusDiverge: function ( wcHidden, hidden ) {
-			return Object.keys( wcHidden || {} ).some( function ( key ) {
-				return ! ( hidden && hidden[ key ] );
+		includesItemInMenu: function ( menus, which ) {
+			menus = menus || [];
+
+			return ! menus.length || -1 !== menus.indexOf( which );
+		},
+
+		/**
+		 * Which panels to draw, given what each of the site's menus would show.
+		 *
+		 * One panel is the truth only while the menus agree. The header
+		 * dropdown and the HivePress sidebar are one menu built twice, so they
+		 * agree until an item is limited to one of them; the WooCommerce menu
+		 * agrees with them only while the integration merges everything and
+		 * nothing is hidden or limited on one side. So: one panel when all
+		 * agree, two when only the WooCommerce menu differs, three otherwise.
+		 * A site without WooCommerce passes null for that menu and gets one or
+		 * two.
+		 *
+		 * Compared by key sequence, because that is what a panel draws; the
+		 * labels a key renders with can legitimately differ between the
+		 * HivePress and WooCommerce menus (see itemLabel) without making them
+		 * different menus.
+		 *
+		 * @param {Array} header Keys the header dropdown shows, in order.
+		 * @param {Array} sidebar Keys the HivePress sidebar shows, in order.
+		 * @param {Array|null} woocommerce Keys the WooCommerce menu shows, or
+		 *                                 null where the site has no such menu.
+		 * @return {Array} Objects of `panel` (the panel to use), `which` (the
+		 *                 menu to draw in it) and `title` (the label key).
+		 */
+		panelPlan: function ( header, sidebar, woocommerce ) {
+			function same( a, b ) {
+				a = a || [];
+				b = b || [];
+
+				return a.length === b.length && a.every( function ( key, index ) {
+					return key === b[ index ];
+				} );
+			}
+
+			var hpSame = same( header, sidebar ),
+				hasWc = Array.isArray( woocommerce );
+
+			if ( hpSame && ( ! hasWc || same( sidebar, woocommerce ) ) ) {
+				return [ { panel: 'hivepress', which: 'sidebar', title: 'combined' } ];
+			}
+
+			if ( hpSame ) {
+				return [
+					{ panel: 'hivepress', which: 'sidebar', title: 'hpMenu' },
+					{ panel: 'woocommerce', which: 'woocommerce', title: 'wcMenu' },
+				];
+			}
+
+			var plan = [
+				{ panel: 'header', which: 'header', title: 'headerMenu' },
+				{ panel: 'hivepress', which: 'sidebar', title: 'sidebarMenu' },
+			];
+
+			if ( hasWc ) {
+				plan.push( { panel: 'woocommerce', which: 'woocommerce', title: 'wcMenu' } );
+			}
+
+			return plan;
+		},
+
+		/**
+		 * Folds a further Menu Items row for the same item into what earlier rows
+		 * set.
+		 *
+		 * Nothing stops an owner adding two rows for one item (the dropdown
+		 * offers it again), and the front end then takes each setting from the
+		 * LAST ROW THAT SET IT: get_label_overrides() the last typed label,
+		 * get_item_menus() the last row with a limit, get_parent_map() the last
+		 * row with a parent, get_icon_rules() the icon together with the colour
+		 * and weight of the row that supplied it, get_text_colour_css() the last
+		 * text colour. A later row's empty box never clears an earlier row's
+		 * value. Until this existed the preview took the last row wholesale,
+		 * blanks included, and showed an item unlimited and unnamed while the
+		 * site limited and renamed it. Keep this in step with those readers.
+		 *
+		 * @param {Object|undefined} existing What earlier rows set, or nothing.
+		 * @param {Object} incoming This row's values: key, label, rename, icon,
+		 *                          colour, weight, textColour, menus, parent.
+		 * @return {Object} The merged override.
+		 */
+		mergeItemRow: function ( existing, incoming ) {
+			var out = existing || {
+				label: incoming.label,
+				rename: '',
+				icon: '',
+				colour: '',
+				weight: '',
+				textColour: '',
+				menus: [],
+				parent: '',
+			};
+
+			out.label = incoming.label;
+
+			if ( incoming.rename ) {
+				out.rename = incoming.rename;
+			}
+
+			// The icon's colour and weight travel with the icon, from the row
+			// that supplied it, because get_icon_rules() reads all three from
+			// one row and skips a row with no icon entirely.
+			if ( incoming.icon ) {
+				out.icon = incoming.icon;
+				out.colour = incoming.colour || '';
+				out.weight = incoming.weight || '';
+			}
+
+			if ( incoming.textColour ) {
+				out.textColour = incoming.textColour;
+			}
+
+			if ( incoming.menus && incoming.menus.length ) {
+				out.menus = incoming.menus;
+			}
+
+			// An item naming itself is dropped on the PHP side too.
+			if ( incoming.parent && incoming.parent !== incoming.key ) {
+				out.parent = incoming.parent;
+			}
+
+			return out;
+		},
+
+		/**
+		 * Nests sorted items under their chosen parents, one level deep.
+		 *
+		 * THIS IS resolve_parents() IN JAVASCRIPT; keep the two in step. A
+		 * child whose parent is not among the items - hidden, in another menu,
+		 * or gone - stays at the top level rather than vanishing with it. A
+		 * child whose parent is itself nested is promoted, and two items
+		 * naming each other are both promoted, so the answer never depends on
+		 * row order.
+		 *
+		 * Every item is given a `children` list, and the top-level items are
+		 * returned in the order they arrived, each with its children in the
+		 * order they arrived - which is the order the front end renders each
+		 * level in, because the flat order is what the site stores.
+		 *
+		 * @param {Array} items Objects of `key` and `parent`, in menu order.
+		 * @return {Array} The top-level items.
+		 */
+		nestItems: function ( items ) {
+			items = items || [];
+
+			var byKey = {},
+				resolved = {},
+				children = {},
+				top = [];
+
+			items.forEach( function ( item ) {
+				item.children = [];
+
+				if ( item.key && ! byKey[ item.key ] ) {
+					byKey[ item.key ] = item;
+				}
 			} );
+
+			items.forEach( function ( item ) {
+				var parent = item.parent || '';
+
+				if ( item.key && parent && parent !== item.key && byKey[ parent ] ) {
+					resolved[ item.key ] = parent;
+				}
+			} );
+
+			Object.keys( resolved ).forEach( function ( key ) {
+				if ( ! resolved[ resolved[ key ] ] ) {
+					children[ key ] = resolved[ key ];
+				}
+			} );
+
+			items.forEach( function ( item ) {
+				if ( item.key && children[ item.key ] ) {
+					byKey[ children[ item.key ] ].children.push( item );
+				} else {
+					top.push( item );
+				}
+			} );
+
+			return top;
 		},
 
 		/**
@@ -415,22 +620,6 @@
 			}
 
 			return fallback;
-		},
-
-		/**
-		 * Whether a custom item belongs in the panel being drawn.
-		 *
-		 * A custom item goes in the menus its own Menus field names, so an item
-		 * set to one menu appears in one panel only, the same way it appears in
-		 * one menu on the site. An empty value is the "Both Menus" placeholder.
-		 *
-		 * @param {string} menus The row's Menus value.
-		 * @param {string} which Which menu.
-		 * @param {boolean} combined Whether the menus are combined.
-		 * @return {boolean}
-		 */
-		includesCustomItem: function ( menus, which, combined ) {
-			return ! ( ! combined && menus && menus !== which );
 		},
 
 		/**

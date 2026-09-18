@@ -62,11 +62,13 @@
 		}
 
 		/*
-		 * The panels. One per menu the site actually renders: with the
-		 * WooCommerce integration on that is a single combined menu, with it
-		 * off the two account areas list different items and get a panel
-		 * each. Both are in the page and the switch below shows or hides the
-		 * WooCommerce one live, so no save is needed to see it.
+		 * The panels. One per menu the site actually renders: while the
+		 * header dropdown, the HivePress sidebar and the WooCommerce menu all
+		 * show the same items that is a single combined menu, and as they
+		 * come apart - an item limited to some menus, the WooCommerce
+		 * integration off, the WooCommerce-only hidden list - each gets a
+		 * panel of its own. All are in the page and paint() shows or hides
+		 * them live, so no save is needed to see the split.
 		 */
 		var panels = Array.prototype.map.call( panel.querySelectorAll( '.amehp-preview__panel' ), function ( element ) {
 			return {
@@ -142,6 +144,32 @@
 			var field = row.querySelector( '[name$="[' + name + ']"]' );
 
 			return field ? ( field.value || '' ).trim() : '';
+		}
+
+		/**
+		 * Every chosen value of a row's multiple select.
+		 *
+		 * rowField() reads `.value`, which on a multiple select is the FIRST
+		 * chosen option only, so a Menus field set to two menus would read as
+		 * one. The name carries the "[]" suffix core gives a multiple select.
+		 *
+		 * @param {Element} row Repeater row.
+		 * @param {string} name Field name.
+		 * @return {Array}
+		 */
+		function rowValues( row, name ) {
+			var field = row.querySelector( '[name$="[' + name + '][]"]' ),
+				values = [];
+
+			if ( field && field.selectedOptions ) {
+				Array.prototype.forEach.call( field.selectedOptions, function ( option ) {
+					if ( option.value ) {
+						values.push( option.value );
+					}
+				} );
+			}
+
+			return values;
 		}
 
 		/**
@@ -339,12 +367,18 @@
 		/**
 		 * Reads the keys in one panel's list, top to bottom.
 		 *
+		 * Document order, which walks into each nested list straight after its
+		 * parent: that flat sequence - parent, its children, the next parent -
+		 * is what the site stores and what apply_menu_order() replays, so a
+		 * child dragged among its siblings is saved in its new place and a
+		 * parent dragged past another takes its children with it.
+		 *
 		 * @param {Element} list Panel list.
 		 * @return {Array}
 		 */
 		function visibleKeys( list ) {
 			return Array.prototype.map
-				.call( list.children, function ( li ) {
+				.call( list.querySelectorAll( 'li[data-key]' ), function ( li ) {
 					return li.getAttribute( 'data-key' ) || '';
 				} )
 				.filter( Boolean );
@@ -365,8 +399,8 @@
 		 * base list for that reason: the panel should open showing the menu the
 		 * owner recognises.
 		 *
-		 * @param {string} which Which menu: "hivepress", "woocommerce" or
-		 *                       "combined".
+		 * @param {string} which Which menu: "header", "sidebar" or
+		 *                       "woocommerce".
 		 * @return {Array}
 		 */
 		function collectItems( which ) {
@@ -384,7 +418,12 @@
 				 * name would then have dropped every WooCommerce endpoint out of
 				 * the HivePress panel that the merge puts in it.
 				 */
-				combined = 'combined' === which || !! value( OPTIONS.wcIntegration ),
+				combined = !! value( OPTIONS.wcIntegration ),
+
+				// The header and the sidebar are one HivePress menu as far as
+				// the catalogue routing is concerned; only the Menus field on a
+				// row tells them apart, and that is applied below.
+				side = 'woocommerce' === which ? 'woocommerce' : 'hivepress',
 				orders = data.itemOrders || {},
 				arranged = storedOrder();
 
@@ -396,34 +435,55 @@
 					return;
 				}
 
-				overrides[ option.value ] = {
+				// A second row for the same item adds to the first rather than
+				// replacing it, the way the front end reads them; the rule is
+				// mergeItemRow() in preview-logic.js.
+				overrides[ option.value ] = logic.mergeItemRow( overrides[ option.value ], {
+					key: option.value,
 					label: option.text,
+
+					// The owner's own name for the item, applied after the
+					// site's usual name has been worked out below; empty
+					// means "keep the usual name", as the field says.
+					rename: rowField( row, 'label' ),
 					icon: iconName( rowField( row, 'icon' ) ),
 					colour: hex( rowField( row, 'colour' ) ),
 					textColour: hex( rowField( row, 'text_colour' ) ),
 					weight: rowField( row, 'weight' ),
-				};
+					menus: logic.normaliseMenus( rowValues( row, 'menus' ) ),
+					parent: rowField( row, 'parent' ),
+				} );
 			} );
 
 			/*
 			 * Which menu an item belongs to when the two are NOT being
 			 * combined: a WooCommerce endpoint appears in the WooCommerce menu
 			 * only, and a HivePress item in the HivePress menu only. Combining
-			 * is exactly what puts each of them in both, so the combined panel
-			 * takes everything. Anything hidden is out of every panel.
+			 * is exactly what puts each of them in both. Anything hidden is
+			 * out of every panel.
 			 *
 			 * hpMenuWcKeys is the exception the prefix cannot express: the
 			 * lists HivePress core adds to its own menu carry a WooCommerce
 			 * name and are in both menus regardless of the setting.
 			 */
-			logic.catalogueItems( menuCatalogue(), hidden, which, combined, data.hpMenuWcKeys, wcHidden ).forEach( function ( entry ) {
+			logic.catalogueItems( menuCatalogue(), hidden, side, combined, data.hpMenuWcKeys, wcHidden ).forEach( function ( entry ) {
 				var item = overrides[ entry.value ] || {
 					label: entry.label,
+					rename: '',
 					icon: '',
 					colour: '',
 					textColour: '',
 					weight: '',
+					menus: [],
+					parent: '',
 				};
+
+				// The row's Menus field, which is what tells the header from
+				// the sidebar and can take an item out of the WooCommerce
+				// menu on its own.
+				if ( ! logic.includesItemInMenu( item.menus, which ) ) {
+					return;
+				}
 
 				// The order the site really renders this item in, handed over
 				// by the component from the same merge the front end runs.
@@ -439,9 +499,10 @@
 				 * Orders". Applied here rather than in menuCatalogue() because
 				 * the answer depends on which menu is being drawn, and because
 				 * a styling row's own copy of the label comes through
-				 * overrides[] and needs it just as much.
+				 * overrides[] and needs it just as much. The owner's rename
+				 * then beats it, in every menu, as it does on the site.
 				 */
-				item.label = logic.itemLabel( entry.value, item.label, data.itemLabels, data.wcItemLabels, which );
+				item.label = item.rename || logic.itemLabel( entry.value, item.label, data.itemLabels, data.wcItemLabels, side );
 
 				items.push( item );
 			} );
@@ -461,11 +522,11 @@
 
 				/*
 				 * A custom item goes in the menus its own Menus field names,
-				 * so an item set to one menu appears in one panel only, the
-				 * same way it appears in one menu on the site. An empty value
-				 * is the "Both Menus" placeholder.
+				 * so an item limited to one menu appears in that panel only,
+				 * the same way it appears in that menu on the site. An empty
+				 * value is the "All Menus" placeholder.
 				 */
-				if ( ! logic.includesCustomItem( rowField( row, 'menus' ), which, combined ) ) {
+				if ( ! logic.includesItemInMenu( logic.normaliseMenus( rowValues( row, 'menus' ) ), which ) ) {
 					return;
 				}
 
@@ -502,6 +563,7 @@
 					colour: hex( rowField( row, 'colour' ) ),
 					textColour: hex( rowField( row, 'text_colour' ) ),
 					weight: rowField( row, 'weight' ),
+					parent: rowField( row, 'parent' ),
 				} );
 			} );
 
@@ -513,49 +575,117 @@
 			// Only reached when the catalogue is empty and nothing is
 			// configured, which leaves the global settings something to change.
 			if ( ! items.length ) {
-				items.push( { key: '', order: 0, label: labels.sampleItem || 'Dashboard', icon: '', colour: '', textColour: '', weight: '' } );
-				items.push( { key: '', order: 1, label: labels.signOut || 'Sign Out', icon: 'sign-out-alt', colour: '', textColour: '', weight: '' } );
+				items.push( { key: '', order: 0, label: labels.sampleItem || 'Dashboard', icon: '', colour: '', textColour: '', weight: '', parent: '' } );
+				items.push( { key: '', order: 1, label: labels.signOut || 'Sign Out', icon: 'sign-out-alt', colour: '', textColour: '', weight: '', parent: '' } );
 			}
 
 			return items;
 		}
 
 		/**
-		 * Redraws the sample menu from scratch. Cheap enough not to bother
-		 * diffing: the list is a couple of dozen nodes at most.
+		 * The keys a collected list would draw, in order, for comparing menus.
+		 *
+		 * @param {Array} items Collected items.
+		 * @return {Array}
 		 */
-		function paint() {
-			var combined = !! value( OPTIONS.wcIntegration ),
+		function keysOf( items ) {
+			return items.map( function ( item ) {
+				return item.key;
+			} );
+		}
 
-				/*
-				 * One panel or two.
-				 *
-				 * Merging the menus normally makes one panel the truth, because
-				 * the site then renders the same list of items in both. "Also
-				 * Hidden from the WooCommerce Menu" is the case where it does
-				 * not: the two menus differ by whatever is in that list, so the
-				 * panels split and the owner sees both menus as their site now
-				 * has them. Otherwise the setting would appear to do nothing on
-				 * a merged site, which is the same silent disagreement between
-				 * preview and front end that this panel exists to prevent.
-				 */
-				single = ( combined && ! logic.menusDiverge( wcHiddenItems(), hiddenItems() ) ) || panels.length < 2;
+		/**
+		 * Redraws the sample menus from scratch. Cheap enough not to bother
+		 * diffing: each list is a couple of dozen nodes at most.
+		 *
+		 * One panel, two or three. The site has up to three account menus,
+		 * and they show the same list until something tells them apart - an
+		 * item's Menus field, the WooCommerce integration being off, or the
+		 * WooCommerce-only hidden list - at which point a single preview would
+		 * be showing the owner a menu their site does not have. So each menu
+		 * is collected and the panels split exactly as far as the menus really
+		 * differ; the rule is panelPlan() in preview-logic.js.
+		 *
+		 * @param {Element} [skip] A panel list to leave as it is: the one the
+		 *                         owner has just dragged or arrow-moved in, whose
+		 *                         nodes carry the drag and the focused button.
+		 *                         The other panels share its items and are
+		 *                         redrawn so they show the new order too.
+		 */
+		function paint( skip ) {
+			var byMenu = {},
+				hasWc = panels.some( function ( item ) {
+					return 'woocommerce' === item.menu;
+				} );
+
+			byMenu.header = collectItems( 'header' );
+			byMenu.sidebar = collectItems( 'sidebar' );
+
+			if ( hasWc ) {
+				byMenu.woocommerce = collectItems( 'woocommerce' );
+			}
+
+			var plan = logic.panelPlan( keysOf( byMenu.header ), keysOf( byMenu.sidebar ), hasWc ? keysOf( byMenu.woocommerce ) : null );
 
 			panels.forEach( function ( item ) {
+				var entry = null;
 
-				// With the menus combined there is one menu, so the second
-				// panel is not a menu the site has and is taken off screen.
-				item.element.hidden = single && 'hivepress' !== item.menu;
+				plan.forEach( function ( candidate ) {
+					if ( candidate.panel === item.menu ) {
+						entry = candidate;
+					}
+				} );
+
+				// A panel the plan does not name is not a menu the site has
+				// right now, and is taken off screen.
+				item.element.hidden = ! entry;
+
+				if ( ! entry ) {
+					return;
+				}
 
 				if ( item.title ) {
-					item.title.textContent = 'woocommerce' === item.menu
-						? labels.wcMenu || 'WooCommerce account menu'
-						: ( single ? labels.combined || 'Account menu' : labels.hpMenu || 'HivePress account menu' );
+					item.title.textContent = labels[ entry.title ] || entry.title;
 				}
 
-				if ( ! item.element.hidden ) {
-					paintPanel( item, single ? 'combined' : item.menu );
+				if ( item.list !== skip ) {
+					paintPanel( item, byMenu[ entry.which ] );
 				}
+			} );
+		}
+
+		/**
+		 * Makes a nested list sortable among its own siblings.
+		 *
+		 * Each nested list is its own sortable, contained to itself, so a
+		 * child can be reordered among the items under the same parent and
+		 * cannot be dragged out to the top level - that is what the row's
+		 * Parent field is for, and a drag that silently changed it would be
+		 * saving something the owner did not choose. The outer list's own
+		 * sortable takes only direct children, so dragging a parent moves its
+		 * whole group.
+		 *
+		 * @param {Element} list The nested list.
+		 * @param {Element} root The panel's top-level list.
+		 */
+		function makeSortable( list, root ) {
+			$( list ).sortable( {
+				items: '> li[data-key]',
+				handle: '> .amehp-preview__handle',
+				axis: 'y',
+				containment: 'parent',
+				tolerance: 'pointer',
+				placeholder: 'amehp-preview__placeholder',
+				forcePlaceholderSize: true,
+
+				update: function () {
+					writeOrder( visibleKeys( root ) );
+					updateReset();
+
+					// The other panels show the same items and would otherwise
+					// keep the old order until some unrelated field changed.
+					paint( root );
+				},
 			} );
 		}
 
@@ -563,9 +693,9 @@
 		 * Draws one panel's list.
 		 *
 		 * @param {Object} panelItem Panel record.
-		 * @param {string} which Which menu to collect for.
+		 * @param {Array} items The collected items to draw.
 		 */
-		function paintPanel( panelItem, which ) {
+		function paintPanel( panelItem, items ) {
 			var menu = panelItem.list,
 				globalColour = hex( value( OPTIONS.iconColour ) ),
 				background = hex( value( OPTIONS.background ) ),
@@ -576,7 +706,9 @@
 				headingFont = '' !== value( OPTIONS.headingFont ) && data.headingFont ? data.headingFont : '',
 				hideChevrons = '' !== value( OPTIONS.chevrons );
 
-			menu.textContent = '';
+			// Through jQuery, so the sortables built on the nested lists of
+			// the last paint are torn down with their nodes.
+			$( menu ).empty();
 
 			// The sidebar font: the theme Heading Font when the toggle is on.
 			// The face itself may still need fetching - see loadHeadingFont().
@@ -586,7 +718,14 @@
 
 			menu.style.fontFamily = headingFont ? '"' + headingFont + '", sans-serif' : '';
 
-			collectItems( which ).forEach( function ( item ) {
+			/**
+			 * Builds one row, and under it the nested list of its children.
+			 *
+			 * @param {Object} item Collected item.
+			 * @param {boolean} child Whether the row is inside a nested list.
+			 * @return {Element}
+			 */
+			function buildRow( item, child ) {
 				var li = document.createElement( 'li' ),
 					link = document.createElement( 'a' ),
 					chev = document.createElement( 'span' ),
@@ -594,7 +733,7 @@
 					name = document.createElement( 'span' ),
 					moves = null;
 
-				li.className = 'amehp-preview__item';
+				li.className = 'amehp-preview__item' + ( child ? ' amehp-preview__item--child' : '' ) + ( item.children && item.children.length ? ' amehp-preview__item--parent' : '' );
 				chev.className = 'amehp-preview__chevron';
 				name.className = 'amehp-preview__label';
 
@@ -704,7 +843,34 @@
 					li.appendChild( moves );
 				}
 
-				menu.appendChild( li );
+				// The nested items, as the site draws them: a list inside the
+				// parent's own row, always open here so every row stays
+				// reachable for dragging.
+				if ( item.children && item.children.length ) {
+					var caret = document.createElement( 'span' ),
+						sub = document.createElement( 'ul' );
+
+					caret.className = 'amehp-preview__caret dashicons dashicons-arrow-down-alt2';
+					caret.setAttribute( 'aria-hidden', 'true' );
+					link.appendChild( caret );
+
+					sub.className = 'amehp-preview__submenu';
+
+					item.children.forEach( function ( childItem ) {
+						sub.appendChild( buildRow( childItem, true ) );
+					} );
+
+					li.appendChild( sub );
+					makeSortable( sub, menu );
+				}
+
+				return li;
+			}
+
+			// Nested the way the front end nests them; the rule is
+			// nestItems() in preview-logic.js.
+			logic.nestItems( items ).forEach( function ( item ) {
+				menu.appendChild( buildRow( item, false ) );
 			} );
 		}
 
@@ -736,21 +902,11 @@
 		 * with the form, so nothing is stored until Save Changes - which is
 		 * what the panel's description says.
 		 */
+		// The handle selector is relative to the row ("> .handle"), or a
+		// child's handle deeper inside a parent row would start dragging the
+		// parent. The nested lists get the same treatment in makeSortable().
 		panels.forEach( function ( panelItem ) {
-			$( panelItem.list ).sortable( {
-				items: '> li[data-key]',
-				handle: '.amehp-preview__handle',
-				axis: 'y',
-				containment: 'parent',
-				tolerance: 'pointer',
-				placeholder: 'amehp-preview__placeholder',
-				forcePlaceholderSize: true,
-
-				update: function () {
-					writeOrder( visibleKeys( panelItem.list ) );
-					updateReset();
-				},
-			} );
+			makeSortable( panelItem.list, panelItem.list );
 		} );
 
 		/*
@@ -758,15 +914,17 @@
 		 * rather than repainted, so focus stays on the button that was pressed
 		 * and a run of presses keeps moving the same item - a repaint would
 		 * rebuild the list and drop focus back to the top of the page after
-		 * every single press.
+		 * every single press. A row moves among its own siblings only, nested
+		 * or not, exactly as a drag does.
 		 */
 		$( panel ).on( 'click', '.amehp-preview__move', function () {
 			var button = this,
 				li = button.closest( 'li' ),
 				list = li ? li.parentElement : null,
+				root = li ? li.closest( '.amehp-preview__menu' ) : null,
 				up = 'up' === button.getAttribute( 'data-move' );
 
-			if ( ! li || ! list ) {
+			if ( ! li || ! list || ! root ) {
 				return;
 			}
 
@@ -782,8 +940,9 @@
 				list.insertBefore( sibling, li );
 			}
 
-			writeOrder( visibleKeys( list ) );
+			writeOrder( visibleKeys( root ) );
 			updateReset();
+			paint( root );
 
 			// The node moved with the button inside it, so this re-focuses the
 			// same element rather than a rebuilt one.
@@ -859,7 +1018,7 @@
 			}
 		}
 
-		panels.forEach( function ( panelItem, index ) {
+		panels.forEach( function ( panelItem ) {
 			if ( ! panelItem.header ) {
 				return;
 			}
@@ -874,14 +1033,14 @@
 			 * Below the sticky-column breakpoint the panels sit at the bottom
 			 * of the form, and an open list of thirty items there buries the
 			 * end of the page, so they start folded. On a wide screen the
-			 * first panel is open - it is the menu most owners came to look
-			 * at - and a second one starts folded, because two open lists in a
-			 * 320px column leave each with a few centimetres of stage and both
-			 * scrolling.
+			 * HivePress panel is open - it is the menu most owners came to
+			 * look at, and the one shown when the menus agree - and the
+			 * others start folded, because two open lists in a 320px column
+			 * leave each with a few centimetres of stage and both scrolling.
 			 */
 			var stored = readPanelStore()[ panelItem.menu ],
 				wide = window.matchMedia && window.matchMedia( '(min-width: 1200px)' ).matches,
-				open = 'undefined' !== typeof stored ? !! stored : ( wide && 0 === index );
+				open = 'undefined' !== typeof stored ? !! stored : ( wide && 'hivepress' === panelItem.menu );
 
 			setPanelOpen( panelItem, open, false );
 		} );
@@ -919,10 +1078,18 @@
 		 * values with .val() and announces them only as the jQuery-only
 		 * "irischange" - both invisible to native listeners.
 		 */
-		// The hidden order field is excluded: this script is what writes it,
-		// and repainting on its own change would rebuild the list underneath
-		// the drag or the button press that had just moved a row.
-		$( document ).on( 'input change irischange', '[name^="hp_amehp_"]:not(.amehp-menu-order)', repaint );
+		/*
+		 * The hidden order field is excluded: this script is what writes it,
+		 * and repainting on its own change would rebuild the list underneath
+		 * the drag or the button press that had just moved a row. Excluded BY
+		 * NAME: until 3.5.0 this looked for the amehp-menu-order class, which
+		 * core's hidden field never carries (it renders its own classes and
+		 * drops the attribute), so every drag was followed by a full repaint
+		 * that threw keyboard focus back to the top of the page. Measured on
+		 * the rendered field on 2026-09-18. The other panels are repainted by
+		 * paint( root ) from the two handlers instead.
+		 */
+		$( document ).on( 'input change irischange', '[name^="hp_amehp_"]:not([name="' + OPTIONS.order + '"])', repaint );
 
 		// The picker's Clear button changes a colour with no event at all;
 		// the zero-delay timer lets its own handler finish writing first.

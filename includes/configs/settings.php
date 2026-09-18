@@ -39,7 +39,7 @@ $amehp_settings = [
 		'sections' => [
 			'display'   => [
 				'title'       => esc_html__( 'Appearance', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns include the Font Awesome 6 and 7 names and brand icons (for example stripe-s and paypal); the full Font Awesome library is loaded automatically when a chosen icon needs it. If you subset Font Awesome yourself, make sure your chosen icons are included.', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns search every icon in Font Awesome Free, brands included (for example stripe-s and paypal), and each icon is drawn from its own shape, so nothing on the front of your site loads a font for it.', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => 10,
 
 				'fields'      => [
@@ -91,7 +91,7 @@ $amehp_settings = [
 					],
 
 					'amehp_icons'                => [
-						'label'       => esc_html__( 'Menu Item Styling', 'account-menu-enhancer-for-hivepress' ),
+						'label'       => esc_html__( 'Menu Items', 'account-menu-enhancer-for-hivepress' ),
 
 						/*
 						 * The middle sentence used to read "and drag the handle
@@ -104,8 +104,14 @@ $amehp_settings = [
 						 * ordering really happens rather than only removing the
 						 * claim - an owner who read the old sentence went looking
 						 * for a handle that is not there.
+						 *
+						 * Since 3.5.0 a row also renames an item, nests it under a
+						 * parent and decides which of the three menus show it, so
+						 * the setting is "Menu Items" rather than "Menu Item
+						 * Styling". The option name stays hp_amehp_icons: every
+						 * site already holds its rows under it.
 						 */
-						'description' => esc_html__( 'Choose a menu item, then optionally give it an icon, an icon weight and colours. Click a card header to collapse or expand it. The order of the cards makes no difference to the menu; arrange the menu itself in the Live preview panel. Styling for custom items is set in the Custom Items section.', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Choose a menu item, then optionally rename it, give it an icon, an icon weight and colours, nest it under a parent item, or limit which menus show it. Leave the label empty to keep the item\'s usual name. A parent must be a top-level item shown in the same menu; an item whose parent is itself nested, hidden or not in that menu sits at the top level instead. Click a card header to collapse or expand it. The order of the cards makes no difference to the menu; arrange the menu itself in the Live preview panel. Custom items are set up in the Custom Items section.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'repeater',
 						'caption'     => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
 						'_order'      => 30,
@@ -120,6 +126,35 @@ $amehp_settings = [
 
 								'attributes'  => [
 									'data-amehp-label' => esc_html__( 'Menu Item', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
+
+							/*
+							 * The item's new name, or nothing.
+							 *
+							 * Empty means "keep the usual name", and the usual
+							 * name is shown as the box's placeholder by
+							 * backend.js, read from the labels the site really
+							 * renders (itemLabels). It is a placeholder rather
+							 * than a value on purpose: a value would be saved,
+							 * and a saved copy of today's default would freeze
+							 * it against translation and against the relabels
+							 * other extensions apply (Marketplace's "Placed
+							 * Orders"). Core's repeater also blanks every input
+							 * on a new row, so a value could not survive
+							 * anyway.
+							 *
+							 * A text field strips percent-encoded sequences,
+							 * which a menu label never legitimately holds.
+							 */
+							'label'       => [
+								'type'       => 'text',
+								'max_length' => 100,
+								'_order'     => 15,
+
+								'attributes' => [
+									'data-amehp-label' => esc_html__( 'Label', 'account-menu-enhancer-for-hivepress' ),
+									'placeholder'      => esc_html__( 'Optional new name', 'account-menu-enhancer-for-hivepress' ),
 								],
 							],
 
@@ -174,6 +209,37 @@ $amehp_settings = [
 									'placeholder' => esc_html__( 'Text Colour', 'account-menu-enhancer-for-hivepress' ),
 								],
 							],
+
+							/*
+							 * A placeholder is required on a single select, or
+							 * core prepends a bare dash option. "No parent" is
+							 * a real choice here, so it is the placeholder.
+							 */
+							'parent'      => [
+								'type'        => 'select',
+								'options'     => 'amehp_parent_items',
+								'placeholder' => esc_html__( 'No parent (top level)', 'account-menu-enhancer-for-hivepress' ),
+								'_order'      => 50,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Parent Item', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
+
+							// An emptied multiple select stores '' rather than
+							// an array; the component reads that as "all menus",
+							// which is what the placeholder promises.
+							'menus'       => [
+								'type'        => 'select',
+								'options'     => 'amehp_menus',
+								'multiple'    => true,
+								'placeholder' => esc_html__( 'All Menus', 'account-menu-enhancer-for-hivepress' ),
+								'_order'      => 60,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Menus', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
 						],
 					],
 
@@ -218,13 +284,13 @@ $amehp_settings = [
 
 			'items'     => [
 				'title'       => esc_html__( 'Custom Items', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'Add your own links to the account menus. Each item needs a label and either a link from the dropdown or a custom URL. To decide where an item sits in the menu, drag it in the Live preview panel above, alongside the built-in items.', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Add your own links to the account menus. Each item needs a label and either a link from the dropdown or a custom URL. To decide where an item sits in the menu, drag it in the Live preview panel above, alongside the built-in items. An item nested under a parent always sits inside that parent; drag it to change its place among the other items there.', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => 20,
 
 				'fields'      => [
 					'amehp_custom_items' => [
-						'label'       => esc_html__( 'Menu Items', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'Everything except the label and link is optional. Administrators always see every item, so check a role restriction with a non-administrator account.', 'account-menu-enhancer-for-hivepress' ),
+						'label'       => esc_html__( 'Custom Items', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'Everything except the label and link is optional. A parent item must be a top-level item shown in the same menu; save a new custom item once before choosing it as a parent. Administrators always see every item, so check a role restriction with a non-administrator account. An item nested under a role-restricted custom item sits at the top level for members who cannot see that parent.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'repeater',
 						'caption'     => esc_html__( 'Add Item', 'account-menu-enhancer-for-hivepress' ),
 						'_order'      => 10,
@@ -359,18 +425,37 @@ $amehp_settings = [
 								],
 							],
 
+							/*
+							 * Which of the three menus show the item. A
+							 * multiple select since 3.5.0; before that it was
+							 * a single choice of "HivePress Menu Only" or
+							 * "WooCommerce Menu Only", and a row saved under
+							 * the old shape is carried forward by
+							 * amehp_migrate_v350_settings() (and read
+							 * correctly by get_custom_items() in the window
+							 * before that runs). An emptied select stores ''
+							 * and means every menu, as the placeholder says.
+							 */
 							'menus'       => [
 								'type'        => 'select',
-								'placeholder' => esc_html__( 'Both Menus', 'account-menu-enhancer-for-hivepress' ),
+								'options'     => 'amehp_menus',
+								'multiple'    => true,
+								'placeholder' => esc_html__( 'All Menus', 'account-menu-enhancer-for-hivepress' ),
 								'_order'      => 60,
-
-								'options'     => [
-									'hivepress'   => esc_html__( 'HivePress Menu Only', 'account-menu-enhancer-for-hivepress' ),
-									'woocommerce' => esc_html__( 'WooCommerce Menu Only', 'account-menu-enhancer-for-hivepress' ),
-								],
 
 								'attributes'  => [
 									'data-amehp-label' => esc_html__( 'Menus', 'account-menu-enhancer-for-hivepress' ),
+								],
+							],
+
+							'parent'      => [
+								'type'        => 'select',
+								'options'     => 'amehp_parent_items',
+								'placeholder' => esc_html__( 'No parent (top level)', 'account-menu-enhancer-for-hivepress' ),
+								'_order'      => 65,
+
+								'attributes'  => [
+									'data-amehp-label' => esc_html__( 'Parent Item', 'account-menu-enhancer-for-hivepress' ),
 								],
 							],
 
@@ -429,7 +514,7 @@ $amehp_settings = [
 
 					'amehp_hidden_items' => [
 						'label'       => esc_html__( 'Hidden Items', 'account-menu-enhancer-for-hivepress' ),
-						'description' => esc_html__( 'The menu items hidden from both account menus.', 'account-menu-enhancer-for-hivepress' ),
+						'description' => esc_html__( 'The menu items hidden from every account menu: the header account dropdown, the HivePress sidebar menu and the WooCommerce account menu. To hide an item from some menus but not others, choose it under Menu Items and set its Menus.', 'account-menu-enhancer-for-hivepress' ),
 						'type'        => 'select',
 						'options'     => 'amehp_menu_items',
 						'multiple'    => true,
@@ -549,7 +634,7 @@ if ( class_exists( 'WooCommerce' ) ) {
 			 */
 			'amehp_hidden_wc_items' => [
 				'label'       => esc_html__( 'Also Hidden from the WooCommerce Menu', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account menu, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from both menus.', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'The menu items hidden from the WooCommerce account menu only. They stay in the HivePress account dropdown and sidebar, so your members can still reach them there. Anything chosen in Hidden Items above is already hidden from every menu.', 'account-menu-enhancer-for-hivepress' ),
 				'type'        => 'select',
 				'options'     => 'amehp_wc_menu_items',
 				'multiple'    => true,

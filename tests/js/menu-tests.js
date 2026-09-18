@@ -212,15 +212,26 @@ ok(
 	'I3g a missing list is not an error'
 );
 
-/* --- whether the two menus can still be drawn as one panel --- */
+/* --- how many panels the site's menus need --- */
 
-ok( ! logic.menusDiverge( {}, {} ), 'I3h with nothing on the list the merged menus are still one menu, so one panel' );
-ok( logic.menusDiverge( { 'wc:orders': true }, {} ), 'I3i one item hidden from WooCommerce alone splits the panels apart' );
-ok(
-	! logic.menusDiverge( { 'wc:orders': true }, { 'wc:orders': true } ),
-	'I3j but an item hidden from everywhere is absent from both menus, so they still match'
-);
-ok( ! logic.menusDiverge( undefined, undefined ), 'I3k and a missing list is not an error either' );
+/*
+ * panelPlan() replaced menusDiverge() in 3.5.0: the question is no longer
+ * "does the WooCommerce-only list split the two menus" but "which of the three
+ * menus still agree", answered from what each would actually draw.
+ */
+const A = [ 'hp:a', 'hp:b' ];
+const B = [ 'hp:a' ];
+
+is( logic.panelPlan( A, A, A ).map( ( p ) => p.panel ), [ 'hivepress' ], 'I3h three menus that agree are one panel' );
+is( logic.panelPlan( A, A, A )[ 0 ].title, 'combined', 'I3i titled as the one account menu' );
+is( logic.panelPlan( A, A, B ).map( ( p ) => p.panel ), [ 'hivepress', 'woocommerce' ], 'I3j only the WooCommerce menu differing splits off that panel alone' );
+is( logic.panelPlan( A, A, B )[ 0 ].title, 'hpMenu', 'I3k and the HivePress panel is then named as the HivePress menu' );
+is( logic.panelPlan( B, A, A ).map( ( p ) => p.panel ), [ 'header', 'hivepress', 'woocommerce' ], 'I3l the header differing from the sidebar draws all three' );
+is( logic.panelPlan( B, A, A ).map( ( p ) => p.which ), [ 'header', 'sidebar', 'woocommerce' ], 'I3m each drawing its own menu' );
+is( logic.panelPlan( A, A, null ).map( ( p ) => p.panel ), [ 'hivepress' ], 'I3n with no WooCommerce menu on the site, agreeing menus are one panel' );
+is( logic.panelPlan( B, A, null ).map( ( p ) => p.panel ), [ 'header', 'hivepress' ], 'I3o and differing ones are two, with no WooCommerce panel to draw' );
+is( logic.panelPlan( [ 'hp:a', 'hp:b' ], [ 'hp:b', 'hp:a' ], null ).length, 2, 'I3p the same items in a different order are different menus' );
+is( logic.panelPlan( undefined, undefined, undefined ).length, 1, 'I3q missing lists are not an error' );
 
 /* ===================== I4. the wording the panel draws ===================== */
 section( '[I4] itemLabel - the label the site really renders' );
@@ -263,16 +274,77 @@ is(
 is( logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', undefined, undefined, 'hivepress' ), 'Orders (WooCommerce)', 'I4f missing maps are not an error' );
 is( logic.itemLabel( 'wc:orders', 'Orders (WooCommerce)', { 'wc:orders': '' }, {}, 'hivepress' ), 'Orders (WooCommerce)', 'I4g and an empty label is not a label' );
 
-/* ===================== J. custom items pick their own menu ===================== */
-section( '[J] includesCustomItem - the row\'s own Menus field' );
+/* ===================== J. an item's own Menus field ===================== */
+section( '[J] normaliseMenus and includesItemInMenu - the row\'s own Menus field' );
 
-ok( logic.includesCustomItem( '', 'hivepress', false ), 'J1 an item set to Both Menus appears in the HivePress panel' );
-ok( logic.includesCustomItem( '', 'woocommerce', false ), 'J2 and in the WooCommerce one' );
-ok( logic.includesCustomItem( 'hivepress', 'hivepress', false ), 'J3 an item set to one menu appears in that menu' );
-ok( ! logic.includesCustomItem( 'hivepress', 'woocommerce', false ), 'J4 and not in the other one' );
-ok( ! logic.includesCustomItem( 'woocommerce', 'hivepress', false ), 'J5 which holds in both directions' );
-ok( logic.includesCustomItem( 'woocommerce', 'combined', true ), 'J6 with the menus combined there is one menu, so every custom item is in it' );
-ok( logic.includesCustomItem( 'hivepress', 'combined', true ), 'J7 whichever menu the row names' );
+/*
+ * THIS IS normalise_menus() IN JAVASCRIPT; tests/logic-tests.php section T
+ * walks the PHP side through the same values.
+ */
+is( logic.normaliseMenus( [] ), [], 'J1 nothing chosen is every menu' );
+is( logic.normaliseMenus( '' ), [], 'J2 and so is the empty string an emptied multiple select stores' );
+is( logic.normaliseMenus( [ 'header' ] ), [ 'header' ], 'J3 one menu chosen is that menu' );
+is( logic.normaliseMenus( [ 'woocommerce', 'header' ] ), [ 'header', 'woocommerce' ], 'J4 two are read back in canonical order whatever order they were ticked in' );
+is( logic.normaliseMenus( [ 'header', 'sidebar', 'woocommerce' ] ), [], 'J5 all three ticked is the same answer as none, and is read as the same answer' );
+is( logic.normaliseMenus( [ 'header', 'footer' ] ), [ 'header' ], 'J6 a menu the site does not have is dropped' );
+is( logic.normaliseMenus( 'hivepress' ), [ 'header', 'sidebar' ], 'J7 the 3.4.x "HivePress Menu Only" string is the header and the sidebar, which is what it always meant' );
+is( logic.normaliseMenus( 'woocommerce' ), [ 'woocommerce' ], 'J8 and "WooCommerce Menu Only" is the WooCommerce menu' );
+is( logic.normaliseMenus( 'both' ), [], 'J9 while the old "both" is every menu' );
+is( logic.normaliseMenus( undefined ), [], 'J10 a missing value is not an error' );
+
+ok( logic.includesItemInMenu( [], 'header' ), 'J11 an item limited to nothing is in the header' );
+ok( logic.includesItemInMenu( [], 'woocommerce' ), 'J12 and in the WooCommerce menu' );
+ok( logic.includesItemInMenu( [ 'header' ], 'header' ), 'J13 an item limited to one menu is in that menu' );
+ok( ! logic.includesItemInMenu( [ 'header' ], 'sidebar' ), 'J14 and not in its twin, which is the whole point of telling the two apart' );
+ok( ! logic.includesItemInMenu( [ 'header', 'sidebar' ], 'woocommerce' ), 'J15 an item limited to the HivePress menus stays out of the WooCommerce one' );
+ok( logic.includesItemInMenu( undefined, 'sidebar' ), 'J16 a missing list is not an error' );
+
+/* ===================== J3. two rows for one item ===================== */
+section( '[J3] mergeItemRow - a second row adds to the first, as the site reads it' );
+
+const ROW1 = { key: 'hp:a', label: 'A', rename: 'My A', icon: 'tag', colour: '#ff0000', weight: 'bold', textColour: '#00ff00', menus: [ 'header' ], parent: 'hp:b' };
+const ROW2 = { key: 'hp:a', label: 'A', rename: '', icon: '', colour: '#0000ff', weight: 'semibold', textColour: '', menus: [], parent: '' };
+
+let merged = logic.mergeItemRow( undefined, ROW1 );
+is( merged.rename + '|' + merged.icon + '|' + merged.colour + '|' + merged.menus.join() + '|' + merged.parent, 'My A|tag|#ff0000|header|hp:b', 'J3a the first row is taken as it is' );
+
+merged = logic.mergeItemRow( logic.mergeItemRow( undefined, ROW1 ), ROW2 );
+is( merged.rename, 'My A', 'J3b a later row with an empty Label does not clear the name, because get_label_overrides() keeps the last row that typed one' );
+is( merged.icon + '|' + merged.colour + '|' + merged.weight, 'tag|#ff0000|bold', 'J3c nor does a later row with no icon change the icon, its colour or its weight, which get_icon_rules() reads from one row' );
+is( merged.textColour, '#00ff00', 'J3d nor an empty text colour' );
+is( merged.menus, [ 'header' ], 'J3e nor an unlimited Menus field, because get_item_menus() keeps the last row with a limit' );
+is( merged.parent, 'hp:b', 'J3f nor an empty Parent Item' );
+
+merged = logic.mergeItemRow( logic.mergeItemRow( undefined, ROW1 ), { key: 'hp:a', label: 'A', rename: 'Newer', icon: 'star', colour: '', weight: '', textColour: '#123456', menus: [ 'sidebar' ], parent: 'hp:c' } );
+is( merged.rename + '|' + merged.icon + '|' + merged.colour + '|' + merged.weight + '|' + merged.textColour + '|' + merged.menus.join() + '|' + merged.parent, 'Newer|star|||#123456|sidebar|hp:c', 'J3g while a later row that sets a field wins it, and a new icon brings its own (empty) colour and weight with it' );
+
+merged = logic.mergeItemRow( logic.mergeItemRow( undefined, ROW1 ), { key: 'hp:a', label: 'A', rename: '', icon: '', colour: '', weight: '', textColour: '', menus: [], parent: 'hp:a' } );
+is( merged.parent, 'hp:b', 'J3h an item naming itself as parent is dropped, as get_parent_map() drops it' );
+
+/* ===================== J2. nesting ===================== */
+section( '[J2] nestItems - one level, and only parents that are really there' );
+
+/*
+ * THIS IS resolve_parents() IN JAVASCRIPT; tests/logic-tests.php section V
+ * walks the PHP side through the same shapes.
+ */
+function tree( items ) {
+	return logic.nestItems( items ).map( function ( item ) {
+		return item.key + ( item.children.length ? '(' + item.children.map( ( c ) => c.key ).join( ',' ) + ')' : '' );
+	} );
+}
+
+is( tree( [ { key: 'hp:a', parent: '' }, { key: 'hp:b', parent: 'hp:a' }, { key: 'hp:c', parent: '' } ] ), [ 'hp:a(hp:b)', 'hp:c' ], 'J2a a child is drawn under its parent' );
+is( tree( [ { key: 'hp:b', parent: 'hp:a' }, { key: 'hp:a', parent: '' } ] ), [ 'hp:a(hp:b)' ], 'J2b wherever the child sits in the flat order' );
+is( tree( [ { key: 'hp:a', parent: '' }, { key: 'hp:c', parent: 'hp:a' }, { key: 'hp:b', parent: 'hp:a' } ] ), [ 'hp:a(hp:c,hp:b)' ], 'J2c and siblings keep the flat order, which is what the site stores' );
+is( tree( [ { key: 'hp:b', parent: 'hp:gone' } ] ), [ 'hp:b' ], 'J2d a child whose parent is not in this menu stays at the top level rather than vanishing with it' );
+is( tree( [ { key: 'hp:a', parent: 'hp:a' } ] ), [ 'hp:a' ], 'J2e an item naming itself is left alone' );
+is( tree( [ { key: 'hp:a', parent: '' }, { key: 'hp:b', parent: 'hp:a' }, { key: 'hp:c', parent: 'hp:b' } ] ), [ 'hp:a(hp:b)', 'hp:c' ], 'J2f one level only: a child of a nested item is promoted' );
+is( tree( [ { key: 'hp:a', parent: 'hp:b' }, { key: 'hp:b', parent: 'hp:a' } ] ), [ 'hp:a', 'hp:b' ], 'J2g two items naming each other are both promoted, whichever was read first' );
+is( tree( [ { key: 'hp:b', parent: 'hp:a' }, { key: 'hp:a', parent: 'hp:b' } ] ), [ 'hp:b', 'hp:a' ], 'J2h in either order' );
+is( tree( [ { key: '', parent: 'hp:a' }, { key: 'hp:a', parent: '' } ] ), [ '', 'hp:a' ], 'J2i a sample row with no key is never nested' );
+is( tree( [ { key: 'amehp_item_ab12cd34', parent: '' }, { key: 'hp:a', parent: 'amehp_item_ab12cd34' } ] ), [ 'amehp_item_ab12cd34(hp:a)' ], 'J2j a custom item can be a parent' );
+is( tree( undefined ), [], 'J2k a missing list is not an error' );
 
 /* ===================== K. the order the panel draws ===================== */
 section( '[K] sortItems - the arrangement kept, the rest slotted in by menu order' );

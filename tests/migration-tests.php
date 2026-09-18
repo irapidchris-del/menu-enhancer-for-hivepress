@@ -510,4 +510,71 @@ ok(
 	'G8 the stored arrangement is never rewritten: the new ordering is applied at render time only'
 );
 
+/* ===================== H. the 3.5.0 Menus rewrite ===================== */
+echo "\n[H] amehp_migrate_v350_settings: one menu or the other becomes a list of menus\n";
+
+amehp_test_reset();
+amehp_migrate_v350_settings();
+ok( [] === options_snapshot(), 'H1 with no custom items nothing is written' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'label' => 'A',
+		'menus' => 'hivepress',
+	],
+	[
+		'label' => 'B',
+		'menus' => 'woocommerce',
+	],
+	[
+		'label' => 'C',
+		'menus' => 'both',
+	],
+	[
+		'label' => 'D',
+		'menus' => '',
+	],
+	[ 'label' => 'E' ],
+	[
+		'label' => 'F',
+		'menus' => [ 'header' ],
+	],
+];
+amehp_migrate_v350_settings();
+$rows = get_option( 'hp_amehp_custom_items' );
+ok( [ 'header', 'sidebar' ] === $rows[0]['menus'], 'H2 "HivePress Menu Only" becomes the header and the sidebar, which is what it always meant' );
+ok( [ 'woocommerce' ] === $rows[1]['menus'], 'H3 "WooCommerce Menu Only" becomes the WooCommerce menu' );
+ok( '' === $rows[2]['menus'], 'H4 the old "both" becomes the empty value that means every menu' );
+ok( '' === $rows[3]['menus'] && ! isset( $rows[4]['menus'] ), 'H5 an empty or absent value is left as it is' );
+ok( [ 'header' ] === $rows[5]['menus'], 'H6 and a row already in the new shape is untouched' );
+ok( 'A' === $rows[0]['label'], 'H7 nothing else on a row changes' );
+
+$writes = count( $GLOBALS['_option_writes'] );
+amehp_migrate_v350_settings();
+ok( count( $GLOBALS['_option_writes'] ) === $writes, 'H8 running it again writes nothing, so it is safe to run twice' );
+
+amehp_test_reset();
+$GLOBALS['_options']['amehp_version']         = '3.4.5';
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'label' => 'A',
+		'menus' => 'hivepress',
+	],
+];
+amehp_maybe_migrate();
+ok( [ 'header', 'sidebar' ] === get_option( 'hp_amehp_custom_items' )[0]['menus'], 'H9 a site upgrading from 3.4.5 gets the rewrite' );
+ok( AMEHP_VERSION === get_option( 'amehp_version' ), 'H10 and records the version that ran' );
+
+amehp_test_reset();
+$GLOBALS['_options']['amehp_version']         = '3.5.0';
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'label' => 'A',
+		'menus' => 'hivepress',
+	],
+];
+amehp_maybe_migrate();
+ok( 'hivepress' === get_option( 'hp_amehp_custom_items' )[0]['menus'], 'H11 while a site already past 3.5.0 is not touched, even holding an old value, which the component reads correctly anyway' );
+
 amehp_test_finish();

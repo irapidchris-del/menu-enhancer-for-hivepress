@@ -1,6 +1,84 @@
 == Changelog ==
 
-Releases before 3.3.7. The most recent entries are in readme.txt.
+Releases before 3.4.1. The most recent entries are in readme.txt.
+
+= 3.4.0 =
+* Added: every icon in Font Awesome Free is now available wherever this plugin asks for one - all
+  1,918 of them, brands included, in place of the shorter list it used to carry. The icon boxes now
+  search as you type instead of listing everything at once.
+* Changed: menu icons are drawn from the icon's own shape rather than from a font, so nothing on the
+  front of your site downloads a font file for them any more. Your icon colour, size, weight,
+  spacing and background settings all work exactly as before. This also removed a 320KB copy of
+  Font Awesome from the plugin; the one that remains is shared with this author's other plugins, so
+  however many of them you run, only one copy is ever loaded, and only in the admin.
+* Fixed: a link that another plugin adds to the WooCommerce account menu but that is not an account
+  page no longer appears in your HivePress account menu. User Switching's "Switch back to ..." was
+  turning up there mid-switch, and the copy in the HivePress menu led to a page that does not exist.
+  Genuine WooCommerce account pages are unaffected.
+
+= 3.3.14 =
+* Changed: the older entries in this changelog have moved to changelog.txt, which ships with the
+  plugin. WordPress only shows the first 5,000 characters of a changelog on the update screen, and
+  this one had grown well past that, so recent releases were being cut off before you could read
+  them. Nothing has been removed.
+
+= 3.3.13 =
+* Fixed: the unread counters in the account menus now sit a small, even distance from the wording
+  they belong to. In menus your theme lays out as a row the counter was pushed to the far right,
+  away from its own item, and in the account dropdown it sat flush against the last letter with no
+  gap at all. Both now match the spacing HivePress uses itself.
+
+= 3.3.12 =
+* Added: an "Also Hidden from the WooCommerce Menu" setting, which takes a menu item out of the
+  WooCommerce account menu while leaving it in the HivePress account menu. The existing Hidden Items
+  setting is unchanged and still hides an item from both menus, so nothing you have already saved
+  behaves differently. The Live preview panel shows both menus separately whenever the two now
+  differ.
+* Fixed: the Live preview panel named a menu item the way the settings dropdowns name it rather than
+  the way your site renders it, showing "Orders (WooCommerce)" where members see "Placed Orders".
+  The panel now draws the wording each menu actually rendered, which can differ between the two
+  menus for the same page. The dropdowns keep their wording, where it tells two similar destinations
+  apart.
+
+= 3.3.11 =
+* Changed: internal tidying only, with no change to how anything looks or behaves. The settings
+  screen was being sent a copy of your saved menu arrangement that nothing used, because the
+  live preview reads the arrangement from the page itself so that it follows you as you drag.
+  The unused copy has been removed.
+
+= 3.3.10 =
+* Fixed: the Placed Orders item, which HivePress adds to the account menu once a member has an
+  order, appeared at the very bottom of the menu on sites where the menu order had been arranged.
+  It now sits in its proper place, and the same applies to the Subscriptions item.
+* Fixed: Placed Orders and Subscriptions are now shown in the Live preview panel, where they can be
+  dragged into any position you like. They were missing from the preview whenever the WooCommerce
+  integration was switched off, so the preview disagreed with the menu your members actually saw.
+* Changed: a menu item that appears after you have arranged your menu is now placed in the position
+  its own extension gives it, rather than being added below every item you arranged. Your own
+  arrangement is unchanged.
+
+= 3.3.9 =
+* Changed: the instructions on the Menu Item Styling setting no longer say the cards can be dragged
+  into order. The card handles were removed in 3.3.4, and the wording now points to the Live preview
+  panel, which is where the menu order is arranged. Anyone translating the plugin should revisit
+  this wording.
+* Changed: the plugin's record of the menu items your site renders no longer keeps an entry for a
+  custom menu item you have deleted. The record exists so that every item can be offered on the
+  settings screen, and it grew a little each time a custom item was removed. Your custom items,
+  their icons and colours, and your menu order are all unaffected.
+
+= 3.3.8 =
+* Fixed: on sites where Account Menu is the first tab under HivePress > Settings, opening Settings
+  from the menu could show that tab with none of its controls working - no quick links, no live
+  preview and no colour pickers, with nothing to say why. The plugin now recognises its own tab
+  from what is actually on the page rather than from the web address, so it works however you
+  reach it.
+* Fixed: if another extension in this family also adds these controls to a settings tab, you could
+  have ended up with two sets of them at once - two rows of quick links, two floating Save tabs,
+  two back-to-top buttons. The extensions can now see each other's controls and only one set is
+  drawn, whichever extension gets there first.
+* Changed: the hover tooltips on the settings screen are wider, so a two-sentence explanation
+  reads as a few short lines rather than a tall narrow ribbon of text.
 
 = 3.3.7 =
 * Fixed: a custom menu item added after the first no longer has its icon forced to black. Adding a

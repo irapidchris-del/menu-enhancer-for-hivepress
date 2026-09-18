@@ -68,16 +68,25 @@ ok( source.endsWith( 'preview-logic.js' ), 'L1 the tests load the shipped file, 
 	'isWooItem',
 	'includesCatalogueEntry',
 	'catalogueItems',
-	'menusDiverge',
+	'normaliseMenus',
+	'includesItemInMenu',
+	'panelPlan',
+	'mergeItemRow',
+	'nestItems',
 	'itemLabel',
-	'includesCustomItem',
 	'customItemOrder',
 	'sortItems',
 ].forEach( function ( name ) {
 	ok( 'function' === typeof logic[ name ], 'L2 ' + name + '() is published' );
 } );
 
-is( Object.keys( logic ).length, 19, 'L3 and nothing else is - an untested export is an export nobody is watching' );
+is( Object.keys( logic ).length, 22, 'L3 and nothing else is - an untested export is an export nobody is watching' );
+
+// Retired in 3.5.0, when the three-menu model replaced the two-menu one. A
+// copy left behind is a second answer to a question the new functions answer.
+[ 'menusDiverge', 'includesCustomItem' ].forEach( function ( name ) {
+	ok( 'undefined' === typeof logic[ name ], 'L4 ' + name + '() is gone, along with the two-menu model it described' );
+} );
 
 /* ===================== M. the module has stayed pure ===================== */
 section( '[M] preview-logic.js touches nothing but its arguments' );
@@ -195,6 +204,37 @@ ok( HP_MENU.length > 100 && HP_ITEMS.length > 100 && WC_MENU.length > 100, 'Q5 t
 ok( -1 !== WC_MENU.indexOf( READER ), 'Q6 alter_wc_menu() reads the list' );
 ok( -1 === HP_MENU.indexOf( READER ), 'Q7 alter_hp_menu() does not, or an item hidden from one menu would vanish from both' );
 ok( -1 === HP_ITEMS.indexOf( READER ), 'Q8 nor does alter_hp_menu_items(), which is the other stage that hides things in that menu' );
+
+/* ===================== R. the three-menu model, labels and nesting ===================== */
+section( '[R] the 3.5.0 seams' );
+
+/*
+ * Three features landed together in 3.5.0 - a Label on every Menu Items row,
+ * nesting under a parent, and a Menus limit that tells the header dropdown
+ * from the sidebar - and each one crosses the same seam between PHP and the
+ * browser. The names pinned here are the ones a misspelling on either side
+ * would silently break.
+ */
+ok( -1 !== SETTINGS_SOURCE.indexOf( "'amehp_parent_items'" ) && -1 !== SETTINGS_SOURCE.indexOf( "'amehp_menus'" ), 'R1 the Parent and Menus fields read their options from the two named configs' );
+ok( fs.existsSync( path.join( PLUGIN, 'includes/configs/amehp-parent-items.php' ) ) && fs.existsSync( path.join( PLUGIN, 'includes/configs/amehp-menus.php' ) ), 'R2 and both config files exist under the prefixed names HivePress resolves them by' );
+
+ok( -1 !== HP_ITEMS.indexOf( 'take_menu_context' ) && -1 !== HP_ITEMS.indexOf( 'remove_items_outside_menu' ), 'R3 the /items stage is where a menu is told apart and trimmed, because it is the only stage that sees every item' );
+ok( -1 !== HP_MENU.indexOf( 'get_menu_context' ) && -1 === HP_MENU.indexOf( 'remove_items_outside_menu' ), 'R4 while the constructor stage only records which menu it is, and hides nothing per menu' );
+ok( -1 !== HP_ITEMS.indexOf( 'record_seen_items' ) && HP_ITEMS.indexOf( 'record_seen_items' ) < HP_ITEMS.indexOf( 'apply_labels' ), 'R5 the usual names are recorded before the owner\'s labels are applied, or the placeholder would show the rename as the default' );
+ok( -1 !== HP_ITEMS.indexOf( 'apply_parents( $this->apply_menu_order(' ), 'R6 nesting is applied to the ordered items, so each child keeps its place among its siblings' );
+
+const FRONTEND_CODE = code( read( 'assets/js/frontend.js' ) );
+
+[ 'nesting', 'toggleLabel' ].forEach( function ( name ) {
+	ok( -1 !== FRONTEND_CODE.indexOf( name ), 'R7 the front-end script reads "' + name + '"' );
+	ok( -1 !== COMPONENT_SOURCE.indexOf( "'" + name + "'" ), 'R8 and the component sends "' + name + '"' );
+} );
+
+ok( -1 !== FRONTEND_CODE.indexOf( 'stopPropagation' ), 'R9 the toggle stops its click reaching the theme, whose burger menu closes on any click that is not a link' );
+ok( -1 !== BROWSER_CODE.indexOf( 'rowValues' ) && -1 !== BROWSER_CODE.indexOf( "'menus'" ), 'R10 the preview reads the Menus field as a list, not as the first chosen option' );
+ok( -1 !== BROWSER_CODE.indexOf( 'logic.nestItems' ) && -1 !== BROWSER_CODE.indexOf( 'logic.panelPlan' ), 'R11 and draws the nesting and the panel split from the pinned logic rather than a copy of it' );
+ok( -1 !== BROWSER_CODE.indexOf( 'logic.mergeItemRow' ), 'R12 and folds a second row for one item the way the front end reads it, not wholesale' );
+ok( -1 === FRONTEND_CODE.indexOf( ".replace( '%s'" ), 'R13 the toggle label is not built with String.replace(), which reads "$$" and "$&" in an owner\'s label as patterns' );
 
 /* ===================== P. the harness never ships ===================== */
 section( '[P] where the harness lives' );

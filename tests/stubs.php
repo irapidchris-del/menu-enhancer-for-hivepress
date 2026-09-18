@@ -1444,6 +1444,16 @@ namespace {
 		}
 
 		/**
+		 * Whether an endpoint is the account page being viewed.
+		 *
+		 * @param string $endpoint Endpoint.
+		 * @return bool
+		 */
+		function wc_is_current_account_menu_item( $endpoint ) {
+			return '' !== $GLOBALS['_wc_endpoint'] && $endpoint === $GLOBALS['_wc_endpoint'];
+		}
+
+		/**
 		 * Gets an account endpoint URL.
 		 *
 		 * @param string $endpoint Endpoint.

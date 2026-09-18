@@ -92,6 +92,47 @@ final class Amehp_Menu_Enhancer extends Component {
 	protected $seen_items_compacted = false;
 
 	/**
+	 * Which account menu each HivePress menu object under construction is for.
+	 *
+	 * Keyed by spl_object_id(). Filled by alter_hp_menu() at the constructor
+	 * stage, which is the only stage that can see how the menu was asked for,
+	 * and taken back out by alter_hp_menu_items() at the /items stage, which is
+	 * the only stage that can act on it. See get_menu_context() for why the two
+	 * stages have to pass a note between them at all.
+	 *
+	 * @var array
+	 */
+	protected $menu_contexts = [];
+
+	/**
+	 * The menu the account page redirect stands for while it is being decided.
+	 *
+	 * Core picks the redirect target by building the User_Account menu with no
+	 * arguments (hivepress/includes/controllers/class-user.php:796, 1.7.31), so
+	 * get_menu_context() cannot name that menu from its arguments. The visitor
+	 * is about to land beside the account page sidebar, so the redirect has to
+	 * pick from the sidebar's items: without this, a first item limited to the
+	 * header dropdown sent /account/ to a page whose own sidebar did not list
+	 * it. Set to "sidebar" by filter_account_redirect() for exactly as long as
+	 * the redirect runs, and empty at every other time.
+	 *
+	 * @var string
+	 */
+	protected $redirect_context = '';
+
+	/**
+	 * The WooCommerce menu rows nested under another this request.
+	 *
+	 * Child endpoint mapped to its parent endpoint, set by alter_wc_menu() and
+	 * read by alter_wc_menu_item_classes(), which runs later in the same
+	 * template. The WooCommerce navigation is a flat list, so nesting there is a
+	 * matter of order plus a class on each row.
+	 *
+	 * @var array
+	 */
+	protected $wc_children = [];
+
+	/**
 	 * Class constructor.
 	 *
 	 * @param array $args Component arguments.
@@ -99,8 +140,10 @@ final class Amehp_Menu_Enhancer extends Component {
 	public function __construct( $args = [] ) {
 		if ( ! is_admin() ) {
 
-			// Alter the HivePress account menu.
-			add_filter( 'hivepress/v1/menus/user_account', [ $this, 'alter_hp_menu' ], 1000 );
+			// Alter the HivePress account menu. Two arguments: the menu object
+			// is what tells the header dropdown from the sidebar, see
+			// get_menu_context().
+			add_filter( 'hivepress/v1/menus/user_account', [ $this, 'alter_hp_menu' ], 1000, 2 );
 
 			/*
 			 * The menu is filtered at TWO stages, and both matter. The filter above runs in
@@ -112,7 +155,7 @@ final class Amehp_Menu_Enhancer extends Component {
 			 * the constructor stage, this plugin could neither record such items nor hide them:
 			 * the hidden-key unset ran before the item existed, so "hiding" it did nothing.
 			 */
-			add_filter( 'hivepress/v1/menus/user_account/items', [ $this, 'alter_hp_menu_items' ], 1000 );
+			add_filter( 'hivepress/v1/menus/user_account/items', [ $this, 'alter_hp_menu_items' ], 1000, 2 );
 
 			// Keep the account page's own redirect on this site.
 			add_filter( 'hivepress/v1/routes', [ $this, 'alter_account_route' ], 1000 );
@@ -135,6 +178,9 @@ final class Amehp_Menu_Enhancer extends Component {
 
 				// Alter the WooCommerce account menu.
 				add_filter( 'woocommerce_account_menu_items', [ $this, 'alter_wc_menu' ], 999 );
+
+				// Mark the nested rows in the WooCommerce account menu.
+				add_filter( 'woocommerce_account_menu_item_classes', [ $this, 'alter_wc_menu_item_classes' ], 10, 2 );
 
 				// Set the WooCommerce account template.
 				add_filter( 'wc_get_template', [ $this, 'set_account_template' ], 20, 2 );
@@ -577,7 +623,16 @@ final class Amehp_Menu_Enhancer extends Component {
 					'colour'      => isset( $row['colour'] ) && is_string( $row['colour'] ) ? $row['colour'] : '',
 					'weight'      => isset( $row['weight'] ) && is_string( $row['weight'] ) ? $row['weight'] : '',
 					'text_colour' => isset( $row['text_colour'] ) && is_string( $row['text_colour'] ) ? $row['text_colour'] : '',
-					'menus'       => isset( $row['menus'] ) && in_array( $row['menus'], [ 'hivepress', 'woocommerce' ], true ) ? $row['menus'] : 'both',
+
+					// The menus the item is limited to, as a list; an empty
+					// list is every menu. See normalise_menus() for the shapes
+					// this reads, including the two single strings 3.4.x stored.
+					'menus'       => $this->normalise_menus( isset( $row['menus'] ) ? $row['menus'] : null ),
+
+					// The item this one nests under, as a settings key, or
+					// nothing. Whether that parent is really there is decided
+					// per menu, see resolve_parents().
+					'parent'      => isset( $row['parent'] ) && $this->is_item_key( $row['parent'] ) ? (string) $row['parent'] : '',
 
 					/*
 					 * Where the item sits when the owner has not placed it in
@@ -594,6 +649,352 @@ final class Amehp_Menu_Enhancer extends Component {
 					'order'       => isset( $row['order'] ) && is_numeric( $row['order'] ) ? (int) $row['order'] : 100 + $index,
 					'roles'       => isset( $row['roles'] ) && is_array( $row['roles'] ) ? $row['roles'] : [],
 				];
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Gets the names of the three account menus an item can be limited to.
+	 *
+	 * "header" is the account dropdown in the site header, "sidebar" the
+	 * HivePress account page menu (rendered as a modal on a phone), and
+	 * "woocommerce" the WooCommerce account navigation. The header and the
+	 * sidebar are ONE HivePress menu built twice with different arguments, which
+	 * is why telling them apart needs get_menu_context() rather than a setting.
+	 *
+	 * @return array
+	 */
+	protected function get_menu_names() {
+		return [ 'header', 'sidebar', 'woocommerce' ];
+	}
+
+	/**
+	 * Reads a stored Menus value into the list of menus it names.
+	 *
+	 * An empty list means every menu. That is what the field's "All Menus"
+	 * placeholder promises, it is what an emptied multiple select stores (core
+	 * stores '' rather than an empty array), and every menu ticked is the same
+	 * answer, so it is read as the same answer - the front end and the preview
+	 * then have exactly one way of saying "no limit".
+	 *
+	 * The two single strings are the shape the custom item field stored before
+	 * 3.5.0, when it was a choice of "HivePress Menu Only" or "WooCommerce Menu
+	 * Only". amehp_migrate_v350_settings() rewrites them, but it runs on
+	 * admin_init, so until an admin has visited wp-admin after the update every
+	 * front-end request still reads the old shape. Reading it here is what keeps
+	 * an upgraded site rendering as it did in that window.
+	 *
+	 * @param mixed $value Stored value.
+	 * @return array Menu names in canonical order, or an empty array for all.
+	 */
+	protected function normalise_menus( $value ) {
+		if ( 'hivepress' === $value ) {
+			$value = [ 'header', 'sidebar' ];
+		} elseif ( 'woocommerce' === $value ) {
+			$value = [ 'woocommerce' ];
+		}
+
+		if ( ! is_array( $value ) ) {
+			return [];
+		}
+
+		$menus = array_values( array_intersect( $this->get_menu_names(), array_filter( $value, 'is_string' ) ) );
+
+		return count( $menus ) === count( $this->get_menu_names() ) ? [] : $menus;
+	}
+
+	/**
+	 * Checks whether a string is a settings item key.
+	 *
+	 * The three shapes the settings screen uses: a HivePress item, a
+	 * WooCommerce endpoint, or one of this plugin's custom items. The same
+	 * pattern get_menu_order() applies to the stored arrangement, because the
+	 * parent field stores the same kind of value and is used the same way - to
+	 * look up a menu item.
+	 *
+	 * @param mixed $key Candidate key.
+	 * @return bool
+	 */
+	protected function is_item_key( $key ) {
+		return is_string( $key ) && '' !== $key && (bool) preg_match( '/^(hp:|wc:)?[A-Za-z0-9_-]+$/', $key );
+	}
+
+	/**
+	 * Gets the menus each item is limited to, keyed by settings key.
+	 *
+	 * Only items with a limit are listed: an item absent from this map is in
+	 * every menu. Both the Menu Items rows and the custom items feed it, so the
+	 * one reader in each menu method treats a limited built-in item and a
+	 * limited custom item the same way.
+	 *
+	 * @return array Settings key mapped to the menu names it may appear in.
+	 */
+	protected function get_item_menus() {
+		$menus = [];
+		$rows  = get_option( 'hp_amehp_icons' );
+
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) || empty( $row['item'] ) || ! is_string( $row['item'] ) ) {
+					continue;
+				}
+
+				$chosen = $this->normalise_menus( isset( $row['menus'] ) ? $row['menus'] : null );
+
+				if ( $chosen ) {
+					$menus[ (string) $row['item'] ] = $chosen;
+				}
+			}
+		}
+
+		foreach ( $this->get_custom_items() as $key => $item ) {
+			if ( $item['menus'] ) {
+				$menus[ $key ] = $item['menus'];
+			}
+		}
+
+		return $menus;
+	}
+
+	/**
+	 * Checks whether an item may appear in one menu.
+	 *
+	 * @param string $key Settings item key.
+	 * @param string $menu Menu name, see get_menu_names().
+	 * @param array  $menus The map from get_item_menus().
+	 * @return bool
+	 */
+	protected function is_in_menu( $key, $menu, $menus ) {
+		return ! isset( $menus[ $key ] ) || in_array( $menu, $menus[ $key ], true );
+	}
+
+	/**
+	 * Gets the new name each Menu Items row gives its item, keyed by settings key.
+	 *
+	 * Only rows that typed a label are listed; an item absent from this map
+	 * keeps whatever name the menu gives it. The stored text is cleaned the way
+	 * get_seen_items() cleans a recorded label, and capped at the same length,
+	 * because it goes into the same place - and HivePress core escapes it on
+	 * output (Menu::render_items()), so what is stored here is text, never
+	 * markup.
+	 *
+	 * Custom items are not in this map and never will be: a custom item has a
+	 * label of its own on its own row.
+	 *
+	 * @return array Settings key mapped to the label to render.
+	 */
+	protected function get_label_overrides() {
+		$labels = [];
+		$rows   = get_option( 'hp_amehp_icons' );
+
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) || empty( $row['item'] ) || ! is_string( $row['item'] ) || ! isset( $row['label'] ) || ! is_string( $row['label'] ) ) {
+					continue;
+				}
+
+				$label = trim( wp_strip_all_tags( $row['label'] ) );
+
+				if ( '' !== $label ) {
+					$labels[ (string) $row['item'] ] = mb_substr( $label, 0, 100 );
+				}
+			}
+		}
+
+		return $labels;
+	}
+
+	/**
+	 * Gets the parent chosen for each item, keyed by settings key.
+	 *
+	 * The raw choice only. A row naming itself is dropped here because it can
+	 * never be right; everything else - a parent that is hidden, absent from
+	 * this particular menu, or itself nested - is decided per menu by
+	 * resolve_parents(), because the answer differs from one menu to the next.
+	 *
+	 * @return array Child settings key mapped to its parent settings key.
+	 */
+	protected function get_parent_map() {
+		$parents = [];
+		$rows    = get_option( 'hp_amehp_icons' );
+
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( ! is_array( $row ) || empty( $row['item'] ) || ! is_string( $row['item'] ) || ! isset( $row['parent'] ) || ! $this->is_item_key( $row['parent'] ) ) {
+					continue;
+				}
+
+				if ( $row['parent'] !== $row['item'] ) {
+					$parents[ (string) $row['item'] ] = (string) $row['parent'];
+				}
+			}
+		}
+
+		foreach ( $this->get_custom_items() as $key => $item ) {
+			if ( '' !== $item['parent'] && $item['parent'] !== $key ) {
+				$parents[ $key ] = $item['parent'];
+			}
+		}
+
+		return $parents;
+	}
+
+	/**
+	 * Works out which items of one menu nest under which, by menu item name.
+	 *
+	 * ONE LEVEL, AND ONLY PARENTS THAT ARE REALLY THERE. A child whose parent is
+	 * not in this menu - hidden, limited to another menu, belonging to an
+	 * extension that is off, or simply never present for this member - is left
+	 * where it is, at the top level, rather than vanishing with it: HivePress
+	 * core drops an item whose `_parent` names nothing
+	 * (hivepress/includes/menus/class-menu.php:228-235, 1.7.31), which would
+	 * turn "nest Bookings under Listings" into "Bookings disappears for anyone
+	 * without Listings". A child whose parent is itself nested is promoted for
+	 * the same reason the settings screen says a parent must be a top-level
+	 * item, and two items naming each other are both promoted, so the answer
+	 * never depends on the order the rows were saved in.
+	 *
+	 * @param array $keys Menu item name mapped to its settings key, for every item in the menu.
+	 * @return array Child item name mapped to its parent item name.
+	 */
+	protected function resolve_parents( $keys ) {
+		$parents = $this->get_parent_map();
+
+		if ( ! $parents || ! $keys ) {
+			return [];
+		}
+
+		// The first item carrying a key wins, the same rule get_preview_orders()
+		// applies when a HivePress item and a WooCommerce endpoint share one.
+		$names = [];
+
+		foreach ( $keys as $name => $key ) {
+			if ( ! isset( $names[ $key ] ) ) {
+				$names[ $key ] = (string) $name;
+			}
+		}
+
+		$resolved = [];
+
+		foreach ( $keys as $name => $key ) {
+			if ( ! isset( $parents[ $key ], $names[ $parents[ $key ] ] ) || $names[ $parents[ $key ] ] === (string) $name ) {
+				continue;
+			}
+
+			$resolved[ (string) $name ] = $names[ $parents[ $key ] ];
+		}
+
+		// Decided against the full map, not the one being trimmed, so a pair
+		// naming each other are both promoted whichever was read first.
+		$children = $resolved;
+
+		foreach ( $resolved as $name => $parent ) {
+			if ( isset( $resolved[ $parent ] ) ) {
+				unset( $children[ $name ] );
+			}
+		}
+
+		return $children;
+	}
+
+	/**
+	 * Maps every item of a menu to the key the settings screen knows it by.
+	 *
+	 * @param array $names Menu item names.
+	 * @param array $endpoints WooCommerce endpoints in this menu, keyed by slug.
+	 * @return array Menu item name mapped to its settings key.
+	 */
+	protected function get_item_keys( $names, $endpoints ) {
+		$keys = [];
+
+		foreach ( $names as $name ) {
+			$keys[ (string) $name ] = $this->get_settings_key( (string) $name, $endpoints );
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Gets the WooCommerce endpoints that can be in the HivePress account menu.
+	 *
+	 * Only while the integration is merging them in; with it off the HivePress
+	 * menu carries no endpoint rows and the base list is never even built, which
+	 * matters on a path that runs for every account menu on every page.
+	 *
+	 * @return array Endpoint slugs mapped to labels.
+	 */
+	protected function get_hp_menu_endpoints() {
+		return $this->is_wc_integration_enabled() ? $this->get_base_wc_items() : [];
+	}
+
+	/**
+	 * Removes the items limited to other menus.
+	 *
+	 * @param array  $items Menu items keyed by name.
+	 * @param array  $keys Menu item name mapped to its settings key.
+	 * @param string $menu Which menu is being built.
+	 * @return array
+	 */
+	protected function remove_items_outside_menu( $items, $keys, $menu ) {
+		$menus = $this->get_item_menus();
+
+		if ( ! $menus ) {
+			return $items;
+		}
+
+		foreach ( $keys as $name => $key ) {
+			if ( ! $this->is_in_menu( $key, $menu, $menus ) ) {
+				unset( $items[ $name ] );
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Renames the items the owner has given a label of their own.
+	 *
+	 * @param array $items Menu items keyed by name.
+	 * @param array $keys Menu item name mapped to its settings key.
+	 * @return array
+	 */
+	protected function apply_labels( $items, $keys ) {
+		$labels = $this->get_label_overrides();
+
+		if ( ! $labels ) {
+			return $items;
+		}
+
+		foreach ( $keys as $name => $key ) {
+			if ( isset( $labels[ $key ], $items[ $name ] ) && is_array( $items[ $name ] ) ) {
+				$items[ $name ]['label'] = $labels[ $key ];
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Nests the HivePress menu items under their chosen parents.
+	 *
+	 * Done with core's own `_parent` argument, so core renders the children as
+	 * the nested list it already knows how to render (Menu::render_items()) and
+	 * sorts each level by `_order` itself. The flat order this plugin applied a
+	 * moment earlier is therefore the order within each level too, which is
+	 * exactly the order the preview shows.
+	 *
+	 * An item another extension has already nested is left alone.
+	 *
+	 * @param array $items Menu items keyed by name.
+	 * @param array $keys Menu item name mapped to its settings key.
+	 * @return array
+	 */
+	protected function apply_parents( $items, $keys ) {
+		foreach ( $this->resolve_parents( $keys ) as $name => $parent ) {
+			if ( isset( $items[ $name ] ) && is_array( $items[ $name ] ) && ! isset( $items[ $name ]['_parent'] ) ) {
+				$items[ $name ]['_parent'] = $parent;
 			}
 		}
 
@@ -896,14 +1297,93 @@ final class Amehp_Menu_Enhancer extends Component {
 	*/
 
 	/**
+	 * Tells the header account dropdown from the account page sidebar.
+	 *
+	 * They are the same `User_Account` menu, built twice with different
+	 * arguments, and the arguments are the only thing that differs. The header
+	 * is built by core's template component with `wrap => false`, because it
+	 * goes inside an existing navigation list
+	 * (hivepress/includes/components/class-template.php:272-280, 1.7.31), and
+	 * the sidebar by the menu block, which always passes a `context`
+	 * (hivepress/includes/blocks/class-menu.php:43-51) and, on the account page
+	 * template, the `widget_nav_menu` class
+	 * (hivepress/includes/templates/class-user-account-page.php:61-68). A menu
+	 * built with neither - this plugin's settings screen, another extension
+	 * probing the menu - is nobody's in particular and gets no per-menu
+	 * treatment at all, which is the safe answer: an item is never hidden from
+	 * a menu this method could not name. The one exception is core's account
+	 * page redirect, which also builds the menu bare but is answered for the
+	 * sidebar by filter_account_redirect(); see $redirect_context.
+	 *
+	 * Read at the constructor stage because that is where the arguments are;
+	 * acted on at the /items stage because that is where the complete item set
+	 * is (see the note on the two stages in the constructor). The menu object
+	 * is the note passed between them.
+	 *
+	 * @param array $args Menu arguments as passed to the constructor.
+	 * @return string "header", "sidebar", or an empty string for an unknown caller.
+	 */
+	protected function get_menu_context( $args ) {
+		if ( ! is_array( $args ) ) {
+			return '';
+		}
+
+		if ( isset( $args['wrap'] ) && false === $args['wrap'] ) {
+			return 'header';
+		}
+
+		$classes = isset( $args['attributes']['class'] ) ? (array) $args['attributes']['class'] : [];
+
+		if ( isset( $args['context'] ) || in_array( 'widget_nav_menu', $classes, true ) ) {
+			return 'sidebar';
+		}
+
+		return $this->redirect_context;
+	}
+
+	/**
+	 * Takes the context recorded for a menu object, once.
+	 *
+	 * Unset as it is read, so the map never grows past the menus being built at
+	 * this moment and an object id PHP later reuses cannot inherit a stale
+	 * answer.
+	 *
+	 * @param mixed $menu Menu object, or null from a caller that has none.
+	 * @return string
+	 */
+	protected function take_menu_context( $menu ) {
+		if ( ! is_object( $menu ) ) {
+			return '';
+		}
+
+		$id      = spl_object_id( $menu );
+		$context = isset( $this->menu_contexts[ $id ] ) ? $this->menu_contexts[ $id ] : '';
+
+		unset( $this->menu_contexts[ $id ] );
+
+		return $context;
+	}
+
+	/**
 	 * Alters the HivePress account menu.
 	 *
 	 * @param array $menu Menu arguments.
+	 * @param mixed $object Menu object, from the second filter argument; null when called directly.
 	 * @return array
 	 */
-	public function alter_hp_menu( $menu ) {
+	public function alter_hp_menu( $menu, $object = null ) {
 		if ( $this->suppressed ) {
 			return $menu;
+		}
+
+		if ( ! is_array( $menu ) ) {
+			$menu = [];
+		}
+
+		// Note which menu this is for alter_hp_menu_items(), before the
+		// arguments below are added to and the answer is lost.
+		if ( is_object( $object ) ) {
+			$this->menu_contexts[ spl_object_id( $object ) ] = $this->get_menu_context( $menu );
 		}
 
 		if ( ! isset( $menu['items'] ) || ! is_array( $menu['items'] ) ) {
@@ -931,6 +1411,53 @@ final class Amehp_Menu_Enhancer extends Component {
 			foreach ( $this->get_key_menu_names( $key ) as $name ) {
 				unset( $menu['items'][ $name ] );
 			}
+		}
+
+		/*
+		 * Put the usual name back on the lists HivePress core copies out of
+		 * the WooCommerce menu.
+		 *
+		 * Core builds "Placed Orders" and "Subscriptions" at priority 10 on
+		 * this same filter, taking each label from wc_get_account_menu_items()
+		 * (hivepress/includes/components/class-woocommerce.php:448-461, 1.7.31)
+		 * - and that call has already been through alter_wc_menu() at 999. Two
+		 * things go wrong there. An Orders row limited away from the WooCommerce
+		 * menu, or on the "Also Hidden" list, is no longer in that list at all,
+		 * so the item arrives with a null label and core renders an empty row
+		 * (Menu::render_items() prints the label straight into a span). And an
+		 * Orders row the owner has renamed arrives already renamed, so
+		 * record_seen_items() would store the rename as the usual name and the
+		 * settings screen would show it as the Label box's placeholder. Both
+		 * are settled here from the list as WooCommerce built it, which
+		 * get_base_wc_items() fetches with this plugin's filters stood down;
+		 * apply_labels() re-applies the rename at the /items stage, after the
+		 * usual name has been recorded. A label anybody else set - Marketplace's
+		 * "Placed Orders" at priority 100 - is neither empty nor the rename and
+		 * is left alone. Found by review on 2026-09-18; the empty row already
+		 * happened in 3.4.5 through the "Also Hidden" list.
+		 */
+		$overrides = null;
+
+		foreach ( $this->get_core_wc_items() as $name => $endpoint ) {
+			if ( ! isset( $menu['items'][ $name ] ) || ! is_array( $menu['items'][ $name ] ) ) {
+				continue;
+			}
+
+			if ( null === $overrides ) {
+				$overrides = $this->get_label_overrides();
+			}
+
+			$label = hp\get_array_value( $menu['items'][ $name ], 'label' );
+			$label = is_string( $label ) ? trim( $label ) : '';
+
+			if ( '' !== $label && ( ! isset( $overrides[ 'wc:' . $endpoint ] ) || $overrides[ 'wc:' . $endpoint ] !== $label ) ) {
+				continue;
+			}
+
+			$usual = hp\get_array_value( $this->get_base_wc_items(), $endpoint );
+			$usual = is_string( $usual ) ? trim( wp_strip_all_tags( $usual ) ) : '';
+
+			$menu['items'][ $name ]['label'] = '' !== $usual ? $usual : ucfirst( $endpoint );
 		}
 
 		// Add the WooCommerce items.
@@ -984,9 +1511,12 @@ final class Amehp_Menu_Enhancer extends Component {
 			}
 		}
 
-		// Add the custom items.
+		// Add the custom items. One limited to the WooCommerce menu alone is
+		// never this menu's; one limited to the header or the sidebar is added
+		// here and taken out of the other at the /items stage, where the menu
+		// being built is known.
 		foreach ( $this->get_custom_items() as $name => $item ) {
-			if ( 'woocommerce' === $item['menus'] || ! $this->is_item_visible( $item ) ) {
+			if ( ( $item['menus'] && ! array_intersect( [ 'header', 'sidebar' ], $item['menus'] ) ) || ! $this->is_item_visible( $item ) ) {
 				continue;
 			}
 
@@ -1041,20 +1571,31 @@ final class Amehp_Menu_Enhancer extends Component {
 		 * another row leading to the same page.
 		 */
 		$hidden = array_merge( $this->get_hidden_keys(), $this->get_wc_hidden_keys() );
+		$menus  = $this->get_item_menus();
+		$labels = $this->get_label_overrides();
 		$rows   = [];
+
+		// Each row's settings key, kept as the rows are added so the per-menu
+		// limit, the label and the parent are all looked up by the one key the
+		// settings screen stored them under.
+		$keys = [];
 
 		// Add the WooCommerce items.
 		$order = 500;
 
 		foreach ( $items as $endpoint => $label ) {
-			if ( in_array( 'wc:' . $endpoint, $hidden, true ) ) {
+			$key = 'wc:' . $endpoint;
+
+			if ( in_array( $key, $hidden, true ) || ! $this->is_in_menu( $key, 'woocommerce', $menus ) ) {
 				continue;
 			}
 
 			$rows[ $endpoint ] = [
-				'label'  => $label,
+				'label'  => isset( $labels[ $key ] ) ? $labels[ $key ] : $label,
 				'_order' => 'customer-logout' === $endpoint ? 1000 : $order,
 			];
+
+			$keys[ $endpoint ] = $key;
 
 			++$order;
 		}
@@ -1075,7 +1616,9 @@ final class Amehp_Menu_Enhancer extends Component {
 		// Add the HivePress items.
 		if ( $this->is_wc_integration_enabled() ) {
 			foreach ( $this->get_base_hp_items() as $name => $item ) {
-				if ( in_array( 'hp:' . $name, $hidden, true ) ) {
+				$key = $this->get_settings_key( (string) $name, $items );
+
+				if ( in_array( 'hp:' . $name, $hidden, true ) || ! $this->is_in_menu( $key, 'woocommerce', $menus ) ) {
 					continue;
 				}
 
@@ -1104,9 +1647,11 @@ final class Amehp_Menu_Enhancer extends Component {
 				}
 
 				$rows[ $name ] = [
-					'label'  => isset( $item['label'] ) ? wp_strip_all_tags( (string) $item['label'] ) : $name,
+					'label'  => isset( $labels[ $key ] ) ? $labels[ $key ] : ( isset( $item['label'] ) ? wp_strip_all_tags( (string) $item['label'] ) : $name ),
 					'_order' => isset( $item['_order'] ) ? (int) $item['_order'] : 200,
 				];
+
+				$keys[ $name ] = $key;
 
 				$this->wc_urls[ $name ] = $url;
 			}
@@ -1114,7 +1659,7 @@ final class Amehp_Menu_Enhancer extends Component {
 
 		// Add the custom items.
 		foreach ( $this->get_custom_items() as $name => $item ) {
-			if ( 'hivepress' === $item['menus'] || ! $this->is_item_visible( $item ) ) {
+			if ( ( $item['menus'] && ! in_array( 'woocommerce', $item['menus'], true ) ) || ! $this->is_item_visible( $item ) ) {
 				continue;
 			}
 
@@ -1129,16 +1674,119 @@ final class Amehp_Menu_Enhancer extends Component {
 				'_order' => $item['order'],
 			];
 
+			$keys[ $name ] = $name;
+
 			$this->wc_urls[ $name ] = $url;
 		}
 
-		// Apply the owner's chosen order, then sort and flatten the items.
+		// Apply the owner's chosen order, sort, nest, then flatten the items.
+		$rows = $this->nest_wc_rows( hp\sort_array( $this->apply_menu_order( $rows ) ), $keys );
+
 		return array_map(
 			function ( $row ) {
 				return $row['label'];
 			},
-			hp\sort_array( $this->apply_menu_order( $rows ) )
+			$rows
 		);
+	}
+
+	/**
+	 * Puts each nested WooCommerce row directly after its parent.
+	 *
+	 * The WooCommerce navigation template is one flat list
+	 * (woocommerce/templates/myaccount/navigation.php), so nesting there can
+	 * only be order plus a class: the children follow their parent in the
+	 * order they were sorted into, and alter_wc_menu_item_classes() marks each
+	 * row so the stylesheet can indent it and the script can fold it.
+	 *
+	 * The answer is remembered for that classes filter, which WooCommerce runs
+	 * per row later in the same template with nothing but the endpoint name.
+	 *
+	 * @param array $rows Sorted menu rows keyed by endpoint.
+	 * @param array $keys Endpoint mapped to its settings key.
+	 * @return array The same rows, children moved under their parents.
+	 */
+	protected function nest_wc_rows( $rows, $keys ) {
+		$this->wc_children = [];
+
+		$parents = $this->resolve_parents( array_intersect_key( $keys, $rows ) );
+
+		if ( ! $parents ) {
+			return $rows;
+		}
+
+		$nested = [];
+
+		foreach ( $rows as $name => $row ) {
+			if ( isset( $parents[ $name ] ) ) {
+				continue;
+			}
+
+			$nested[ $name ] = $row;
+
+			foreach ( $rows as $child => $child_row ) {
+				if ( isset( $parents[ $child ] ) && $parents[ $child ] === $name ) {
+					$nested[ $child ] = $child_row;
+
+					$this->wc_children[ $child ] = $name;
+				}
+			}
+		}
+
+		return $nested;
+	}
+
+	/**
+	 * Marks the nested rows of the WooCommerce account menu.
+	 *
+	 * A child row starts folded away unless one of its group is the page being
+	 * viewed, in which case the whole group starts open so the current page is
+	 * never hidden inside a closed parent. Decided here, in PHP, so the rows
+	 * render in their final state and nothing jumps when the script arrives.
+	 *
+	 * @param array  $classes Row CSS classes.
+	 * @param string $endpoint Endpoint name.
+	 * @return array
+	 */
+	public function alter_wc_menu_item_classes( $classes, $endpoint ) {
+		if ( $this->suppressed || ! is_array( $classes ) || ! $this->wc_children ) {
+			return $classes;
+		}
+
+		$endpoint = (string) $endpoint;
+		$parent   = isset( $this->wc_children[ $endpoint ] ) ? $this->wc_children[ $endpoint ] : ( in_array( $endpoint, $this->wc_children, true ) ? $endpoint : '' );
+
+		if ( ! $parent ) {
+			return $classes;
+		}
+
+		$open = false;
+
+		if ( function_exists( 'wc_is_current_account_menu_item' ) ) {
+			foreach ( $this->wc_children as $child => $child_parent ) {
+				if ( $child_parent === $parent && wc_is_current_account_menu_item( $child ) ) {
+					$open = true;
+
+					break;
+				}
+			}
+		}
+
+		if ( $parent === $endpoint ) {
+			$classes[] = 'amehp-menu__item--parent';
+
+			if ( $open ) {
+				$classes[] = 'amehp-open';
+			}
+		} else {
+			$classes[] = 'amehp-menu__item--child';
+
+			if ( ! $open ) {
+				$classes[] = 'amehp-collapsed';
+			}
+		}
+
+		return $classes;
 	}
 
 	/**
@@ -1569,6 +2217,15 @@ final class Amehp_Menu_Enhancer extends Component {
 			$badges = $this->get_badge_counts();
 		}
 
+		// Whether any item nests under another. The fold-away rules and the
+		// toggle script are only sent to a site that has set that up, so a
+		// site that has not carries nothing for it.
+		$nesting = (bool) $this->get_parent_map();
+
+		if ( $nesting ) {
+			$css .= $this->get_nesting_css();
+		}
+
 		if ( ! $css && ! $badges ) {
 			return;
 		}
@@ -1585,8 +2242,8 @@ final class Amehp_Menu_Enhancer extends Component {
 			wp_add_inline_style( 'amehp-frontend', $css );
 		}
 
-		// Enqueue the counters script.
-		if ( $badges ) {
+		// Enqueue the script: the counters, the sub-menu toggles, or both.
+		if ( $badges || $nesting ) {
 			wp_enqueue_script(
 				'amehp-frontend',
 				plugins_url( 'assets/js/frontend.js', AMEHP_FILE ),
@@ -1614,9 +2271,82 @@ final class Amehp_Menu_Enhancer extends Component {
 				[
 					'badges'       => $badges,
 					'badgeClasses' => implode( ' ', array_unique( array_merge( [ 'amehp-badge' ], array_filter( array_map( 'sanitize_html_class', $badge_classes ) ) ) ) ),
+					'nesting'      => $nesting,
+
+					/* translators: %s: menu item label. */
+					'toggleLabel'  => esc_html__( '%s sub-menu', 'account-menu-enhancer-for-hivepress' ),
 				]
 			);
 		}
+	}
+
+	/**
+	 * Builds the CSS that folds nested menu items away.
+	 *
+	 * Inline, and only on a site that nests something, rather than a rule in
+	 * frontend.css: a nested `_parent` list is something another extension
+	 * could add to the account menu on its own, and a stylesheet that folded
+	 * theirs away without this plugin's toggle beside it would leave those
+	 * items unreachable.
+	 *
+	 * WHAT THE THEMES DO WITH A NESTED LIST, AND WHY EVERY RULE HERE IS
+	 * MARKED IMPORTANT. All six official themes share hivetheme, whose header
+	 * menu turns a nested list into an absolutely positioned flyout that opens
+	 * on hover (assets/css/frontend.less, `.header-navbar__menu ul li ul`, and
+	 * assets/js/frontend.js, the hoverIntent binding at line 33), with a third
+	 * level thrown out to the side (`left: 100%`). Inside an account dropdown
+	 * that is unusable on a phone and odd on a desktop, so the list is made
+	 * static and folded instead, and the toggle in frontend.js opens it. The
+	 * theme's script writes its state as inline styles (slideDown/slideUp), and
+	 * only an important declaration outranks an inline style, which is why
+	 * display and position carry it. The theme's sidebar and burger lists are
+	 * plainer - always visible, indented by the list's own padding - and the
+	 * same rules simply fold them.
+	 *
+	 * The `:has()` rule keeps the group holding the current page open before
+	 * the script has run, so the page a member is on is never inside a closed
+	 * parent even for the instant before the toggle exists; the script then
+	 * takes over with the `amehp-ready` class. It is a convenience, not the
+	 * mechanism, which is why it must stay in a rule of its own (see below).
+	 *
+	 * The WooCommerce navigation is a flat list, so its rows are folded by a
+	 * class alter_wc_menu_item_classes() puts on each child.
+	 *
+	 * @return string
+	 */
+	protected function get_nesting_css() {
+		$hp = '.hp-menu--user-account li.menu-item-has-children';
+		$wc = '.woocommerce-MyAccount-navigation ul li';
+
+		/*
+		 * The link fills the row up to the toggle, and that is load-bearing in
+		 * the burger menu: hivetheme binds a click on every row that has a
+		 * nested list and, when the tap lands on the row ITSELF rather than on
+		 * its link, runs slideToggle on that list (frontend.js:103-108). With a
+		 * gap between the label and the toggle, a tap in the gap folded an open
+		 * group shut and the important rule above snapped it back open. A
+		 * stretched link leaves no row surface to tap.
+		 *
+		 * The :has() fallback sits in a rule of its OWN, deliberately. A browser
+		 * without :has() discards an entire comma-joined selector list, and
+		 * joined to the .amehp-open rule it would have taken the toggle's
+		 * display:block with it and left every nested item unreachable there.
+		 * Kept apart, such a browser loses only the "starts open" instant
+		 * before the script runs.
+		 */
+		return $hp . '{display:flex;flex-wrap:wrap;align-items:center;}'
+			. $hp . '>a{flex:1 1 auto;}'
+			. $hp . '::after{content:none !important;}'
+			. $hp . '>ul{display:none !important;position:static !important;top:auto !important;left:auto !important;right:auto !important;flex:0 0 100%;width:100%;min-width:0;align-self:auto;margin:0.25rem 0 0;padding-top:0;padding-bottom:0;border:0;box-shadow:none;background:transparent;}'
+			. $hp . '.amehp-open>ul{display:block !important;}'
+			. $hp . ':not(.amehp-ready):has(>ul .current-menu-item)>ul{display:block !important;}'
+			. '.amehp-menu__toggle{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;margin-inline-start:auto;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;font:inherit;line-height:1;}'
+			. '.amehp-menu__toggle::before{content:"";display:block;width:0.4em;height:0.4em;margin-top:-0.2em;border-inline-end:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform 0.2s;}'
+			. '.amehp-open>.amehp-menu__toggle::before{margin-top:0.2em;transform:rotate(-135deg);}'
+			. $wc . '.amehp-menu__item--parent{display:flex;flex-wrap:wrap;align-items:center;}'
+			. $wc . '.amehp-menu__item--parent>a{flex:1 1 auto;}'
+			. $wc . '.amehp-menu__item--child{margin-inline-start:1.5rem;}'
+			. $wc . '.amehp-menu__item--child.amehp-collapsed{display:none !important;}';
 	}
 
 	/**
@@ -1897,7 +2627,9 @@ final class Amehp_Menu_Enhancer extends Component {
 					// the links that follow it, not as a heading over them.
 					'jumpTo'       => esc_html__( 'Jump to a section:', 'account-menu-enhancer-for-hivepress' ),
 					'combined'     => esc_html__( 'Account menu', 'account-menu-enhancer-for-hivepress' ),
-					'hpMenu'       => esc_html__( 'HivePress account menu', 'account-menu-enhancer-for-hivepress' ),
+					'hpMenu'       => esc_html__( 'HivePress account menu (dropdown and sidebar)', 'account-menu-enhancer-for-hivepress' ),
+					'headerMenu'   => esc_html__( 'Header account dropdown', 'account-menu-enhancer-for-hivepress' ),
+					'sidebarMenu'  => esc_html__( 'HivePress account sidebar', 'account-menu-enhancer-for-hivepress' ),
 					'wcMenu'       => esc_html__( 'WooCommerce account menu', 'account-menu-enhancer-for-hivepress' ),
 					'save'         => esc_html__( 'Save Changes', 'account-menu-enhancer-for-hivepress' ),
 					'backToTop'    => esc_html__( 'Back to top', 'account-menu-enhancer-for-hivepress' ),
@@ -2214,25 +2946,35 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * @return mixed
 	 */
 	protected function filter_account_redirect( $callbacks ) {
-		foreach ( $callbacks as $callback ) {
-			$redirect = call_user_func( $callback );
 
-			// Falsy results mean no redirect, the same as in core.
-			if ( ! $redirect ) {
-				continue;
+		// The menus built while the redirect is decided - core's own and
+		// get_first_internal_item_url()'s - are the sidebar's; see
+		// $redirect_context. Closed again on every way out.
+		$this->redirect_context = 'sidebar';
+
+		try {
+			foreach ( $callbacks as $callback ) {
+				$redirect = call_user_func( $callback );
+
+				// Falsy results mean no redirect, the same as in core.
+				if ( ! $redirect ) {
+					continue;
+				}
+
+				// A boolean is a feature gate rather than a destination.
+				if ( is_bool( $redirect ) || $this->is_internal_url( (string) $redirect ) ) {
+					return $redirect;
+				}
+
+				$internal = $this->get_first_internal_item_url();
+
+				return $internal ? $internal : home_url( '/' );
 			}
 
-			// A boolean is a feature gate rather than a destination.
-			if ( is_bool( $redirect ) || $this->is_internal_url( (string) $redirect ) ) {
-				return $redirect;
-			}
-
-			$internal = $this->get_first_internal_item_url();
-
-			return $internal ? $internal : home_url( '/' );
+			return false;
+		} finally {
+			$this->redirect_context = '';
 		}
-
-		return false;
 	}
 
 	/**
@@ -2409,24 +3151,33 @@ final class Amehp_Menu_Enhancer extends Component {
 		echo '<h2 class="amehp-preview__title">' . esc_html__( 'Live preview', 'account-menu-enhancer-for-hivepress' ) . '</h2>';
 
 		/*
-		 * Two panels, and the script shows one or both.
+		 * Three panels, and the script shows as many as the site has menus.
 		 *
-		 * With the WooCommerce integration on, the site renders ONE list of
-		 * items in every account menu, so one panel is the truth. With it off
-		 * the two account areas stay separate and show different items, and a
-		 * single combined preview was then showing owners a menu their site
-		 * does not have. Both panels are rendered here and the script hides
-		 * the one that does not apply, so the switch is live on the checkbox
-		 * and needs no save; the WooCommerce panel is not rendered at all
-		 * where WooCommerce is inactive, since there is no second menu.
+		 * The site renders up to three account menus - the header dropdown,
+		 * the HivePress sidebar and the WooCommerce navigation - and until an
+		 * item is limited to some of them they show the same list, so one
+		 * panel is the truth. The moment they differ, by an item's Menus
+		 * setting, by the WooCommerce integration being off or by the
+		 * WooCommerce-only hidden list, a single preview would be showing
+		 * owners a menu their site does not have, so the script splits the
+		 * panels apart: two when only the WooCommerce menu differs, three when
+		 * the header and the sidebar differ too. All are rendered here and the
+		 * script hides the ones that do not apply, so every switch is live
+		 * and needs no save. The WooCommerce panel is not rendered at all
+		 * where WooCommerce is inactive, since there is no such menu.
+		 *
+		 * The header panel is rendered hidden: it is the one most sites never
+		 * split out, and it would otherwise flash empty before the script
+		 * decides.
 		 */
+		$this->render_preview_panel( 'header', esc_html__( 'Header account dropdown', 'account-menu-enhancer-for-hivepress' ), true );
 		$this->render_preview_panel( 'hivepress', esc_html__( 'Account menu', 'account-menu-enhancer-for-hivepress' ) );
 
 		if ( hp\is_plugin_active( 'woocommerce' ) ) {
 			$this->render_preview_panel( 'woocommerce', esc_html__( 'WooCommerce account menu', 'account-menu-enhancer-for-hivepress' ) );
 		}
 
-		echo '<p class="description amehp-preview__description">' . esc_html__( 'Your account menu in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons. Nothing is stored until you press Save Changes.', 'account-menu-enhancer-for-hivepress' ) . '</p>';
+		echo '<p class="description amehp-preview__description">' . esc_html__( 'Your account menus in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons; a nested item moves among the items under the same parent. Nested items are shown open here; on your site they start folded away unless one of them is the page being viewed. Nothing is stored until you press Save Changes.', 'account-menu-enhancer-for-hivepress' ) . '</p>';
 
 		// Shown by the script only once an order has actually been arranged,
 		// so nobody is offered a reset for something they have not done.
@@ -2447,11 +3198,12 @@ final class Amehp_Menu_Enhancer extends Component {
 	 *
 	 * @param string $menu Which menu the panel previews.
 	 * @param string $title Panel title.
+	 * @param bool   $hidden Whether the panel starts hidden, for the script to reveal.
 	 */
-	protected function render_preview_panel( $menu, $title ) {
+	protected function render_preview_panel( $menu, $title, $hidden = false ) {
 		$id = 'amehp-preview-panel-' . $menu;
 
-		echo '<div class="amehp-preview__panel" data-menu="' . esc_attr( $menu ) . '">';
+		echo '<div class="amehp-preview__panel" data-menu="' . esc_attr( $menu ) . '"' . ( $hidden ? ' hidden' : '' ) . '>';
 
 		echo '<button type="button" class="amehp-preview__header amehp-card-toggle-bar" aria-expanded="true" aria-controls="' . esc_attr( $id ) . '">';
 		echo '<span class="amehp-card-toggle" aria-hidden="true"><span class="dashicons dashicons-arrow-up-alt2"></span></span>';
@@ -3095,6 +3847,22 @@ final class Amehp_Menu_Enhancer extends Component {
 				'label' => esc_html__( 'Payouts', 'account-menu-enhancer-for-hivepress' ),
 			],
 
+			/*
+			 * Marketplace 1.4 adds a vendor "Coupons" page (route coupons_edit_page, item
+			 * coupons_edit). It is registered for vendors only, so the account menu built in
+			 * wp-admin never carries it and, until a vendor has loaded an account page, the
+			 * recorded items do not either. Without this pin the Menu Items dropdown could not
+			 * offer it, and the one item an owner could not choose was the one item in their
+			 * menu with no icon. Note that the local reference source is Marketplace 1.3.15,
+			 * which has no such route; the route and item name come from the rendered menu on
+			 * a 1.4 site (menu item class hp-menu__item--coupons-edit, URL /account/vendor/
+			 * coupons/). The route lookup below keeps the entry harmless on older versions.
+			 */
+			'coupons_edit'       => [
+				'route' => 'coupons_edit_page',
+				'label' => esc_html__( 'Coupons', 'account-menu-enhancer-for-hivepress' ),
+			],
+
 			'bookings_view'      => [
 				'route' => 'bookings_view_page',
 				'label' => esc_html__( 'Bookings', 'account-menu-enhancer-for-hivepress' ),
@@ -3169,13 +3937,20 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * neither record (wrong context) nor hide (the settings screen needs the full list).
 	 *
 	 * @param array $items Menu items, complete.
+	 * @param mixed $menu Menu object, from the second filter argument; null when called directly.
 	 * @return array
 	 */
-	public function alter_hp_menu_items( $items ) {
+	public function alter_hp_menu_items( $items, $menu = null ) {
 		if ( $this->suppressed || ! is_array( $items ) ) {
 			return $items;
 		}
 
+		// Which menu this is, if the constructor stage could tell. Taken before
+		// anything can return early, so the note never outlives its menu.
+		$context = $this->take_menu_context( $menu );
+
+		// Recorded BEFORE the owner's labels are applied, so what the settings
+		// screen shows as the usual name really is the usual name.
 		$this->record_seen_items( $items );
 
 		foreach ( $this->get_hidden_keys() as $key ) {
@@ -3183,6 +3958,18 @@ final class Amehp_Menu_Enhancer extends Component {
 				unset( $items[ substr( $key, strlen( 'hp:' ) ) ] );
 			}
 		}
+
+		$keys = $this->get_item_keys( array_keys( $items ), $this->get_hp_menu_endpoints() );
+
+		// The per-menu limits, only for a menu this plugin could name. The
+		// header dropdown and the sidebar are one menu built twice, and this
+		// is the one place the two are told apart.
+		if ( $context ) {
+			$items = $this->remove_items_outside_menu( $items, $keys, $context );
+			$keys  = array_intersect_key( $keys, $items );
+		}
+
+		$items = $this->apply_labels( $items, $keys );
 
 		/*
 		 * The owner's chosen order is applied HERE rather than at the
@@ -3193,8 +3980,12 @@ final class Amehp_Menu_Enhancer extends Component {
 		 * this same filter does not exist yet at the constructor stage. Both
 		 * the header account dropdown and the account page sidebar are this
 		 * one menu, so ordering it once covers them both.
+		 *
+		 * Nesting comes last, on the ordered items, so each child keeps its
+		 * place among its siblings; core sorts each level by the `_order`
+		 * this leaves behind.
 		 */
-		return $this->apply_menu_order( $items );
+		return $this->apply_parents( $this->apply_menu_order( $items ), $keys );
 	}
 
 	/**
@@ -3600,6 +4391,97 @@ final class Amehp_Menu_Enhancer extends Component {
 			$options[ $key ] = isset( $catalogue[ $key ] )
 				? $catalogue[ $key ]
 				: ucwords( str_replace( [ 'hp:', 'wc:', '_', '-' ], [ '', '', ' ', ' ' ], $key ) );
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Gets the account menu options for the settings screen.
+	 *
+	 * The WooCommerce menu is offered only where there is one, or where a saved
+	 * row already names it: a chosen value the select no longer offers is
+	 * sanitised away on the next save of this tab, so deactivating WooCommerce
+	 * would otherwise quietly discard the owner's choice rather than suspend
+	 * it. Same rule as get_wc_menu_item_options().
+	 *
+	 * @return array
+	 */
+	public function get_menu_options() {
+		$options = [
+			'header'  => esc_html__( 'Header account dropdown', 'account-menu-enhancer-for-hivepress' ),
+			'sidebar' => esc_html__( 'HivePress account sidebar', 'account-menu-enhancer-for-hivepress' ),
+		];
+
+		if ( hp\is_plugin_active( 'woocommerce' ) || $this->has_saved_menu( 'woocommerce' ) ) {
+			$options['woocommerce'] = esc_html__( 'WooCommerce account menu', 'account-menu-enhancer-for-hivepress' );
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Checks whether any saved row limits an item to a menu.
+	 *
+	 * @param string $menu Menu name.
+	 * @return bool
+	 */
+	protected function has_saved_menu( $menu ) {
+		$rows = get_option( 'hp_amehp_icons' );
+		$rows = is_array( $rows ) ? $rows : [];
+
+		$custom = get_option( 'hp_amehp_custom_items' );
+		$rows   = array_merge( $rows, is_array( $custom ) ? $custom : [] );
+
+		/*
+		 * The stored rows, not get_item_menus(): that reader folds "all three
+		 * ticked" into "no limit", and a row saved that way still names this
+		 * menu. Offered nothing to hold it, the next save would post the two
+		 * menus the select still had and turn "every menu" into "not the
+		 * WooCommerce one" behind the owner's back.
+		 */
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || ! isset( $row['menus'] ) ) {
+				continue;
+			}
+
+			if ( in_array( $menu, $this->normalise_menus( $row['menus'] ), true ) || ( is_array( $row['menus'] ) && in_array( $menu, $row['menus'], true ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Gets the parent item options for the settings screen.
+	 *
+	 * Every built-in item the screen already lists, plus the saved custom
+	 * items, because a custom item can be a parent too. A custom item is only
+	 * offered once it has been saved: its key is its stored id, and a row that
+	 * has never been saved has no id yet, which is what the field's own
+	 * description tells the owner.
+	 *
+	 * A parent a row already names stays selectable for the same reason
+	 * get_menu_item_options() keeps its saved keys: a value the select no
+	 * longer offers is sanitised away on the next save, and the extension
+	 * whose item it was may simply be switched off for now. A deleted custom
+	 * item is the one exception - there is nothing to suspend, so its key is
+	 * allowed to fall away, and the child returns to the top level.
+	 *
+	 * @return array
+	 */
+	public function get_parent_item_options() {
+		$options = $this->get_menu_item_options();
+
+		foreach ( $this->get_custom_items() as $key => $item ) {
+			$options[ $key ] = $item['label'];
+		}
+
+		foreach ( $this->get_parent_map() as $parent ) {
+			if ( ! isset( $options[ $parent ] ) && 0 !== strpos( $parent, 'amehp_item_' ) ) {
+				$options[ $parent ] = ucwords( str_replace( [ 'hp:', 'wc:', '_', '-' ], [ '', '', ' ', ' ' ], $parent ) );
+			}
 		}
 
 		return $options;

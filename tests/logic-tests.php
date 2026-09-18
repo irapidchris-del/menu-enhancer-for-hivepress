@@ -56,6 +56,9 @@ function amehp_test_reset() {
 			'building_hp_items' => false,
 			'seen_items'        => null,
 			'seen_items_compacted' => false,
+			'menu_contexts'     => [],
+			'redirect_context'  => '',
+			'wc_children'       => [],
 		] as $name => $value
 	) {
 		set_priv( $MENU, $name, $value );
@@ -1698,6 +1701,786 @@ if ( AMEHP_TEST_WC ) {
 		'S9 and on a site whose members have not loaded an account page yet, the admin-built menu is what answers'
 	);
 }
+
+/* ===================== T. the Label on a Menu Items row ===================== */
+echo "\n[T] label overrides\n";
+
+/*
+ * Added in 3.5.0. Every Menu Items row has an optional Label, so any item can
+ * be renamed without a translation plugin. Empty means the usual name; the
+ * usual name is what record_seen_items() still records, because the settings
+ * screen shows it as the box's placeholder.
+ */
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'  => 'hp:listings_edit',
+		'label' => ' My <b>Adverts</b> ',
+	],
+	[
+		'item'  => 'hp:messages',
+		'label' => '',
+	],
+	[
+		'item'  => 'wc:downloads',
+		'label' => 'Files',
+	],
+	[
+		'item'  => '',
+		'label' => 'Nobody',
+	],
+	[
+		'item'  => 'hp:settings',
+		'label' => str_repeat( 'x', 120 ),
+	],
+];
+$labels                                = call_priv( $MENU, 'get_label_overrides' );
+ok( 'My Adverts' === $labels['hp:listings_edit'], 'T1 a typed label is stripped of tags and trimmed' );
+ok( ! isset( $labels['hp:messages'] ), 'T2 an empty label is no override: the item keeps its usual name' );
+ok( 'Files' === $labels['wc:downloads'], 'T3 a WooCommerce endpoint can be renamed too' );
+ok( ! isset( $labels[''] ), 'T4 a row with no item names nothing' );
+ok( 100 === strlen( $labels['hp:settings'] ), 'T5 and a label is capped at 100 characters, the same cap as a recorded label' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'  => 'hp:listings_edit',
+		'label' => 'My Adverts',
+	],
+];
+$items                                 = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'listings_edit' => 10,
+			'messages'      => 20,
+		]
+	)
+);
+ok( 'My Adverts' === $items['listings_edit']['label'], 'T6 the HivePress menu renders the owner\'s label' );
+ok( 'MESSAGES' === $items['messages']['label'], 'T7 and leaves every other item alone' );
+
+$seen = call_priv( $MENU, 'get_seen_items' );
+ok( 'LISTINGS_EDIT' === $seen['listings_edit']['label'], 'T8 while the recorded label is still the usual name, so the settings screen can show it as the placeholder' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'  => 'hp:listings_edit',
+		'label' => 'My Adverts',
+	],
+];
+$items                                 = $MENU->alter_hp_menu_items(
+	[
+		'listings_edit' => [
+			'route'  => 'listings_edit_page',
+			'_order' => 10,
+		],
+	]
+);
+ok( 'My Adverts' === $items['listings_edit']['label'], 'T9 an item registered by route alone gets the owner\'s label, which core then leaves in place rather than filling in the route title' );
+
+if ( AMEHP_TEST_WC ) {
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                      = base_menu(
+		[
+			'listings_edit' => 10,
+			'orders_view'   => 40,
+		]
+	);
+	$GLOBALS['_wc_menu_items']                      = [
+		'downloads'    => 'Downloads',
+		'orders'       => 'Orders',
+		'edit-address' => 'Addresses',
+	];
+	$GLOBALS['_options']['hp_amehp_wc_integration'] = '1';
+	$GLOBALS['_options']['hp_amehp_icons']          = [
+		[
+			'item'  => 'wc:downloads',
+			'label' => 'Files',
+		],
+		[
+			'item'  => 'hp:listings_edit',
+			'label' => 'My Adverts',
+		],
+		[
+			'item'  => 'wc:orders',
+			'label' => 'Purchases',
+		],
+	];
+	$rows                                           = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	ok( 'Files' === $rows['downloads'], 'T10 a WooCommerce endpoint renders the owner\'s label in the WooCommerce menu' );
+	ok( 'My Adverts' === $rows['listings_edit'], 'T11 so does a HivePress item merged into it' );
+	ok( 'Purchases' === $rows['orders'], 'T12 and renaming Orders renames the WooCommerce row, which is the one that menu shows' );
+	ok( 'Addresses' === $rows['edit-address'], 'T13 while an unnamed row keeps its own wording' );
+
+	$menu  = $MENU->alter_hp_menu( [ 'items' => $GLOBALS['_hp_menu_items'] ] );
+	$items = $MENU->alter_hp_menu_items( $menu['items'] );
+	ok( 'Files' === $items['downloads']['label'], 'T14 the same endpoint is renamed in the HivePress menu too' );
+	ok( 'Purchases' === $items['orders_view']['label'], 'T15 and renaming Orders reaches the HivePress "Placed Orders" item, which the screen lists under the WooCommerce key' );
+
+	/*
+	 * Core reads the Orders label back through THIS plugin's WooCommerce
+	 * filter (hivepress/includes/components/class-woocommerce.php:448-461,
+	 * 1.7.31), so the label that arrives at the constructor stage is whatever
+	 * alter_wc_menu() left in the list. Modelled here the way core does it.
+	 * Found by review on 2026-09-18; the empty row already happened in 3.4.5
+	 * through the "Also Hidden from the WooCommerce Menu" list.
+	 */
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items']             = [
+		'orders'    => 'Orders',
+		'downloads' => 'Downloads',
+	];
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'  => 'wc:orders',
+			'menus' => [ 'header', 'sidebar' ],
+		],
+	];
+	$filtered                              = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	ok( ! isset( $filtered['orders'] ), 'T16 limiting Orders to the HivePress menus takes the row out of the WooCommerce list' );
+
+	$menu = $MENU->alter_hp_menu(
+		[
+			'items' => [
+				'orders_view' => [
+					'label'  => isset( $filtered['orders'] ) ? $filtered['orders'] : null,
+					'url'    => 'http://example.test/orders',
+					'_order' => 40,
+				],
+			],
+		]
+	);
+	ok( 'Orders' === $menu['items']['orders_view']['label'], 'T17 and the "Placed Orders" item core built from that filtered list gets its usual name back rather than rendering an empty row' );
+
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items']                       = [ 'orders' => 'Orders' ];
+	$GLOBALS['_options']['hp_amehp_hidden_wc_items'] = [ 'wc:orders' ];
+	$filtered                                        = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	$menu                                            = $MENU->alter_hp_menu(
+		[
+			'items' => [
+				'orders_view' => [
+					'label'  => isset( $filtered['orders'] ) ? $filtered['orders'] : null,
+					'url'    => 'http://example.test/orders',
+					'_order' => 40,
+				],
+			],
+		]
+	);
+	ok( 'Orders' === $menu['items']['orders_view']['label'], 'T18 the same for an Orders row on the "Also Hidden from the WooCommerce Menu" list, which is the 3.4.5 shape of the bug' );
+
+	$menu = $MENU->alter_hp_menu(
+		[
+			'items' => [
+				'orders_view' => [
+					'label'  => 'Placed Orders',
+					'url'    => 'http://example.test/orders',
+					'_order' => 40,
+				],
+			],
+		]
+	);
+	ok( 'Placed Orders' === $menu['items']['orders_view']['label'], 'T19 while a label another extension set is left alone' );
+
+	amehp_test_reset();
+	$GLOBALS['_wc_menu_items']             = [ 'orders' => 'Orders' ];
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'  => 'wc:orders',
+			'label' => 'My purchases',
+		],
+	];
+	$filtered                              = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	$menu                                  = $MENU->alter_hp_menu(
+		[
+			'items' => [
+				'orders_view' => [
+					'label'  => $filtered['orders'],
+					'url'    => 'http://example.test/orders',
+					'_order' => 40,
+				],
+			],
+		]
+	);
+	ok( 'Orders' === $menu['items']['orders_view']['label'], 'T20 a rename core read back through the WooCommerce list is put back to the usual name at the constructor stage' );
+
+	$items = $MENU->alter_hp_menu_items( $menu['items'] );
+	ok( 'My purchases' === $items['orders_view']['label'], 'T21 and applied again at the /items stage, after the usual name has been recorded' );
+	ok( 'Orders' === call_priv( $MENU, 'get_seen_items' )['orders_view']['label'], 'T22 so the settings screen still knows the usual name' );
+}
+
+/* ===================== U. telling the three menus apart ===================== */
+echo "\n[U] per-menu visibility\n";
+
+/*
+ * Added in 3.5.0. The header dropdown and the account page sidebar are one
+ * HivePress menu built twice, so the only way to tell them apart is how each
+ * was asked for; the constructor stage sees that, the /items stage acts on it,
+ * and the menu object is the note passed between them.
+ */
+amehp_test_reset();
+ok(
+	'header' === call_priv(
+		$MENU,
+		'get_menu_context',
+		[
+			[
+				'wrap'       => false,
+				'attributes' => [ 'class' => [ 'sub-menu' ] ],
+			],
+		]
+	),
+	'U1 the header dropdown is built with wrap off, and is known by that'
+);
+ok(
+	'sidebar' === call_priv(
+		$MENU,
+		'get_menu_context',
+		[
+			[
+				'context'    => [],
+				'attributes' => [ 'class' => [ 'widget_nav_menu' ] ],
+			],
+		]
+	),
+	'U2 the sidebar is built by the menu block with a context and the widget class'
+);
+ok( 'sidebar' === call_priv( $MENU, 'get_menu_context', [ [ 'context' => [ 'x' => 1 ] ] ] ), 'U3 a context alone is enough: the block always passes one' );
+ok( '' === call_priv( $MENU, 'get_menu_context', [ [] ] ), 'U4 a menu built with no arguments is nobody\'s in particular' );
+ok( '' === call_priv( $MENU, 'get_menu_context', [ [ 'items' => [] ] ] ), 'U5 and so is one built with items alone, as the settings screen does' );
+ok( '' === call_priv( $MENU, 'get_menu_context', [ 'not an array' ] ), 'U6 a non-array is not an error' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'  => 'hp:messages',
+		'menus' => [ 'sidebar' ],
+	],
+	[
+		'item'  => 'hp:settings',
+		'menus' => [ 'header', 'woocommerce' ],
+	],
+];
+$base                                  = base_menu(
+	[
+		'listings_edit' => 10,
+		'messages'      => 20,
+		'settings'      => 30,
+	]
+);
+
+$header = new stdClass();
+$menu   = $MENU->alter_hp_menu(
+	[
+		'wrap'  => false,
+		'items' => $base,
+	],
+	$header
+);
+$items  = $MENU->alter_hp_menu_items( $menu['items'], $header );
+ok( ! isset( $items['messages'] ) && isset( $items['settings'], $items['listings_edit'] ), 'U7 an item limited to the sidebar is out of the header dropdown, and nothing else is' );
+
+$sidebar = new stdClass();
+$menu    = $MENU->alter_hp_menu(
+	[
+		'context'    => [],
+		'attributes' => [ 'class' => [ 'widget_nav_menu' ] ],
+		'items'      => $base,
+	],
+	$sidebar
+);
+$items   = $MENU->alter_hp_menu_items( $menu['items'], $sidebar );
+ok( isset( $items['messages'] ) && ! isset( $items['settings'] ), 'U8 the same settings leave the sidebar with the opposite answer' );
+
+$menu  = $MENU->alter_hp_menu( [ 'items' => $base ] );
+$items = $MENU->alter_hp_menu_items( $menu['items'] );
+ok( isset( $items['messages'], $items['settings'] ), 'U9 a menu nobody could name gets every item: nothing is ever hidden from a menu this plugin cannot tell apart' );
+
+$stranger = new stdClass();
+$items    = $MENU->alter_hp_menu_items( $base, $stranger );
+ok( isset( $items['messages'], $items['settings'] ), 'U10 and so does a menu whose constructor stage this plugin never saw' );
+
+ok( [] === get_priv( $MENU, 'menu_contexts' ), 'U11 the note is taken back out as it is read, so the map never grows' );
+
+if ( AMEHP_TEST_WC ) {
+	amehp_test_reset();
+	$GLOBALS['_hp_menu_items']                      = base_menu(
+		[
+			'listings_edit' => 10,
+			'messages'      => 20,
+		]
+	);
+	$GLOBALS['_wc_menu_items']                      = [
+		'downloads'    => 'Downloads',
+		'edit-address' => 'Addresses',
+	];
+	$GLOBALS['_options']['hp_amehp_wc_integration'] = '1';
+	$GLOBALS['_options']['hp_amehp_icons']          = [
+		[
+			'item'  => 'wc:downloads',
+			'menus' => [ 'header', 'sidebar' ],
+		],
+		[
+			'item'  => 'hp:messages',
+			'menus' => [ 'woocommerce' ],
+		],
+	];
+	$rows                                           = $MENU->alter_wc_menu( $GLOBALS['_wc_menu_items'] );
+	ok( ! isset( $rows['downloads'] ), 'U12 an endpoint limited to the HivePress menus leaves the WooCommerce menu' );
+	ok( isset( $rows['messages'], $rows['edit-address'] ), 'U13 while an item limited to the WooCommerce menu is merged in' );
+
+	$sidebar = new stdClass();
+	$menu    = $MENU->alter_hp_menu(
+		[
+			'context' => [],
+			'items'   => $GLOBALS['_hp_menu_items'],
+		],
+		$sidebar
+	);
+	$items   = $MENU->alter_hp_menu_items( $menu['items'], $sidebar );
+	ok( isset( $items['downloads'] ) && ! isset( $items['messages'] ), 'U14 and the sidebar shows the reverse: the endpoint stays, the WooCommerce-only item goes' );
+
+	amehp_test_reset();
+	$GLOBALS['_options']['hp_amehp_wc_integration'] = '1';
+	$GLOBALS['_options']['hp_amehp_custom_items']   = [
+		[
+			'uid'   => 'aaaaaaaaaaaa',
+			'label' => 'Header only',
+			'url'   => '/h',
+			'menus' => [ 'header' ],
+		],
+		[
+			'uid'   => 'bbbbbbbbbbbb',
+			'label' => 'Legacy HivePress',
+			'url'   => '/l',
+			'menus' => 'hivepress',
+		],
+		[
+			'uid'   => 'cccccccccccc',
+			'label' => 'Legacy Woo',
+			'url'   => '/w',
+			'menus' => 'woocommerce',
+		],
+		[
+			'uid'   => 'dddddddddddd',
+			'label' => 'Everywhere',
+			'url'   => '/e',
+			'menus' => '',
+		],
+	];
+
+	$header = new stdClass();
+	$menu   = $MENU->alter_hp_menu(
+		[
+			'wrap'  => false,
+			'items' => [],
+		],
+		$header
+	);
+	$items  = $MENU->alter_hp_menu_items( $menu['items'], $header );
+	ok(
+		isset( $items['amehp_item_aaaaaaaaaaaa'], $items['amehp_item_bbbbbbbbbbbb'], $items['amehp_item_dddddddddddd'] ) && ! isset( $items['amehp_item_cccccccccccc'] ),
+		'U15 the header shows the header-only item, the 3.4.x HivePress-only item and the unlimited one'
+	);
+
+	$sidebar = new stdClass();
+	$menu    = $MENU->alter_hp_menu(
+		[
+			'context' => [],
+			'items'   => [],
+		],
+		$sidebar
+	);
+	$items   = $MENU->alter_hp_menu_items( $menu['items'], $sidebar );
+	ok(
+		! isset( $items['amehp_item_aaaaaaaaaaaa'] ) && isset( $items['amehp_item_bbbbbbbbbbbb'], $items['amehp_item_dddddddddddd'] ) && ! isset( $items['amehp_item_cccccccccccc'] ),
+		'U16 the sidebar drops the header-only item and keeps the 3.4.x HivePress-only one, which always meant both HivePress menus'
+	);
+
+	$rows = $MENU->alter_wc_menu( [ 'downloads' => 'Downloads' ] );
+	ok(
+		! isset( $rows['amehp_item_aaaaaaaaaaaa'] ) && ! isset( $rows['amehp_item_bbbbbbbbbbbb'] ) && isset( $rows['amehp_item_cccccccccccc'], $rows['amehp_item_dddddddddddd'] ),
+		'U17 and the WooCommerce menu shows the 3.4.x WooCommerce-only item and the unlimited one'
+	);
+}
+
+// normalise_menus(), the one reader of every stored shape. tests/js/menu-tests.js
+// section J walks the JavaScript twin through the same values.
+amehp_test_reset();
+ok( [] === call_priv( $MENU, 'normalise_menus', [ null ] ), 'U18 nothing stored is every menu' );
+ok( [] === call_priv( $MENU, 'normalise_menus', [ '' ] ), 'U19 and so is the empty string an emptied select stores' );
+ok( [ 'header', 'woocommerce' ] === call_priv( $MENU, 'normalise_menus', [ [ 'woocommerce', 'header' ] ] ), 'U20 a list is read back in canonical order' );
+ok( [] === call_priv( $MENU, 'normalise_menus', [ [ 'header', 'sidebar', 'woocommerce' ] ] ), 'U21 all three is the same answer as none' );
+ok( [ 'sidebar' ] === call_priv( $MENU, 'normalise_menus', [ [ 'sidebar', 'footer', 42 ] ] ), 'U22 a menu the site does not have, or a non-string, is dropped' );
+ok( [ 'header', 'sidebar' ] === call_priv( $MENU, 'normalise_menus', [ 'hivepress' ] ), 'U23 the 3.4.x "hivepress" string is both HivePress menus' );
+ok( [ 'woocommerce' ] === call_priv( $MENU, 'normalise_menus', [ 'woocommerce' ] ), 'U24 and "woocommerce" is the WooCommerce menu' );
+ok( [] === call_priv( $MENU, 'normalise_menus', [ 'both' ] ), 'U25 while "both" is every menu' );
+
+// The account page redirect picks from the sidebar's items.
+amehp_test_reset();
+set_priv( $MENU, 'redirect_context', 'sidebar' );
+ok( 'sidebar' === call_priv( $MENU, 'get_menu_context', [ [] ] ), 'U26 while the account page redirect runs, a menu built with no arguments is the sidebar, since that is what the visitor lands beside' );
+ok( 'header' === call_priv( $MENU, 'get_menu_context', [ [ 'wrap' => false ] ] ), 'U27 and a menu that names itself is never overridden' );
+
+amehp_test_reset();
+call_priv(
+	$MENU,
+	'filter_account_redirect',
+	[
+		[
+			function () {
+				return '/account/listings/';
+			},
+		],
+	]
+);
+ok( '' === get_priv( $MENU, 'redirect_context' ), 'U28 and the window is closed again once the redirect has been decided' );
+
+/* ===================== V. nesting the HivePress menu ===================== */
+echo "\n[V] nesting\n";
+
+/*
+ * Added in 3.5.0, on core's own `_parent` argument. tests/js/menu-tests.js
+ * section J2 walks the JavaScript twin (nestItems) through the same shapes.
+ */
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'   => 'hp:messages',
+		'parent' => 'hp:listings_edit',
+	],
+	[
+		'item'   => 'hp:settings',
+		'parent' => 'hp:gone',
+	],
+	[
+		'item'   => 'hp:logout',
+		'parent' => 'hp:logout',
+	],
+	[
+		'item'   => 'hp:bad',
+		'parent' => 'nope;drop',
+	],
+];
+$parents                               = call_priv( $MENU, 'get_parent_map' );
+ok(
+	[
+		'hp:messages' => 'hp:listings_edit',
+		'hp:settings' => 'hp:gone',
+	] === $parents,
+	'V1 the map keeps every well-formed choice bar an item naming itself; whether the parent exists is decided per menu'
+);
+
+$items = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'listings_edit' => 10,
+			'messages'      => 20,
+			'settings'      => 30,
+			'logout'        => 1000,
+		]
+	)
+);
+ok( 'listings_edit' === $items['messages']['_parent'], 'V2 a child carries core\'s own _parent argument, naming its parent by menu item name' );
+ok( ! isset( $items['settings']['_parent'] ), 'V3 a child whose parent is not in the menu stays at the top level rather than vanishing with it' );
+ok( ! isset( $items['listings_edit']['_parent'] ) && ! isset( $items['logout']['_parent'] ), 'V4 and nothing else is nested' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons']      = [
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+	[
+		'item'   => 'hp:c',
+		'parent' => 'hp:a',
+	],
+];
+$GLOBALS['_options']['hp_amehp_menu_order'] = 'hp:a,hp:c,hp:b,hp:d';
+$items                                      = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'a' => 10,
+			'b' => 20,
+			'c' => 30,
+			'd' => 40,
+		]
+	)
+);
+$top                                        = array_filter(
+	$items,
+	function ( $item ) {
+		return ! isset( $item['_parent'] );
+	}
+);
+$children                                   = array_filter(
+	$items,
+	function ( $item ) {
+		return isset( $item['_parent'] );
+	}
+);
+ok( [ 'a', 'd' ] === rendered_order( $top ), 'V5 the top level renders in the arranged order' );
+ok( [ 'c', 'b' ] === rendered_order( $children ), 'V6 and the children in theirs, exactly as dragged' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons']        = [
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+];
+$GLOBALS['_options']['hp_amehp_hidden_items'] = [ 'hp:a' ];
+$items                                        = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'a' => 10,
+			'b' => 20,
+		]
+	)
+);
+ok( isset( $items['b'] ) && ! isset( $items['b']['_parent'] ), 'V7 hiding the parent promotes the child rather than hiding it too' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'  => 'hp:a',
+		'menus' => [ 'sidebar' ],
+	],
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+];
+$header                                = new stdClass();
+$menu                                  = $MENU->alter_hp_menu(
+	[
+		'wrap'  => false,
+		'items' => base_menu(
+			[
+				'a' => 10,
+				'b' => 20,
+			]
+		),
+	],
+	$header
+);
+$items                                 = $MENU->alter_hp_menu_items( $menu['items'], $header );
+ok( ! isset( $items['a'] ) && isset( $items['b'] ) && ! isset( $items['b']['_parent'] ), 'V8 a parent limited to the sidebar leaves its child at the top level of the header dropdown' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+	[
+		'item'   => 'hp:c',
+		'parent' => 'hp:b',
+	],
+];
+$items                                 = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'a' => 10,
+			'b' => 20,
+			'c' => 30,
+		]
+	)
+);
+ok( 'a' === $items['b']['_parent'] && ! isset( $items['c']['_parent'] ), 'V9 one level only: a child of a nested item is promoted' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'   => 'hp:a',
+		'parent' => 'hp:b',
+	],
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+];
+$items                                 = $MENU->alter_hp_menu_items(
+	base_menu(
+		[
+			'a' => 10,
+			'b' => 20,
+		]
+	)
+);
+ok( ! isset( $items['a']['_parent'] ) && ! isset( $items['b']['_parent'] ), 'V10 two items naming each other are both promoted' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'uid'   => 'aaaaaaaaaaaa',
+		'label' => 'Help',
+		'url'   => '/help',
+	],
+	[
+		'uid'    => 'bbbbbbbbbbbb',
+		'label'  => 'FAQ',
+		'url'    => '/faq',
+		'parent' => 'amehp_item_aaaaaaaaaaaa',
+	],
+];
+$GLOBALS['_options']['hp_amehp_icons']        = [
+	[
+		'item'   => 'hp:a',
+		'parent' => 'amehp_item_aaaaaaaaaaaa',
+	],
+];
+$menu                                         = $MENU->alter_hp_menu( [ 'items' => base_menu( [ 'a' => 10 ] ) ] );
+$items                                        = $MENU->alter_hp_menu_items( $menu['items'] );
+ok( 'amehp_item_aaaaaaaaaaaa' === $items['amehp_item_bbbbbbbbbbbb']['_parent'], 'V11 a custom item nests under another custom item' );
+ok( 'amehp_item_aaaaaaaaaaaa' === $items['a']['_parent'], 'V12 and a built-in item nests under a custom one' );
+
+// The front-end assets follow the setting.
+amehp_test_reset();
+$MENU->enqueue_frontend_assets();
+ok( ! in_array( 'amehp-frontend', $GLOBALS['_scripts_enq'], true ), 'V13 with nothing nested and no counters the front-end script is not sent' );
+ok( false === strpos( (string) ( $GLOBALS['_inline_styles']['amehp-frontend'] ?? '' ), 'menu-item-has-children' ), 'V14 nor are the fold-away rules' );
+
+amehp_test_reset();
+$GLOBALS['_options']['hp_amehp_icons'] = [
+	[
+		'item'   => 'hp:b',
+		'parent' => 'hp:a',
+	],
+];
+$MENU->enqueue_frontend_assets();
+ok( in_array( 'amehp-frontend', $GLOBALS['_scripts_enq'], true ), 'V15 the script is sent as soon as an item is nested, whether or not there are counters' );
+ok( ! empty( $GLOBALS['_localized']['amehpFrontendData']['nesting'] ), 'V16 with the flag the script switches its toggles on by' );
+ok( false !== strpos( $GLOBALS['_localized']['amehpFrontendData']['toggleLabel'], '%s' ), 'V17 and a toggle label the script names after each parent item' );
+
+$css = (string) ( $GLOBALS['_inline_styles']['amehp-frontend'] ?? '' );
+ok( false !== strpos( $css, 'li.menu-item-has-children>ul{display:none !important' ), 'V18 with the rules that fold a nested list away, marked important because the theme writes its own state inline' );
+ok( false !== strpos( $css, ':has(>ul .current-menu-item)>ul{display:block !important' ), 'V19 and the group holding the current page kept open before the script runs' );
+ok( false !== strpos( $css, '.amehp-menu__item--child.amehp-collapsed{display:none !important' ), 'V20 and the rule that folds a WooCommerce child row' );
+
+/* ===================== W. nesting the WooCommerce menu ===================== */
+if ( AMEHP_TEST_WC ) {
+	echo "\n[W] nesting in the WooCommerce menu\n";
+
+	amehp_test_reset();
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'   => 'wc:downloads',
+			'parent' => 'wc:edit-account',
+		],
+		[
+			'item'   => 'wc:edit-address',
+			'parent' => 'wc:edit-account',
+		],
+	];
+	$rows                                  = $MENU->alter_wc_menu(
+		[
+			'dashboard'       => 'Dashboard',
+			'edit-address'    => 'Addresses',
+			'downloads'       => 'Downloads',
+			'edit-account'    => 'Account details',
+			'customer-logout' => 'Logout',
+		]
+	);
+	ok( [ 'dashboard', 'edit-account', 'edit-address', 'downloads', 'customer-logout' ] === array_keys( $rows ), 'W1 the flat WooCommerce list puts each child directly after its parent, in their own order' );
+	ok( 'Downloads' === $rows['downloads'], 'W2 and still hands WooCommerce a plain label per row' );
+
+	$classes = $MENU->alter_wc_menu_item_classes( [ 'woocommerce-MyAccount-navigation-link' ], 'downloads' );
+	ok( in_array( 'amehp-menu__item--child', $classes, true ) && in_array( 'amehp-collapsed', $classes, true ), 'W3 a child row is marked as one, folded away' );
+
+	$classes = $MENU->alter_wc_menu_item_classes( [ 'woocommerce-MyAccount-navigation-link' ], 'edit-account' );
+	ok( in_array( 'amehp-menu__item--parent', $classes, true ) && ! in_array( 'amehp-open', $classes, true ), 'W4 the parent row is marked as a parent, closed' );
+
+	$classes = $MENU->alter_wc_menu_item_classes( [ 'woocommerce-MyAccount-navigation-link' ], 'dashboard' );
+	ok( [ 'woocommerce-MyAccount-navigation-link' ] === $classes, 'W5 and a row outside any group is untouched' );
+
+	$GLOBALS['_wc_endpoint'] = 'edit-address';
+	$classes                 = $MENU->alter_wc_menu_item_classes( [], 'edit-account' );
+	ok( in_array( 'amehp-open', $classes, true ), 'W6 the parent of the page being viewed starts open' );
+
+	$classes = $MENU->alter_wc_menu_item_classes( [], 'downloads' );
+	ok( ! in_array( 'amehp-collapsed', $classes, true ), 'W7 and every child in that group starts shown, not just the current one' );
+
+	amehp_test_reset();
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'   => 'wc:downloads',
+			'parent' => 'hp:listings_edit',
+		],
+	];
+	$rows                                  = $MENU->alter_wc_menu(
+		[
+			'downloads'    => 'Downloads',
+			'edit-account' => 'Account details',
+		]
+	);
+	ok( [ 'downloads', 'edit-account' ] === array_keys( $rows ), 'W8 a child whose parent is not in the WooCommerce menu keeps its own place' );
+	ok( [] === $MENU->alter_wc_menu_item_classes( [], 'downloads' ), 'W9 and is not marked as a child' );
+}
+
+/* ===================== X. the options the new fields offer ===================== */
+echo "\n[X] menu and parent options\n";
+
+amehp_test_reset();
+$options = $MENU->get_menu_options();
+
+if ( AMEHP_TEST_WC ) {
+	ok( [ 'header', 'sidebar', 'woocommerce' ] === array_keys( $options ), 'X1 with WooCommerce active all three menus are offered' );
+} else {
+	ok( [ 'header', 'sidebar' ] === array_keys( $options ), 'X1 without WooCommerce only the two HivePress menus are offered' );
+
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'  => 'hp:a',
+			'menus' => [ 'woocommerce' ],
+		],
+	];
+	ok( isset( $MENU->get_menu_options()['woocommerce'] ), 'X2 unless a saved row already names the WooCommerce menu, which must stay selectable or the next save discards it' );
+
+	$GLOBALS['_options']['hp_amehp_icons'] = [
+		[
+			'item'  => 'hp:a',
+			'menus' => [ 'header', 'sidebar', 'woocommerce' ],
+		],
+	];
+	ok( isset( $MENU->get_menu_options()['woocommerce'] ), 'X2b including a row with all three ticked, which reads as "no limit" but still names it - or the next save would quietly narrow it to two' );
+
+	$GLOBALS['_options']['hp_amehp_icons']        = [];
+	$GLOBALS['_options']['hp_amehp_custom_items'] = [
+		[
+			'label' => 'Shop',
+			'url'   => '/shop',
+			'menus' => 'woocommerce',
+		],
+	];
+	ok( isset( $MENU->get_menu_options()['woocommerce'] ), 'X2c and a custom item still holding the 3.4.x "woocommerce" string counts too' );
+}
+
+amehp_test_reset();
+$GLOBALS['_hp_menu_items']                    = base_menu( [ 'listings_edit' => 10 ] );
+$GLOBALS['_options']['hp_amehp_custom_items'] = [
+	[
+		'uid'   => 'aaaaaaaaaaaa',
+		'label' => 'Help',
+		'url'   => '/help',
+	],
+];
+$GLOBALS['_options']['hp_amehp_icons']        = [
+	[
+		'item'   => 'hp:listings_edit',
+		'parent' => 'hp:vanished',
+	],
+	[
+		'item'   => 'hp:x',
+		'parent' => 'amehp_item_deleted00000',
+	],
+];
+$options                                      = $MENU->get_parent_item_options();
+ok( isset( $options['hp:listings_edit'] ), 'X3 the built-in items are offered as parents' );
+ok( 'Help' === $options['amehp_item_aaaaaaaaaaaa'], 'X4 and so is every saved custom item, under its own label' );
+ok( 'Vanished' === $options['hp:vanished'], 'X5 a parent a row already names stays selectable while its extension is off' );
+ok( ! isset( $options['amehp_item_deleted00000'] ), 'X6 but a deleted custom item is allowed to fall away, since there is nothing to suspend' );
 
 /* ===================== O. version drift ===================== */
 echo "\n[O] version drift\n";
