@@ -7,8 +7,8 @@
  * family: a 1.5rem circle that grows into a pill for two digits, 0.75rem bold
  * text (a fixed size rather than 80% of the link, which drifted with the
  * link's own font size), 0 0.4rem padding and a 0.5rem gap from the label.
- * These are the values the Freestylr child theme settled on for every account
- * counter on 3 September 2026, adopted here so the theme needs no rule of its
+ * These are the values settled on for every account counter during a site
+ * review on 3 September 2026, adopted here so a theme needs no rule of its
  * own for this badge. Display is inline-flex so the badge cannot drop onto its
  * own line inside links the theme does not lay out as flex rows.
  */

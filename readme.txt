@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.5.0
+Stable tag: 3.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,11 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.5.1 =
+* Added: each placeholder page has a Show on this page setting, to switch off its page title, icon, message or button where the theme or another plugin already shows its own heading or introduction. Nothing changes until something is unticked.
+* Changed: a parent item that also shows a count, such as Notifications with items nested under it, keeps both the count and the button that opens its group visible, whichever theme draws the count.
+* Fixed: a custom item whose link is just "#" (a parent that is only a heading for its group) was left out of the menu on the site, so its nested items showed at the top level although the settings preview looked right. It now shows, and clicking its name opens and closes the group.
 
 = 3.5.0 =
 * Added: the Coupons item that Marketplace 1.4 adds to the Vendor account menu is now offered on the Menu Items rows straight away, so it can be given an icon, a colour and a label like every other item. Until a vendor had opened their account page it was the one item the settings screen could not list.

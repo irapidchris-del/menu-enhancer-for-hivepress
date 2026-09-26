@@ -1066,9 +1066,9 @@ div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed
 /*
  * Above 1200px the panel becomes a sticky column to the right of the settings,
  * matching how Social Proof's own preview sits beside its form (a 320px side
- * column against a ~640px main column). The threshold was 1400px until
- * 2026-08-30, which is wider than a typical laptop, so the panel stayed stacked
- * on top for most people and the owner reported it as misplaced. 1200px leaves
+ * column against a ~640px main column). The threshold was 1400px, which is
+ * wider than a typical laptop, so the panel stayed stacked on top for most
+ * people and looked misplaced. 1200px leaves
  * roughly 650px of form beside the panel once the admin menu is subtracted,
  * which is the width Social Proof targets.
  *
@@ -1132,22 +1132,11 @@ div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed
 /*
  * Below the sticky-column breakpoint the panel goes to the BOTTOM of the form.
  *
- * It is rendered first, because a settings section can only be moved by
- * reordering the section list server-side and the panel has to be the first
- * section to become the right-hand column above. In the narrow layout that
- * same position pushed every actual setting a screenful down the page, which
- * on a phone means scrolling past a preview to reach the controls that change
- * it - reported by the owner on 2026-08-30.
- *
- * Moved with flex ordering rather than by relocating the node: the panel stays
- * one element in one place in the DOM, so the live updates, the sortable and
- * every event binding carry on working untouched, and the layout is correct at
- * the first paint whether or not any script runs. The nav gains a link down to
- * it (backend.js), which is what makes a panel at the bottom reachable.
- *
- * `order` only has meaning in a flex container, so the form becomes one. A
- * column flex container lays its children out top to bottom at full width,
- * which is what block flow was already doing here.
+ * The panel is rendered first so it can become the right-hand column above; in the
+ * narrow layout that pushed every setting a screenful down. Flex `order` moves it
+ * without relocating the node, so live updates, the sortable and event bindings keep
+ * working and the first paint is correct without script. The nav links down to it
+ * (backend.js). `order` needs a flex container, so the form becomes a column flex.
  */
 @media screen and (max-width: 1199px) {
 	form.hp-form--table:has(> .amehp-preview) {
@@ -1187,12 +1176,10 @@ div[data-component="repeater"] table.hp-table > tbody > tr.amehp-card--collapsed
 	}
 }
 
-/* Tooltip placement, house rule (Chris, 2026-09-02). The help icon sits directly after the label
- * text, not at the far end of the label cell where core's justify-content: space-between puts it,
- * and the bubble opens to the RIGHT at 300px. Core anchors the bubble to the left of the icon at
- * 173px (hivepress/assets/css/backend.min.css, .hp-tooltip__text), which puts it under the admin
- * menu whenever the icon is early in the row and turns two sentences into a tall ribbon. The same
- * block sits in every extension with a settings tab; fix it in one and sweep the rest. */
+/* Tooltip placement, shared by every extension with a settings tab (sweep the siblings).
+ * The help icon sits right after the label text and the bubble opens to the RIGHT at 300px.
+ * Core anchors it left of the icon at 173px (hivepress/assets/css/backend.min.css,
+ * .hp-tooltip__text), which puts it under the admin menu and makes a tall ribbon. */
 .hp-page .hp-form--table th > div {
 	justify-content: flex-start;
 	gap: 6px;

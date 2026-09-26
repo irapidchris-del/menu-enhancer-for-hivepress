@@ -140,6 +140,21 @@
 			} );
 
 			/*
+			 * A parent whose link is only a fragment ("#") is a heading for its
+			 * group with no page of its own, so a click on its label opens and
+			 * closes the group like the chevron does, instead of jumping to the
+			 * top of the page. Stopped for the same reason as the button above.
+			 */
+			if ( /^#[A-Za-z0-9_-]*$/.test( link.getAttribute( 'href' ) || '' ) ) {
+				link.setAttribute( 'role', 'button' );
+				link.addEventListener( 'click', function ( event ) {
+					event.preventDefault();
+					event.stopPropagation();
+					setOpen( ! li.classList.contains( 'amehp-open' ) );
+				} );
+			}
+
+			/*
 			 * Stand the theme's hover flyout down for this row. hivetheme binds
 			 * hoverIntent to every header menu row with a nested list and
 			 * slides that list in and out on hover, positioned as a flyout to

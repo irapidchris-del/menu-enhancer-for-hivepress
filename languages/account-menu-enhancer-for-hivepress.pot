@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Account Menu Enhancer for HivePress 3.5.0\n"
+"Project-Id-Version: Account Menu Enhancer for HivePress 3.5.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/account-menu-enhancer-for-hivepress\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-18T15:09:06+00:00\n"
+"POT-Creation-Date: 2026-09-25T21:51:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: account-menu-enhancer-for-hivepress\n"
@@ -24,7 +24,7 @@ msgid "Account Menu Enhancer for HivePress requires the HivePress plugin to be i
 msgstr ""
 
 #: account-menu-enhancer-for-hivepress.php:124
-#: includes/components/class-amehp-menu-enhancer.php:3812
+#: includes/components/class-amehp-menu-enhancer.php:3835
 msgid "Settings"
 msgstr ""
 
@@ -88,175 +88,175 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: menu item label.
-#: includes/components/class-amehp-menu-enhancer.php:2277
+#: includes/components/class-amehp-menu-enhancer.php:2291
 #, php-format
 msgid "%s sub-menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2618
+#: includes/components/class-amehp-menu-enhancer.php:2641
 msgid "New item"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2619
+#: includes/components/class-amehp-menu-enhancer.php:2642
 msgid "Collapse"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2620
+#: includes/components/class-amehp-menu-enhancer.php:2643
 msgid "Expand"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2621
+#: includes/components/class-amehp-menu-enhancer.php:2644
 msgid "Drag to reorder"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2622
-#: includes/components/class-amehp-menu-enhancer.php:3837
+#: includes/components/class-amehp-menu-enhancer.php:2645
+#: includes/components/class-amehp-menu-enhancer.php:3860
 msgid "Dashboard"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2623
-#: includes/components/class-amehp-menu-enhancer.php:3898
+#: includes/components/class-amehp-menu-enhancer.php:2646
+#: includes/components/class-amehp-menu-enhancer.php:3921
 msgid "Sign Out"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2624
+#: includes/components/class-amehp-menu-enhancer.php:2647
 msgid "Move up"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2625
+#: includes/components/class-amehp-menu-enhancer.php:2648
 msgid "Move down"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2628
+#: includes/components/class-amehp-menu-enhancer.php:2651
 msgid "Jump to a section:"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2629
-#: includes/components/class-amehp-menu-enhancer.php:3174
+#: includes/components/class-amehp-menu-enhancer.php:2652
+#: includes/components/class-amehp-menu-enhancer.php:3197
 msgid "Account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2630
+#: includes/components/class-amehp-menu-enhancer.php:2653
 msgid "HivePress account menu (dropdown and sidebar)"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2631
-#: includes/components/class-amehp-menu-enhancer.php:3173
-#: includes/components/class-amehp-menu-enhancer.php:4412
+#: includes/components/class-amehp-menu-enhancer.php:2654
+#: includes/components/class-amehp-menu-enhancer.php:3196
+#: includes/components/class-amehp-menu-enhancer.php:4435
 msgid "Header account dropdown"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2632
-#: includes/components/class-amehp-menu-enhancer.php:4413
+#: includes/components/class-amehp-menu-enhancer.php:2655
+#: includes/components/class-amehp-menu-enhancer.php:4436
 msgid "HivePress account sidebar"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2633
-#: includes/components/class-amehp-menu-enhancer.php:3177
-#: includes/components/class-amehp-menu-enhancer.php:4417
+#: includes/components/class-amehp-menu-enhancer.php:2656
+#: includes/components/class-amehp-menu-enhancer.php:3200
+#: includes/components/class-amehp-menu-enhancer.php:4440
 msgid "WooCommerce account menu"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2634
+#: includes/components/class-amehp-menu-enhancer.php:2657
 msgid "Save Changes"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2635
+#: includes/components/class-amehp-menu-enhancer.php:2658
 msgid "Back to top"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:2637
+#: includes/components/class-amehp-menu-enhancer.php:2660
 msgid "Put every menu item back in its default order? Your arrangement will be discarded. Nothing is saved until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3151
+#: includes/components/class-amehp-menu-enhancer.php:3174
 msgid "Live preview"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3180
+#: includes/components/class-amehp-menu-enhancer.php:3203
 msgid "Your account menus in the sidebar style, following every change as you make it. Drag an item by its handle to reorder the menu, or use the arrow buttons; a nested item moves among the items under the same parent. Nested items are shown open here; on your site they start folded away unless one of them is the page being viewed. Nothing is stored until you press Save Changes."
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3184
+#: includes/components/class-amehp-menu-enhancer.php:3207
 msgid "Reset to default order"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3817
+#: includes/components/class-amehp-menu-enhancer.php:3840
 #: includes/components/class-amehp-persistent-menu.php:221
 msgid "Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3822
+#: includes/components/class-amehp-menu-enhancer.php:3845
 #: includes/components/class-amehp-persistent-menu.php:266
 msgid "Favorites"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3827
+#: includes/components/class-amehp-menu-enhancer.php:3850
 msgid "Import Listings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3832
+#: includes/components/class-amehp-menu-enhancer.php:3855
 #: includes/components/class-amehp-persistent-menu.php:327
 msgid "Messages"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3842
+#: includes/components/class-amehp-menu-enhancer.php:3865
 msgid "Received Orders"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3847
+#: includes/components/class-amehp-menu-enhancer.php:3870
 msgid "Payouts"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3863
+#: includes/components/class-amehp-menu-enhancer.php:3886
 msgid "Coupons"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3868
+#: includes/components/class-amehp-menu-enhancer.php:3891
 #: includes/components/class-amehp-persistent-menu.php:312
 msgid "Bookings"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3873
+#: includes/components/class-amehp-menu-enhancer.php:3896
 msgid "Calendar"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3878
+#: includes/components/class-amehp-menu-enhancer.php:3901
 msgid "Searches"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3883
+#: includes/components/class-amehp-menu-enhancer.php:3906
 msgid "Memberships"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3888
+#: includes/components/class-amehp-menu-enhancer.php:3911
 #: includes/components/class-amehp-persistent-menu.php:236
 msgid "Requests"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:3893
+#: includes/components/class-amehp-menu-enhancer.php:3916
 #: includes/components/class-amehp-persistent-menu.php:251
 msgid "Offers"
 msgstr ""
 
 #. translators: %s: menu item label.
-#: includes/components/class-amehp-menu-enhancer.php:4295
-#: includes/components/class-amehp-menu-enhancer.php:4315
-#: includes/components/class-amehp-menu-enhancer.php:4531
+#: includes/components/class-amehp-menu-enhancer.php:4318
+#: includes/components/class-amehp-menu-enhancer.php:4338
+#: includes/components/class-amehp-menu-enhancer.php:4554
 #, php-format
 msgid "%s (WooCommerce)"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:4515
+#: includes/components/class-amehp-menu-enhancer.php:4538
 msgid "My Profile"
 msgstr ""
 
-#: includes/components/class-amehp-menu-enhancer.php:4516
+#: includes/components/class-amehp-menu-enhancer.php:4539
 msgid "My Vendor Profile"
 msgstr ""
 
 #. translators: %s: page title.
-#: includes/components/class-amehp-menu-enhancer.php:4545
+#: includes/components/class-amehp-menu-enhancer.php:4568
 #, php-format
 msgid "%s (Page)"
 msgstr ""
@@ -365,75 +365,96 @@ msgstr ""
 msgid "Subscriptions"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:687
+#: includes/components/class-amehp-persistent-menu.php:721
 msgid "Tick the account menu items that should stay visible even when their pages are empty. Empty pages then show a short notice and a button instead of disappearing. Unticked items keep the default behaviour."
 msgstr ""
 
 #. translators: %s: comma-separated list of page names.
-#: includes/components/class-amehp-persistent-menu.php:696
+#: includes/components/class-amehp-persistent-menu.php:730
 #, php-format
 msgid "Note: these pages are customised under HivePress > Templates, so they show your own layout instead of the notice: %s. Delete the template to use the notice again."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:702
+#: includes/components/class-amehp-persistent-menu.php:736
 msgid "Persistent Menu Items"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:708
+#: includes/components/class-amehp-persistent-menu.php:742
 msgid "Visible Items"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:709
+#: includes/components/class-amehp-persistent-menu.php:743
 msgid "Tick an item to keep it visible even when its page is empty."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:754
+#: includes/components/class-amehp-persistent-menu.php:789
+#: includes/components/class-amehp-persistent-menu.php:858
 #: includes/configs/settings.php:173
 #: includes/configs/settings.php:388
 msgid "Icon"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:755
+#: includes/components/class-amehp-persistent-menu.php:790
 msgid "The large icon shown on the empty page. It takes the icon colour, weight and size from the Appearance section. Leave it empty to keep the default icon."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:762
+#: includes/components/class-amehp-persistent-menu.php:797
 msgid "Default Icon"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:771
+#: includes/components/class-amehp-persistent-menu.php:806
 msgid "Page text"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:772
+#: includes/components/class-amehp-persistent-menu.php:807
 msgid "The message shown on the empty page. Leave it blank to keep the default wording."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:780
+#: includes/components/class-amehp-persistent-menu.php:815
 msgid "Button label"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:782
+#: includes/components/class-amehp-persistent-menu.php:817
 msgid "The text shown on the button. Leave it blank to keep the default."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:783
+#: includes/components/class-amehp-persistent-menu.php:818
 msgid "This page has no button by default. Set both a label and a URL to add one."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:809
+#: includes/components/class-amehp-persistent-menu.php:844
 msgid "Button URL"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:810
+#: includes/components/class-amehp-persistent-menu.php:845
 msgid "A full URL or a relative path like /listings. Leave it blank to keep the default link."
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:822
+#: includes/components/class-amehp-persistent-menu.php:853
+msgid "Show on this page"
+msgstr ""
+
+#: includes/components/class-amehp-persistent-menu.php:854
+msgid "Untick anything your site already shows on this page, such as its own heading or introduction, so it is not shown twice. The page title is the heading at the top of the page."
+msgstr ""
+
+#: includes/components/class-amehp-persistent-menu.php:857
+msgid "Page title"
+msgstr ""
+
+#: includes/components/class-amehp-persistent-menu.php:859
+msgid "Message"
+msgstr ""
+
+#: includes/components/class-amehp-persistent-menu.php:860
+msgid "Button"
+msgstr ""
+
+#: includes/components/class-amehp-persistent-menu.php:871
 msgid "Placeholder Pages"
 msgstr ""
 
-#: includes/components/class-amehp-persistent-menu.php:823
+#: includes/components/class-amehp-persistent-menu.php:872
 msgid "Customise what an account page shows while it is still empty. Each page below has its own icon, message and button. Leave a field blank to keep what that page shows now."
 msgstr ""
 

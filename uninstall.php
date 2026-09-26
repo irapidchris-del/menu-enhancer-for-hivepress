@@ -96,12 +96,14 @@ global $wpdb;
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 $amehp_button_options = $wpdb->get_col(
 	$wpdb->prepare(
-		"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
+		"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s OR option_name LIKE %s",
 		$wpdb->esc_like( 'hp_amehp_button_label_' ) . '%',
 		$wpdb->esc_like( 'hp_amehp_button_url_' ) . '%',
 		// The icon and message added to each placeholder page in 3.3.0.
 		$wpdb->esc_like( 'hp_amehp_page_icon_' ) . '%',
-		$wpdb->esc_like( 'hp_amehp_page_text_' ) . '%'
+		$wpdb->esc_like( 'hp_amehp_page_text_' ) . '%',
+		// Which parts each placeholder page shows, added in 3.5.1.
+		$wpdb->esc_like( 'hp_amehp_page_parts_' ) . '%'
 	)
 );
 

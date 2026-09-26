@@ -506,6 +506,8 @@ final class Amehp_Persistent_Menu extends Component {
 
 				unset( $items[ $name ]['notice']['button']['route'] );
 			}
+
+			$items[ $name ]['notice']['parts'] = $this->get_notice_parts( $name );
 		}
 
 		$this->items           = $items;
@@ -524,6 +526,38 @@ final class Amehp_Persistent_Menu extends Component {
 		 * @param array $items Menu items.
 		 */
 		return apply_filters( 'amehp/persistent_items', $items );
+	}
+
+	/**
+	 * Gets the parts a placeholder page shows.
+	 *
+	 * Added in 3.5.1 because a site can already print its own heading or intro
+	 * on an account page (a theme, a snippet or another extension), and the
+	 * placeholder then repeated it. Each page can now drop its icon, message,
+	 * button or page title.
+	 *
+	 * Read by the stored-empty rules (hivepress-settings.md, "The stored-empty
+	 * trap"): no stored value at all - every existing site until this tab is
+	 * saved - means every part, as before; an empty string is what options.php
+	 * stores when every box is unticked, so it means none; an array is the
+	 * ticked parts, filtered to the known ones.
+	 *
+	 * @param string $name Menu item name.
+	 * @return array Part names: icon, text, button, title.
+	 */
+	protected function get_notice_parts( $name ) {
+		$all    = [ 'icon', 'text', 'button', 'title' ];
+		$stored = get_option( 'hp_amehp_page_parts_' . $name, null );
+
+		if ( null === $stored || false === $stored ) {
+			return $all;
+		}
+
+		if ( ! is_array( $stored ) ) {
+			return [];
+		}
+
+		return array_values( array_intersect( $all, array_map( 'strval', $stored ) ) );
 	}
 
 	/**
@@ -716,11 +750,12 @@ final class Amehp_Persistent_Menu extends Component {
 		];
 
 		/*
-		 * The placeholder pages, four settings each.
+		 * The placeholder pages, five settings each (the fifth, "Show on this
+		 * page", since 3.5.1).
 		 *
 		 * One section holding every page, rather than a section per page:
 		 * with eleven or more pages the tab's own quick-links bar would be
-		 * nothing but page names. backend.js folds each page's four fields
+		 * nothing but page names. backend.js folds each page's fields
 		 * into a group headed by the page name, using the same chevron as the
 		 * repeater cards, so the section reads as a list of pages that open.
 		 *
@@ -743,7 +778,7 @@ final class Amehp_Persistent_Menu extends Component {
 			/*
 			 * The labels name the setting only, not the page.
 			 *
-			 * Each page's four fields are moved into a card headed by that
+			 * Each page's fields are moved into a card headed by that
 			 * page's own name (backend.js), so "Listings: Icon" inside a card
 			 * called Listings said it twice - and the repeated page name was
 			 * what made these read as ordinary settings rows belonging to the
@@ -812,6 +847,20 @@ final class Amehp_Persistent_Menu extends Component {
 				'display_type' => 'text',
 				'max_length'   => 2048,
 				'_order'       => $order + 6,
+			];
+
+			$fields[ 'amehp_page_parts_' . $name ] = [
+				'label'       => __( 'Show on this page', 'account-menu-enhancer-for-hivepress' ),
+				'description' => __( 'Untick anything your site already shows on this page, such as its own heading or introduction, so it is not shown twice. The page title is the heading at the top of the page.', 'account-menu-enhancer-for-hivepress' ),
+				'type'        => 'checkboxes',
+				'options'     => [
+					'title'  => __( 'Page title', 'account-menu-enhancer-for-hivepress' ),
+					'icon'   => __( 'Icon', 'account-menu-enhancer-for-hivepress' ),
+					'text'   => __( 'Message', 'account-menu-enhancer-for-hivepress' ),
+					'button' => __( 'Button', 'account-menu-enhancer-for-hivepress' ),
+				],
+				'default'     => [ 'title', 'icon', 'text', 'button' ],
+				'_order'      => $order + 8,
 			];
 
 			$order += 10;
@@ -1362,6 +1411,16 @@ final class Amehp_Persistent_Menu extends Component {
 				];
 			}
 
+			// The page title, when the owner has unticked it for this page
+			// ("Show on this page", 3.5.1). Only while the placeholder is shown:
+			// a populated page is left exactly as it was (the loop stops above).
+			if ( ! in_array( 'title', (array) hp\get_array_value( $item['notice'], 'parts', [ 'title' ] ), true ) ) {
+				$blanks['page_title'] = [
+					'type'    => 'content',
+					'content' => '',
+				];
+			}
+
 			if ( $blanks ) {
 				hivepress()->template->merge_blocks( $template, $blanks );
 			}
@@ -1420,7 +1479,12 @@ final class Amehp_Persistent_Menu extends Component {
 		 * Escaped with the library's own allow-list rather than a general one: wp_kses_post() strips
 		 * <svg> entirely, which would leave every placeholder page with no icon at all.
 		 */
-		$icon = $this->get_notice_icon( $notice );
+		// The parts the owner has left ticked for this page ("Show on this page", 3.5.1). A notice
+		// built without them - a filter or an older caller - shows everything, as before.
+		$parts = (array) hp\get_array_value( $notice, 'parts', [ 'icon', 'text', 'button', 'title' ] );
+		$empty = $output;
+
+		$icon = in_array( 'icon', $parts, true ) ? $this->get_notice_icon( $notice ) : '';
 		$svg  = $icon && class_exists( 'FAFH' ) ? \FAFH::svg( $icon ) : '';
 
 		if ( $svg ) {
@@ -1428,10 +1492,12 @@ final class Amehp_Persistent_Menu extends Component {
 		}
 
 		// Text.
-		$output .= '<p class="amehp-empty__text">' . esc_html( hp\get_array_value( $notice, 'text', '' ) ) . '</p>';
+		if ( in_array( 'text', $parts, true ) ) {
+			$output .= '<p class="amehp-empty__text">' . esc_html( hp\get_array_value( $notice, 'text', '' ) ) . '</p>';
+		}
 
 		// Button.
-		$button = hp\get_array_value( $notice, 'button' );
+		$button = in_array( 'button', $parts, true ) ? hp\get_array_value( $notice, 'button' ) : null;
 
 		if ( $button ) {
 			$url   = hp\get_array_value( $button, 'url' );
@@ -1455,7 +1521,8 @@ final class Amehp_Persistent_Menu extends Component {
 			}
 		}
 
-		$output .= '</div>';
+		// Every part unticked: no empty box left behind to take up space.
+		$output = $empty === $output ? '' : $output . '</div>';
 
 		/**
 		 * Filters the rendered empty-state notice.

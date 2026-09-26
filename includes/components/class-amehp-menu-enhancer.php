@@ -445,7 +445,7 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * a native `_order` of 40 that puts it in the middle of the menu - but an
 	 * owner who had ever dragged the menu had no stored position for an item
 	 * they had never been shown, so it fell into the appended block and rendered
-	 * BELOW Sign Out. Reported from a live site on 2026-08-30. The old comment
+	 * BELOW Sign Out. The old comment
 	 * here argued that appending was the honest answer because the alternative
 	 * was "inventing a position for a page nobody has ever put anywhere". It is
 	 * not invented: the extension that registered the item chose that number, it
@@ -1261,21 +1261,14 @@ final class Amehp_Menu_Enhancer extends Component {
 	/**
 	 * Checks whether a WooCommerce menu key is a real account page.
 	 *
-	 * A plugin may add whatever it likes to the WooCommerce account menu, and not every addition is
-	 * an account page: User Switching adds a "Switch back to ..." action, which is a link that acts
-	 * and returns rather than a page a member can visit. Merging one of those into the HivePress
-	 * account menu puts it somewhere its author never intended - reported by Chris on 2026-09-02,
-	 * with the action showing up in the HivePress account dropdown mid-switch - and the row does not
-	 * even work, because the URL the merge builds for it is `wc_get_account_endpoint_url()` on a name
-	 * WooCommerce has no endpoint for, which resolves to a 404 under /my-account/.
+	 * A plugin may add non-page entries to the WooCommerce account menu: User Switching adds a
+	 * "Switch back to ..." action. Merged into the HivePress menu, such a row appears where its
+	 * author never intended, and its URL (`wc_get_account_endpoint_url()` on a name with no
+	 * endpoint) is a 404. So only genuine endpoints are merged. Dashboard is the my-account page
+	 * itself, never a query var.
 	 *
-	 * So only genuine endpoints are merged. Dashboard is the one exception worth spelling out: it is
-	 * the my-account page itself rather than an endpoint on it, so it is never a query var.
-	 *
-	 * If the endpoint list cannot be read at all, every item is treated as an endpoint. An empty list
-	 * means "WooCommerce could not be asked", not "WooCommerce has no account pages", and dropping
-	 * the whole WooCommerce section on the strength of a failed question would be a far worse outcome
-	 * than the stray row this is here to prevent.
+	 * If the endpoint list cannot be read, every item is treated as an endpoint: an empty list
+	 * means "WooCommerce could not be asked", and dropping the whole section would be worse.
 	 *
 	 * @param string $endpoint Menu item key.
 	 * @return bool
@@ -2077,6 +2070,19 @@ final class Amehp_Menu_Enhancer extends Component {
 				return home_url( $url );
 			}
 
+			/*
+			 * "#" is how an owner makes a parent that is only a heading for its
+			 * group, with no page of its own. FILTER_VALIDATE_URL rejects it, so
+			 * until 3.5.1 the item got no URL, was never rendered, and its
+			 * children fell back to the top level: the dropdown looked right in
+			 * the settings preview and was simply missing on the site. A bare
+			 * fragment is kept as it is; frontend.js makes a click on
+			 * such a link open the group instead of jumping to the top of the page.
+			 */
+			if ( preg_match( '/^#[A-Za-z0-9_-]*$/', $url ) ) {
+				return $url;
+			}
+
 			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 				return '';
 			}
@@ -2335,7 +2341,13 @@ final class Amehp_Menu_Enhancer extends Component {
 		 * before the script runs.
 		 */
 		return $hp . '{display:flex;flex-wrap:wrap;align-items:center;}'
-			. $hp . '>a{flex:1 1 auto;}'
+			. $hp . '>a{flex:1 1 auto;min-width:0;}'
+
+			// A parent that also carries a count (Notifications nested as a parent, say) keeps
+			// both: the badge never shrinks or leaves the link, and keeps a little room from the
+			// toggle. HiveTheme, shared by all six official themes, already draws the badge inline;
+			// this holds it for a theme that positions it absolutely, under the toggle.
+			. $hp . '>a>small,' . $wc . '.amehp-menu__item--parent>a>small{flex:0 0 auto;position:static;margin-inline-end:0.25rem;}'
 			. $hp . '::after{content:none !important;}'
 			. $hp . '>ul{display:none !important;position:static !important;top:auto !important;left:auto !important;right:auto !important;flex:0 0 100%;width:100%;min-width:0;align-self:auto;margin:0.25rem 0 0;padding-top:0;padding-bottom:0;border:0;box-shadow:none;background:transparent;}'
 			. $hp . '.amehp-open>ul{display:block !important;}'
@@ -2531,24 +2543,13 @@ final class Amehp_Menu_Enhancer extends Component {
 				// right font-family whether or not the face has been loaded.
 				'headingFont'      => $family,
 
-				// The URL, for the script to inject if the owner switches the
-				// option on without reloading. Built here rather than in the
-				// script so the address exists in one place only.
+				// The URL, for the script to inject if the owner switches the option on without
+				// reloading. Built here so the address exists in one place only.
 				//
-				// THIS STRING IS PRESENT EVEN WHEN THE HEADING FONT OPTION IS
-				// OFF, AND THAT IS DELIBERATE. Reading "fonts.googleapis.com"
-				// in the page source of a screen that is supposed to make no
-				// Google request looks exactly like a privacy bug, and the
-				// obvious "fix" is to drop it. Do not: it is an inert string in
-				// a JS data blob, not a request. Nothing fetches it until the
-				// owner ticks the box, and it has to be here in the OFF case
-				// precisely so that ticking can inject the stylesheet and keep
-				// the preview honest. Verified 2026-08-30 on the rendered page:
-				// option off, zero <link> elements and zero requests to Google;
-				// option on, exactly one. Chris was shown this trade and chose
-				// to keep the string (2026-08-30). The alternative is rebuilding
-				// the address in JavaScript, which splits it across two files
-				// and lets them drift when the theme's font changes.
+				// This string is present even when the heading font option is OFF, on purpose: it is an
+				// inert string in a JS data blob, not a request (option off: zero <link> elements and zero
+				// requests to Google). Do not "fix" it by dropping it; rebuilding it in JavaScript splits
+				// the address across two files and lets them drift.
 				'headingFontUrl'   => $family ? $this->get_heading_font_url( $family ) : '',
 
 				// The real front-end order, so the preview can list the items the
@@ -2715,7 +2716,7 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * names can tell two destinations apart. That is right for a dropdown and
 	 * wrong for the preview, whose entire purpose is to show what the site
 	 * renders: the panel was drawing "Orders (WooCommerce)" for a row the site
-	 * renders as "Placed Orders". Reported from a live site on 2026-08-30.
+	 * renders as "Placed Orders".
 	 *
 	 * STRIPPING THE SUFFIX WOULD NOT HAVE FIXED IT. The real label is not the
 	 * catalogue's label minus a suffix. HivePress core takes it from
@@ -2805,7 +2806,7 @@ final class Amehp_Menu_Enhancer extends Component {
 	 * not the integration is on, and is listed under a `wc:` key because that is
 	 * the same destination as the WooCommerce row. So the panel dropped it, the
 	 * owner could not drag it, and the item it could not place rendered at the
-	 * bottom of the real menu. Reported from a live site on 2026-08-30.
+	 * bottom of the real menu.
 	 *
 	 * Worked out structurally rather than named: an item is the HivePress menu's
 	 * own if that menu carries it while this plugin is NOT merging anything into
@@ -3576,19 +3577,10 @@ final class Amehp_Menu_Enhancer extends Component {
 		/*
 		 * A small, constant gap between the wording and its counter.
 		 *
-		 * This was `margin-inline-start:auto` until 3.3.13, meant to push the
-		 * counter to the menu's edge in themes that lay the link out as a flex
-		 * row. One value cannot do both jobs, and `auto` gave the WORST of each:
-		 * in a flex row it flung the counter to the far right, away from the
-		 * wording it belongs to, and in a link the theme lays out as a block it
-		 * collapses to nothing, so the number sat flush against the last letter
-		 * with no gap at all. Chris reported both on the same page, in the
-		 * sidebar and the header dropdown respectively (2026-08-31).
-		 *
-		 * 0.5rem is core's own value for this element
-		 * (`.hp-menu__item small` in hivepress/assets/css/frontend.min.css), so
-		 * the counter now sits where HivePress puts it, in every menu, however
-		 * the theme lays the link out.
+		 * This was `margin-inline-start:auto` until 3.3.13. In a flex row that flung the counter
+		 * to the far edge, and in a block-laid link it collapsed to nothing, so the number sat
+		 * flush against the last letter. 0.5rem is core's own value (`.hp-menu__item small` in
+		 * hivepress/assets/css/frontend.min.css), so it sits where HivePress puts it in any theme.
 		 */
 		$css .= '.hp-menu--user-account .hp-menu__item > a > small,.woocommerce-MyAccount-navigation ul li > a > small{margin-inline-start:0.5rem;}';
 
@@ -4158,9 +4150,8 @@ final class Amehp_Menu_Enhancer extends Component {
 			 * The route test above cannot reach these. It only fires when a
 			 * record HAS a route, and a custom item has none - so from 3.2.0,
 			 * when recording began, every custom item ever created left a
-			 * record here that nothing could ever remove. Measured on the
-			 * development install on 2026-08-30: 3,384 bytes, the sixth-largest
-			 * autoloaded option on the site and 2.2% of alloptions, holding
+			 * record here that nothing could ever remove: in one measurement
+			 * 3,384 bytes, among the largest autoloaded options, holding
 			 * three dead custom-item records against one live item. This option
 			 * is autoloaded and read on every signed-in page view, so it is not
 			 * a place for anything to accumulate for ever.

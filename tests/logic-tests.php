@@ -258,9 +258,8 @@ ok( 'a string, as a third-party filter can leave behind' === $result['not_an_arr
  * member has an order, with a native "_order" of 40 - and it does that whether
  * or not this plugin's WooCommerce integration is on
  * (hivepress/includes/components/class-woocommerce.php:447-464, core 1.7.31).
- * An owner who had arranged their menu before that day had no stored position
- * for it, so until 3.3.10 it rendered below Sign Out. Reproduced on
- * hivepress-dev on 2026-08-30 with a real completed order.
+ * An owner who had arranged their menu earlier had no stored position for it, so until
+ * 3.3.10 it rendered below Sign Out.
  */
 amehp_test_reset();
 $items                                      = base_menu(

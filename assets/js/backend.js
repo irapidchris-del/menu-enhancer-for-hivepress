@@ -782,8 +782,7 @@
 		// this element with inline SVG and reads the icon's real style - solid, regular or brands
 		// - from its own index, so a brand name needs no list of brand names to render correctly.
 		// Only when the icon really changed: rewriting className on every keystroke in the label
-		// strips the classes the shim added, leaving a broken fallback-font glyph beside the SVG
-		// (found in Action Bar by Chris, 2026-09-02; the same code here).
+		// strips the classes the shim added, leaving a broken fallback-font glyph beside the SVG.
 		if ( icon.getAttribute( 'data-amehp-icon' ) !== name ) {
 			icon.setAttribute( 'data-amehp-icon', name );
 			icon.className = name ? 'amehp-card-icon fa-fw fa-solid fa-' + name : 'amehp-card-icon';
@@ -964,7 +963,7 @@
 	 * English and quietly stop grouping in every other language.
 	 */
 	var PAGE_STORE = 'amehpPlaceholderPages';
-	var PAGE_FIELDS = [ 'hp_amehp_page_icon_', 'hp_amehp_page_text_', 'hp_amehp_button_label_', 'hp_amehp_button_url_' ];
+	var PAGE_FIELDS = [ 'hp_amehp_page_icon_', 'hp_amehp_page_text_', 'hp_amehp_button_label_', 'hp_amehp_button_url_', 'hp_amehp_page_parts_' ];
 
 	function readPageStore() {
 		try {
@@ -992,7 +991,8 @@
 
 		PAGE_FIELDS.forEach( function ( prefix ) {
 			if ( ! key && 0 === name.indexOf( prefix ) ) {
-				key = name.slice( prefix.length );
+				// A checkboxes field posts as "name[]"; the page key is the part before it.
+				key = name.slice( prefix.length ).replace( /\[\]$/, '' );
 			}
 		} );
 
