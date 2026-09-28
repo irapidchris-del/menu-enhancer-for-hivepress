@@ -788,8 +788,9 @@
 				}
 
 				if ( item.icon ) {
-					// Family class omitted on purpose - see the same note in backend.js.
-					iconEl.className = 'amehp-preview__icon fa-fw fa-solid fa-' + item.icon;
+					// Family class omitted on purpose - see the same note in backend.js. Only an
+					// outline value says fa-regular, which the library's script reads as the style.
+					iconEl.className = 'amehp-preview__icon fa-fw ' + ( 0 === item.icon.indexOf( 'far fa-' ) ? 'fa-regular fa-' + item.icon.slice( 7 ) : 'fa-solid fa-' + item.icon );
 
 					var colour = item.colour || globalColour;
 

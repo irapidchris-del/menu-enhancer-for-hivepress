@@ -39,7 +39,7 @@ $amehp_settings = [
 		'sections' => [
 			'display'   => [
 				'title'       => esc_html__( 'Appearance', 'account-menu-enhancer-for-hivepress' ),
-				'description' => esc_html__( 'Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns search every icon in Font Awesome Free, brands included (for example stripe-s and paypal), and each icon is drawn from its own shape, so nothing on the front of your site loads a font for it.', 'account-menu-enhancer-for-hivepress' ),
+				'description' => esc_html__( 'Control how the account menus look: icons, colours, sizing and fonts. The icon dropdowns search every icon in Font Awesome Free, brands included (for example stripe-s and paypal). Many icons also come in an outline version, marked (outline) in the list. Each icon is drawn from its own shape, so nothing on the front of your site loads a font for it.', 'account-menu-enhancer-for-hivepress' ),
 				'_order'      => 10,
 
 				'fields'      => [

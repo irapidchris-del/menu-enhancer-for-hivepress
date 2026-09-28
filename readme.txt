@@ -4,7 +4,7 @@ Tags: hivepress, woocommerce, account, menu, icons
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 3.5.1
+Stable tag: 3.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ HivePress renders the WooCommerce Orders page inside its own account layout, but
 **Features**
 
 * **One account layout, one menu.** A single WooCommerce Integration switch renders the remaining WooCommerce account pages inside the HivePress account template, using the same mechanism HivePress core already uses for the Orders page, and lists the WooCommerce account links in the HivePress menu and the HivePress account links in the WooCommerce menu, so every account page shares one sidebar and both menus match wherever they appear.
-* **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a searchable dropdown with previews covering every icon in Font Awesome Free, brands included. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
+* **Icons and colours.** Assign an icon to any menu item, each with an optional colour, from a searchable dropdown with previews covering every icon in Font Awesome Free, brands included, plus the outline version of each icon that has one. Set the icon size, an icon weight that thickens the glyphs, and a round colour chip behind every icon.
 * **Labels.** Rename any menu item from the settings screen, without a translation plugin. Leave the box empty to keep the item's usual name.
 * **Nested items.** Nest any item under a parent item. The parent gets a button that opens and closes its group, in the header account dropdown, the HivePress account sidebar and the WooCommerce account menu alike, and a group holding the page being viewed starts open.
 * **Three menus, told apart.** Limit any item to some of the three account menus: the header account dropdown, the HivePress account sidebar and the WooCommerce account menu. An item can be in the dropdown but not the sidebar, or the other way round.
@@ -49,6 +49,9 @@ All settings live under HivePress, then Settings, then Account Menu.
 4. Configure it under HivePress, then Settings, then Account Menu.
 
 == Changelog ==
+
+= 3.6.0 =
+* Added: every icon dropdown (menu items, custom items and placeholder pages) also offers the outline version of each icon that has one, marked (outline) in the list. Icons already chosen keep their solid look.
 
 = 3.5.1 =
 * Added: each placeholder page has a Show on this page setting, to switch off its page title, icon, message or button where the theme or another plugin already shows its own heading or introduction. Nothing changes until something is unticked.

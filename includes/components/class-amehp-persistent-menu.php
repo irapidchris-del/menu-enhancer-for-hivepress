@@ -483,7 +483,8 @@ final class Amehp_Persistent_Menu extends Component {
 			// it - a brand icon is in a different font from a solid one.
 			$icon = get_option( 'hp_amehp_page_icon_' . $name );
 
-			if ( is_string( $icon ) && preg_match( '/^[a-z0-9-]+$/', $icon ) ) {
+			// A bare name, or an outline value ("far fa-heart") from the picker.
+			if ( is_string( $icon ) && preg_match( '/^(?:far fa-)?[a-z0-9-]+$/', $icon ) ) {
 				$items[ $name ]['notice']['icon_name'] = $icon;
 			}
 

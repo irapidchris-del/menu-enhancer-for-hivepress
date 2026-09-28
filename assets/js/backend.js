@@ -761,7 +761,7 @@
 		var select = row.querySelector( 'select[name$="[icon]"]' ),
 			value  = select ? ( select.value || '' ).trim() : '';
 
-		return /^[a-z0-9-]+$/.test( value ) ? value : '';
+		return /^(?:far fa-)?[a-z0-9-]+$/.test( value ) ? value : '';
 	}
 
 	function updateCardHead( row ) {
@@ -785,7 +785,14 @@
 		// strips the classes the shim added, leaving a broken fallback-font glyph beside the SVG.
 		if ( icon.getAttribute( 'data-amehp-icon' ) !== name ) {
 			icon.setAttribute( 'data-amehp-icon', name );
-			icon.className = name ? 'amehp-card-icon fa-fw fa-solid fa-' + name : 'amehp-card-icon';
+			// An outline value ("far fa-heart") says fa-regular, the one style the script honours.
+			if ( ! name ) {
+				icon.className = 'amehp-card-icon';
+			} else if ( 0 === name.indexOf( 'far fa-' ) ) {
+				icon.className = 'amehp-card-icon fa-fw fa-regular fa-' + name.slice( 7 );
+			} else {
+				icon.className = 'amehp-card-icon fa-fw fa-solid fa-' + name;
+			}
 		}
 	}
 

@@ -211,6 +211,8 @@ is( logic.iconName( 'fa user' ), '', 'E14 a space inside a name is refused' );
 is( logic.iconName( 'user"' ), '', 'E15 a quote is refused, so nothing can break out of the class attribute' );
 is( logic.iconName( '' ), '', 'E16 an empty field is no icon' );
 is( logic.iconName( undefined ), '', 'E17 and a missing field is not an error' );
+is( logic.iconName( 'far fa-heart' ), 'far fa-heart', 'E18 an outline value from the picker is accepted' );
+is( logic.iconName( 'fas fa-heart' ), '', 'E19 only the outline prefix is accepted' );
 
 is( logic.absint( '12' ), 12, 'E18 a number reads as itself' );
 is( logic.absint( '-12' ), 12, 'E19 a negative number reads as its absolute value' );

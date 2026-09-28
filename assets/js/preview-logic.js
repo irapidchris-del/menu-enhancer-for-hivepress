@@ -65,7 +65,7 @@
 		},
 
 		/**
-		 * A Font Awesome icon name, or nothing.
+		 * A Font Awesome icon name, an outline value ("far fa-heart"), or nothing.
 		 *
 		 * The pattern is deliberately narrow: the name is concatenated into a
 		 * class attribute, so anything outside [a-z0-9-] is refused rather than
@@ -77,7 +77,7 @@
 		iconName: function ( val ) {
 			val = ( val || '' ).trim();
 
-			return /^[a-z0-9-]+$/.test( val ) ? val : '';
+			return /^(?:far fa-)?[a-z0-9-]+$/.test( val ) ? val : '';
 		},
 
 		/**
